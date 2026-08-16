@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class User extends Authenticatable
@@ -115,16 +116,51 @@ class User extends Authenticatable
     }
 
     /**
-     * Initials, for the avatar placeholder.
+     * The single capital letter shown when there is no avatar image.
+     *
+     * The first letter of the name: "Foo Chong Xian" gives F, "Wong Siew Lam"
+     * gives W. Falls back to the email if a name somehow starts with something
+     * that is not a letter, so the circle is never empty.
      */
-    public function initials(): string
+    public function avatarLetter(): string
     {
-        return Str::of($this->name)
-            ->explode(' ')
-            ->reject(fn ($part) => in_array(strtoupper($part), ['A/P', 'A/L', 'BIN', 'BINTI'], true))
-            ->take(2)
-            ->map(fn ($part) => Str::substr($part, 0, 1))
-            ->implode('');
+        $source = trim($this->name) !== '' ? trim($this->name) : $this->email;
+
+        return Str::upper(Str::substr($source, 0, 1));
+    }
+
+    /**
+     * The uploaded avatar, or null when the letter placeholder should be used.
+     */
+    public function avatarUrl(): ?string
+    {
+        if (blank($this->avatar_path)) {
+            return null;
+        }
+
+        return Storage::disk('public')->url($this->avatar_path);
+    }
+
+    /**
+     * A stable colour for the placeholder circle, derived from the name.
+     *
+     * Deterministic rather than random so a person keeps the same colour on
+     * every page, which makes them recognisable at a glance in a list.
+     *
+     * @return array{0: string, 1: string}  background and text classes
+     */
+    public function avatarColour(): array
+    {
+        $palette = [
+            ['bg-blue-100', 'text-blue-800'],
+            ['bg-emerald-100', 'text-emerald-800'],
+            ['bg-amber-100', 'text-amber-800'],
+            ['bg-violet-100', 'text-violet-800'],
+            ['bg-rose-100', 'text-rose-800'],
+            ['bg-teal-100', 'text-teal-800'],
+        ];
+
+        return $palette[crc32($this->name) % count($palette)];
     }
 
     /**

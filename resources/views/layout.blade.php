@@ -79,11 +79,18 @@
                         @endif
                     </a>
 
+                    {{-- Avatar and name both open the profile page, so the
+                         obvious thing to click does the obvious thing. --}}
+                    <a href="{{ route('profile.edit') }}"
+                       title="Manage your profile"
+                       class="flex items-center gap-2 rounded-full py-0.5 pl-0.5 pr-3 transition hover:bg-gray-100">
+                        <x-avatar :user="auth()->user()" size="sm" />
+                        <span class="hidden text-gray-600 sm:inline">{{ auth()->user()->name }}</span>
+                    </a>
+
                     <form method="post" action="{{ route('logout') }}">
                         @csrf
-                        <button type="submit" class="text-gray-400 hover:text-gray-700">
-                            {{ auth()->user()->name }} &middot; log out
-                        </button>
+                        <button type="submit" class="text-gray-400 hover:text-gray-700">Log out</button>
                     </form>
                 @else
                     <a href="{{ route('login') }}" class="text-gray-600 hover:text-gray-900">Log in</a>

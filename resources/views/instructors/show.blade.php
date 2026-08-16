@@ -12,14 +12,7 @@
     <div class="mt-6 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
 
         <div class="flex flex-wrap items-center gap-5 border-b border-gray-200 bg-gray-50 px-8 py-6">
-            @if ($instructor->avatar_path)
-                <img src="{{ Storage::disk('public')->url($instructor->avatar_path) }}" alt=""
-                     class="h-20 w-20 rounded-full object-cover">
-            @else
-                <span class="flex h-20 w-20 items-center justify-center rounded-full bg-blue-100 text-2xl font-semibold text-blue-800">
-                    {{ $instructor->initials() }}
-                </span>
-            @endif
+            <x-avatar :user="$instructor" size="lg" />
 
             <div class="min-w-0">
                 <h1 class="text-2xl font-semibold tracking-tight">{{ $instructor->name }}</h1>

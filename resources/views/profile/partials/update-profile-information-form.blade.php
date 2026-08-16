@@ -21,14 +21,7 @@
         <div>
             {{-- Avatar, normalised to a 256px square PNG on upload. --}}
             <div class="mb-6 flex items-center gap-4">
-                @if ($user->avatar_path)
-                    <img src="{{ Storage::disk('public')->url($user->avatar_path) }}" alt=""
-                         class="h-16 w-16 rounded-full object-cover">
-                @else
-                    <span class="flex h-16 w-16 items-center justify-center rounded-full bg-gray-200 text-xl font-semibold text-gray-500">
-                        {{ Str::of($user->name)->explode(' ')->take(2)->map(fn ($p) => Str::substr($p, 0, 1))->implode('') }}
-                    </span>
-                @endif
+                <x-avatar :user="$user" size="lg" />
                 <div>
                     <x-input-label for="avatar" :value="__('Avatar')" />
                     <input id="avatar" name="avatar" type="file" accept="image/*"
