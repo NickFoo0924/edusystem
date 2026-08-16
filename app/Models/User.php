@@ -1,0 +1,205 @@
+<?php
+
+namespace App\Models;
+
+// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Database\Factories\UserFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+
+class User extends Authenticatable
+{
+    /** @use HasFactory<UserFactory> */
+    use HasFactory, Notifiable, SoftDeletes;
+
+    /**
+     * Per-request cache behind permissions().
+     *
+     * @var \Illuminate\Database\Eloquent\Collection<int, Permission>|null
+     */
+    private $resolvedPermissions = null;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var list<string>
+     */
+    protected $fillable = [
+        'name',
+        'email',
+        'password',
+        'role',
+        'avatar_path',
+        'bio',
+        'is_active',
+        'failed_login_attempts',
+        'locked_until',
+        'must_change_password',
+        'last_login_at',
+    ];
+
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var list<string>
+     */
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
+            'is_active' => 'boolean',
+            'must_change_password' => 'boolean',
+            'locked_until' => 'datetime',
+            'last_login_at' => 'datetime',
+        ];
+    }
+
+    /**
+     * Courses this user teaches. Instructors only.
+     */
+    public function coursesTeaching(): HasMany
+    {
+        return $this->hasMany(Course::class, 'instructor_id');
+    }
+
+    /**
+     * Courses this user is enrolled in. Students only.
+     */
+    public function courses(): BelongsToMany
+    {
+        return $this->belongsToMany(Course::class, 'course_student', 'student_id', 'course_id')
+            ->withTimestamps();
+    }
+
+    /**
+     * One progress record per course this student is enrolled in.
+     */
+    public function studentProgress(): HasMany
+    {
+        return $this->hasMany(StudentProgress::class, 'student_id');
+    }
+
+    /**
+     * Credentials issued to this student by the CredentialAuthority.
+     */
+    public function certificates(): HasMany
+    {
+        return $this->hasMany(Certificate::class, 'student_id');
+    }
+
+    /**
+     * Badges this student has earned. The trophy cabinet renders these in
+     * colour and every other active badge greyed out.
+     */
+    public function badges(): BelongsToMany
+    {
+        return $this->belongsToMany(Badge::class, 'badge_student', 'student_id', 'badge_id')
+            ->withPivot('awarded_at');
+    }
+
+    /**
+     * Module 3 -- forum activity.
+     */
+    public function posts(): HasMany
+    {
+        return $this->hasMany(Post::class);
+    }
+
+    public function replies(): HasMany
+    {
+        return $this->hasMany(Reply::class);
+    }
+
+    /**
+     * Module 5 -- coursework and quiz sittings.
+     */
+    public function submissions(): HasMany
+    {
+        return $this->hasMany(Submission::class, 'student_id');
+    }
+
+    public function quizAttempts(): HasMany
+    {
+        return $this->hasMany(QuizAttempt::class, 'student_id');
+    }
+
+    /**
+     * Module 2 -- announcements this user has written.
+     */
+    public function announcements(): HasMany
+    {
+        return $this->hasMany(Announcement::class, 'author_id');
+    }
+
+    /**
+     * Audit trail rows where this user was the actor.
+     */
+    public function activityLogs(): HasMany
+    {
+        return $this->hasMany(ActivityLog::class);
+    }
+
+    /**
+     * Invitations this administrator has issued.
+     */
+    public function invitationsSent(): HasMany
+    {
+        return $this->hasMany(Invitation::class, 'invited_by');
+    }
+
+    /**
+     * This user's inbox.
+     *
+     * Deliberately overrides the relation of the same name from the Notifiable
+     * trait: Module 1 owns a plain `notifications` table (Section 2A) rather
+     * than Laravel's polymorphic database-notification table. Notifiable is
+     * still needed for Breeze's password-reset mail, which uses the mail
+     * channel and never touches this relation.
+     */
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(Notification::class);
+    }
+
+    /**
+     * Which notification types this user has opted into.
+     */
+    public function notificationPreferences(): HasMany
+    {
+        return $this->hasMany(NotificationPreference::class);
+    }
+
+    /**
+     * Every permission granted to this user's role.
+     *
+     * Resolved from the database rather than hardcoded, so the admin permission
+     * grid can retune access at runtime (EduSystem.md Section 7).
+     * AppServiceProvider turns this into a Gate, which is why authorisation is
+     * written $user->can('certificate.revoke') and never $user->role === 'admin'.
+     *
+     * Memoised because the Gate consults it on every single check.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection<int, Permission>
+     */
+    public function permissions()
+    {
+        return $this->resolvedPermissions ??= Permission::whereHas('permissionRoles', function ($query) {
+            $query->where('role', $this->role);
+        })->get();
+    }
+}
