@@ -12,9 +12,11 @@ Cisco NetAcad.
 
 ## Contents
 
+0. [Quick start — Laravel is already installed](#0-quick-start--laravel-is-already-installed)
 1. [What you need before starting](#1-what-you-need-before-starting)
 2. [Setting the system up](#2-setting-the-system-up)
 3. [Running it](#3-running-it)
+3b. [Moving it to another device](#3b-moving-it-to-another-device)
 4. [Login accounts](#4-login-accounts)
 5. [Courses and who teaches them](#5-courses-and-who-teaches-them)
 5b. [Finding your way around](#5b-finding-your-way-around)
@@ -26,6 +28,81 @@ Cisco NetAcad.
 11. [Running the tests](#11-running-the-tests)
 12. [Troubleshooting](#12-troubleshooting)
 13. [Building this from scratch](#13-building-this-from-scratch)
+
+---
+
+## 0. Quick start — Laravel is already installed
+
+If PHP, Composer, Node and XAMPP's MySQL are already working on your machine, this is the whole
+thing. Start MySQL in the **XAMPP Control Panel** first, then open a terminal in the project folder
+and run these in order:
+
+```bash
+cd C:/xampp/htdocs/edusystem
+```
+
+```bash
+composer install
+```
+
+```bash
+npm install && npm run build
+```
+
+```bash
+copy .env.example .env
+```
+
+```bash
+php artisan key:generate
+```
+
+Create an empty database named `edusystem` — either in **http://localhost/phpmyadmin** (**New** →
+name it `edusystem` → collation `utf8mb4_unicode_ci` → **Create**) or from the terminal:
+
+```bash
+C:\xampp\mysql\bin\mysql -u root -e "CREATE DATABASE edusystem CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+```
+
+Then build the tables, load the demo data, and start the server:
+
+```bash
+php artisan migrate:fresh --seed
+```
+
+```bash
+php artisan storage:link
+```
+
+```bash
+php artisan serve
+```
+
+Open **http://localhost:8000** and sign in as `learnsync.admin@gmail.com` with the password
+`password`. Every account uses that same password — the full list is in
+[section 4](#4-login-accounts).
+
+Two things that are easy to miss, because they are the only real prerequisites beyond Laravel
+itself:
+
+- **The GD extension must be enabled** in `C:\xampp\php\php.ini`, or `composer install` stops with
+  *"requires ext-gd"*. See [section 1](#1-what-you-need-before-starting).
+- **Apache is not needed.** `php artisan serve` is the web server; XAMPP is only there for MySQL.
+
+### Already ran the setup before?
+
+Nothing above is repeated on later days. To use the system again you need exactly two things:
+
+1. Start **MySQL** in the XAMPP Control Panel.
+2. Run `php artisan serve` in the project folder.
+
+Then open **http://localhost:8000**. Press `Ctrl + C` in that terminal to stop the server.
+
+Run `npm run build` again only after changing a Blade template or CSS file, and
+`php artisan migrate:fresh --seed` only when you want to wipe the data back to a clean demo state.
+
+The rest of this README explains each of these steps in full, plus what to do when one of them
+fails — start at [section 1](#1-what-you-need-before-starting) if anything above did not work.
 
 ---
 
@@ -198,6 +275,101 @@ chart has a real shape and the activity log reads like a term's use.
 Each student has a hidden ability score, so marks cluster like a real cohort rather than spreading
 evenly, and roughly one submission in eight is left as an unsubmitted draft — the case the
 **Due soon** panel exists to catch.
+
+---
+
+## 3b. Moving it to another device
+
+The project folder is not the whole system, which is the one thing that catches people out. Three
+parts of a working install live outside the folder or are deliberately excluded from it, so copying
+`edusystem` across on its own gives you a site that will not boot.
+
+| Part | Travels with the folder? | What to do on the new device |
+|---|---|---|
+| Source code (`app/`, `routes/`, `resources/`, `database/`) | ✅ yes | nothing |
+| `vendor/` — PHP packages | ⚠️ don't bother | `composer install` rebuilds it |
+| `node_modules/` + `public/build` — compiled CSS/JS | ⚠️ don't bother | `npm install && npm run build` |
+| `.env` — your config and `APP_KEY` | ❌ **no**, it is gitignored | recreate it: `copy .env.example .env` then `php artisan key:generate` |
+| **The database** | ❌ **no** — it lives in MySQL, not in the folder | re-seed it, or export/import — see below |
+| Uploaded avatars and badge icons | only if you **copy the folder**; ❌ not via git | re-seeded, or copy `storage/app/public/` by hand |
+
+### Step 1 — Get the code onto the new device
+
+**If you are copying the folder** (USB stick, zip, OneDrive, Google Drive) — delete `vendor` and
+`node_modules` before you zip it. They are several hundred megabytes of files that are rebuilt from
+`composer.lock` and `package-lock.json` in a minute anyway, and copying them across machines is a
+common cause of odd errors. Put the folder at `C:\xampp\htdocs\edusystem` on the new device.
+
+**If you are using git** — this repository has **no remote configured yet**, so there is nothing to
+clone from until you add one:
+
+```bash
+git remote add origin https://github.com/<your-username>/edusystem.git
+```
+
+```bash
+git push -u origin master
+```
+
+Then on the other device:
+
+```bash
+git clone https://github.com/<your-username>/edusystem.git C:/xampp/htdocs/edusystem
+```
+
+Remember that git will **not** bring `.env`, the database, or any uploaded avatars — `.gitignore`
+excludes all three on purpose, because they are either secret or machine-specific.
+
+### Step 2 — Install the prerequisites on the new device
+
+The new machine still needs **XAMPP (for MySQL)**, **PHP 8.2+**, **Composer** and **Node 18+**, and
+still needs **GD enabled** in its own `php.ini`. That checklist is
+[section 1](#1-what-you-need-before-starting) — none of it transfers with the project.
+
+### Step 3 — Rebuild and run
+
+Exactly the commands from [section 0](#0-quick-start--laravel-is-already-installed): `composer
+install`, `npm install && npm run build`, create `.env`, `php artisan key:generate`, create the
+empty `edusystem` database, `php artisan migrate:fresh --seed`, `php artisan storage:link`, then
+`php artisan serve`.
+
+### The database: fresh demo data, or your actual data?
+
+`migrate:fresh --seed` gives the new device the standard demo — 12 accounts, 6 courses, all the
+walkthrough content. **For a presentation on a lab machine this is what you want**, and you can
+skip the rest of this section.
+
+If instead you want to carry across work you actually did — courses you created, submissions,
+issued certificates — move the database itself:
+
+1. On the old device, open **http://localhost/phpmyadmin**, select `edusystem`, go to **Export**,
+   leave the format as **SQL**, and press **Export**. You get an `edusystem.sql` file.
+2. On the new device, create the empty `edusystem` database as usual, then select it, go to
+   **Import**, choose that `.sql` file, and press **Import**.
+3. Run `php artisan migrate` (not `migrate:fresh` — that would wipe what you just imported) to
+   apply any migrations added since the export.
+
+Copy `storage/app/public/` across too, or the avatars in the imported data will render as broken
+images.
+
+> **A new `APP_KEY` does not break your certificates.** The integrity hash is
+> `SHA-256(student_id | course_id | score | issued_at | credential_id)` — it never touches the app
+> key, so imported certificates still verify as **VALID** on a machine with a freshly generated key.
+> Regenerating the key only invalidates existing sessions and cookies, which just means everyone
+> signs in again.
+
+### If the new device uses a different address
+
+`.env`'s `APP_URL` matters if you are not on `http://localhost:8000` — for example when you run
+`php artisan serve --host=0.0.0.0 --port=8000` so another machine on the same Wi-Fi can reach it.
+Set `APP_URL` to the address people actually type.
+
+The certificate QR code is the reason. It encodes the verification URL, built by Laravel's `route()`
+helper, which uses **the address of the request that minted the PDF** — so a certificate created by
+a lecturer marking work is correct for whatever host they were on. But certificates generated by the
+seeder are built from the command line, where there is no request, and `route()` falls back to
+`APP_URL`. Leave `APP_URL` at `http://localhost` and every seeded certificate's QR code points at
+the lab machine's own localhost, which a phone cannot reach.
 
 ---
 
