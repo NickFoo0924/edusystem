@@ -157,8 +157,8 @@ class DatabaseSeeder extends Seeder
     private function seedAdmin(): User
     {
         return User::create([
-            'name' => 'Serena Lim Sze Kee',
-            'email' => 'admin@learnsync.test',
+            'name' => 'Admin',
+            'email' => 'learnsync.admin@gmail.com',
             'password' => self::DEMO_PASSWORD,
             'role' => 'admin',
             'bio' => 'System administrator for LearnSync.',
@@ -177,12 +177,12 @@ class DatabaseSeeder extends Seeder
     private function seedInstructors(): array
     {
         $instructors = [
-            'BMCS3404' => ['name' => 'Ting Hie Choon', 'email' => 'ting.hc@learnsync.test'],
-            'BMSE3153' => ['name' => 'Fatima Ahmed Mohamed Abdalla', 'email' => 'fatima.ama@learnsync.test'],
-            'BMIT3173' => ['name' => 'Malarvili A/P Nallayan', 'email' => 'malarvili.n@learnsync.test'],
-            'BMIT3123' => ['name' => 'Lim Mei Shyan', 'email' => 'lim.ms@learnsync.test'],
-            'BMIT3113' => ['name' => 'Wong Jee Fong', 'email' => 'wong.jf@learnsync.test'],
-            'BMIT3084' => ['name' => 'Jessie Teoh Poh Lin', 'email' => 'jessie.tpl@learnsync.test'],
+            'BMCS3404' => ['name' => 'Ting Hie Choon', 'email' => 'tinghiechoon@gmail.com'],
+            'BMSE3153' => ['name' => 'Fatima Ahmed Mohamed Abdalla', 'email' => 'fatima.abdalla@yahoo.com'],
+            'BMIT3173' => ['name' => 'Malarvili A/P Nallayan', 'email' => 'malarvili.nallayan@gmail.com'],
+            'BMIT3123' => ['name' => 'Lim Mei Shyan', 'email' => 'limmeishyan@outlook.com'],
+            'BMIT3113' => ['name' => 'Wong Jee Fong', 'email' => 'wongjeefong@yahoo.com'],
+            'BMIT3084' => ['name' => 'Jessie Teoh Poh Lin', 'email' => 'jessieteoh@gmail.com'],
         ];
 
         $created = [];
@@ -206,12 +206,13 @@ class DatabaseSeeder extends Seeder
      */
     private function seedStudents(): array
     {
+        // The five group members who own the five modules (EduSystem.md Section 2).
         $students = [
-            ['name' => 'Aisyah Binti Rahman', 'email' => 'aisyah@learnsync.test'],
-            ['name' => 'Brandon Tan Wei Jie', 'email' => 'brandon@learnsync.test'],
-            ['name' => 'Chelsea Nair', 'email' => 'chelsea@learnsync.test'],
-            ['name' => 'Daniel Lim Jun Hao', 'email' => 'daniel@learnsync.test'],
-            ['name' => 'Elaine Wong Mei Ling', 'email' => 'elaine@learnsync.test'],
+            ['name' => 'Serena Lim Sze Kee', 'email' => 'serenalim@gmail.com'],
+            ['name' => 'Foo Chong Xian', 'email' => 'foochongxian@gmail.com'],
+            ['name' => 'Ong Shun Yan', 'email' => 'ongshunyan@yahoo.com'],
+            ['name' => 'Wong Siew Lam', 'email' => 'wongsiewlam@outlook.com'],
+            ['name' => 'Ong Kwong Wei', 'email' => 'ongkwongwei@hotmail.com'],
         ];
 
         return array_map(fn (array $student) => User::create([
