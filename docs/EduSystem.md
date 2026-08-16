@@ -6,6 +6,23 @@
 **Tools Used:** Composer, MySQL, Chart.js, Tailwind/Bootstrap
 **Required Packages:** `barryvdh/laravel-dompdf` (PDF certificates), `simplesoftwareio/simple-qrcode` (verification QR codes), `intervention/image` (avatar / badge image handling)
 
+> ### Revision Note (v3) — written after implementation
+> The system described below has been built in full: all five modules, all five design patterns, and every item in the Section 8 build priority. This note records where the **implementation** differs from Section 3 as originally written, so the **ERD can be corrected before submission**. Nothing in Sections 1, 2, 2A, 4, 5 or 7 changed — the module boundaries, the pattern assignments and the RBAC matrix were all implementable as specified.
+>
+> **One new table.** `quiz_attempt_answers` (`quiz_attempt_id`, `question_id`, `response`, `is_correct`, `awarded_score`). Section 3 gives `quiz_attempts` only a duration, leaving nowhere to record what the student actually answered — grading and reviewing an attempt are both impossible without it.
+>
+> **New columns.** `courses.code` (e.g. `BMIT3173`, unique); `course_materials.title`; `assignments.description`; `assignments.allow_late_submission` (per-assignment late policy, default accept-and-label); `submissions.submitted_at` (needed to tell on-time from late, which the `on_time_submissions` badge depends on) plus a composite unique key on (`assignment_id`, `student_id`); `users.school_email` (the address published on a lecturer's public contact card, kept apart from the login `email`); `users.phone` and `users.show_phone` (optional, withheld by default).
+>
+> **Widened enum.** `course_materials.type` gains `other`, giving the four fixed sections the course page renders: Lecture notes, Tutorial question, Practical question, Others.
+>
+> **New question type.** `questions.type` accepts `multi` alongside `mcq` and `text` — several correct answers, all of which must be selected. The required count is derived from the number of options flagged correct rather than stored.
+>
+> **Relaxed constraint.** `badges.icon_path` is nullable, so a badge rule can be defined before its artwork exists.
+>
+> **Extra model, no schema change.** `permission_role` is given an Eloquent model (`PermissionRole`) because it pivots a permission against a *role enum* rather than a roles table, leaving `belongsToMany` nothing to point at. The alternative was `DB::table()`, which Section 5 forbids.
+>
+> **Seeder.** Two certificate templates rather than one: a pathway certificate has to read "the learning path", not "the course".
+
 > ### Revision Note (v2)
 > Module 1 was previously scoped as "auth + one progress number + a PDF", most of which Laravel's built-in scaffolding provides for free. It has been expanded into a full **Identity, Access & Digital Credentialing** module inspired by Cisco NetAcad's verifiable certificate model.
 > **ERD changes introduced in this revision:** the old `achievements` table is split into `certificates` (formal, verifiable PDF credentials) and `badges` + `badge_student` (gamified micro-achievements). New tables have been added for permissions, invitations, activity logs, certificate templates, learning paths and notification preferences. `announcements.admin_id` is renamed `author_id`. Update the ERD diagram before submission.
@@ -121,7 +138,7 @@ The class exposes: `issueCertificate(Student, Course)`, `issuePathwayCertificate
 Tables marked **[CORE]** must be built. Tables marked **[STRETCH]** are implemented only if time permits.
 
 ### Shared / Module 1 — Identity & Access
-1.  **users** **[CORE]**: `id` (PK), `name` (string), `email` (string, unique), `password` (string), `role` (enum: 'admin', 'instructor', 'student'), `avatar_path` (string, nullable), `bio` (text, nullable), `is_active` (boolean, default true), `failed_login_attempts` (integer, default 0), `locked_until` (datetime, nullable), `must_change_password` (boolean, default false), `last_login_at` (datetime, nullable), `deleted_at` (softDeletes).
+1.  **users** **[CORE]**: `id` (PK), `name` (string), `email` (string, unique), `school_email` (string, nullable — published contact address), `password` (string), `role` (enum: 'admin', 'instructor', 'student'), `avatar_path` (string, nullable), `bio` (text, nullable), `phone` (string, nullable), `show_phone` (boolean, default false), `is_active` (boolean, default true), `failed_login_attempts` (integer, default 0), `locked_until` (datetime, nullable), `must_change_password` (boolean, default false), `last_login_at` (datetime, nullable), `deleted_at` (softDeletes).
 2.  **permissions** **[CORE]**: `id` (PK), `key` (string, unique — e.g. `course.create`), `label` (string), `group` (string — e.g. 'Course Management').
 3.  **permission_role** **[CORE]** (Many to Many): `permission_id` (FK), `role` (enum: 'admin', 'instructor', 'student').
 4.  **invitations** **[CORE]**: `id` (PK), `email` (string), `role` (enum), `token` (string, unique), `invited_by` (FK to users), `expires_at` (datetime), `accepted_at` (datetime, nullable).
@@ -134,7 +151,7 @@ Tables marked **[CORE]** must be built. Tables marked **[STRETCH]** are implemen
 9.  **progress_snapshots** **[CORE]**: `id` (PK), `student_progress_id` (FK), `completion_percentage` (double), `captured_at` (datetime).
 10. **certificate_templates** **[CORE]**: `id` (PK), `name` (string), `background_path` (string, nullable), `signature_path` (string, nullable), `body_text` (text — contains placeholders), `is_active` (boolean).
 11. **certificates** **[CORE]**: `id` (PK), `student_id` (FK to users), `course_id` (FK to courses, nullable), `learning_path_id` (FK, nullable), `certificate_template_id` (FK), `credential_id` (string, unique — `LS-2026-A7F3D9K2`), `final_score` (double), `integrity_hash` (string), `pdf_path` (string), `issued_at` (datetime), `expires_at` (datetime, nullable), `revoked_at` (datetime, nullable), `revocation_reason` (string, nullable). *Exactly one of `course_id` / `learning_path_id` must be set.*
-12. **badges** **[CORE]**: `id` (PK), `name` (string), `description` (string), `icon_path` (string), `tier` (enum: 'bronze', 'silver', 'gold'), `criteria_type` (enum: 'quiz_score', 'course_completion', 'path_completion', 'on_time_submissions', 'first_forum_post', 'login_streak'), `criteria_value` (integer), `is_active` (boolean).
+12. **badges** **[CORE]**: `id` (PK), `name` (string), `description` (string), `icon_path` (string, nullable), `tier` (enum: 'bronze', 'silver', 'gold'), `criteria_type` (enum: 'quiz_score', 'course_completion', 'path_completion', 'on_time_submissions', 'first_forum_post', 'login_streak'), `criteria_value` (integer), `is_active` (boolean).
 13. **badge_student** **[CORE]** (Many to Many): `badge_id` (FK), `student_id` (FK to users), `awarded_at` (datetime). *Unique composite key on (`badge_id`, `student_id`) — enforces no duplicate awards.*
 14. **learning_paths** **[CORE]**: `id` (PK), `title` (string), `description` (text), `certificate_template_id` (FK, nullable), `is_active` (boolean).
 15. **learning_path_course** **[CORE]** (Many to Many, ordered): `learning_path_id` (FK), `course_id` (FK), `sequence` (integer).
@@ -143,9 +160,9 @@ Tables marked **[CORE]** must be built. Tables marked **[STRETCH]** are implemen
 18. **settings** **[CORE]**: `id` (PK), `key` (string, unique — e.g. `progress.quiz_weight`), `value` (string). *Stores the admin-configurable progress weighting and the certificate pass threshold.*
 
 ### Module 2 — Resources
-19. **courses**: `id` (PK), `instructor_id` (FK to users), `title` (string), `description` (text).
+19. **courses**: `id` (PK), `instructor_id` (FK to users), `code` (string, unique — e.g. `BMIT3173`), `title` (string), `description` (text).
 20. **course_student** (Enrollment Pivot - Many to Many): `student_id` (FK), `course_id` (FK).
-21. **course_materials**: `id` (PK), `course_id` (FK), `type` (enum: 'lecture', 'tutorial', 'practical'), `file_path` (string), `is_external` (boolean).
+21. **course_materials**: `id` (PK), `course_id` (FK), `title` (string), `type` (enum: 'lecture', 'tutorial', 'practical', 'other'), `file_path` (string), `is_external` (boolean).
 22. **announcements**: `id` (PK), `course_id` (FK, nullable — null means a global announcement), `author_id` (FK to users), `content` (text). *Renamed from `admin_id`: instructors post course announcements, admins post global ones.*
 
 ### Module 3 — Forum
@@ -155,13 +172,14 @@ Tables marked **[CORE]** must be built. Tables marked **[STRETCH]** are implemen
 
 ### Module 4 — Assessment
 26. **quizzes**: `id` (PK), `course_id` (FK), `title` (string), `time_limit` (integer).
-27. **questions**: `id` (PK), `quiz_id` (FK), `type` (string), `question_text` (text).
+27. **questions**: `id` (PK), `quiz_id` (FK), `type` (string: 'mcq', 'multi' or 'text'), `question_text` (text).
 28. **answers**: `id` (PK), `question_id` (FK), `answer_text` (string), `is_correct` (boolean).
 
 ### Module 5 — Evaluation
-29. **assignments**: `id` (PK), `course_id` (FK), `title` (string), `due_date` (datetime).
-30. **submissions**: `id` (PK), `assignment_id` (FK), `student_id` (FK), `file_path` (string), `state` (string).
+29. **assignments**: `id` (PK), `course_id` (FK), `title` (string), `description` (text, nullable), `due_date` (datetime), `allow_late_submission` (boolean, default true).
+30. **submissions**: `id` (PK), `assignment_id` (FK), `student_id` (FK), `file_path` (string, nullable), `state` (string: 'draft', 'submitted' or 'graded'), `submitted_at` (datetime, nullable). *Unique composite key on (`assignment_id`, `student_id`).*
 31. **quiz_attempts**: `id` (PK), `quiz_id` (FK), `student_id` (FK), `duration_seconds` (integer).
+31a. **quiz_attempt_answers** *(added during implementation)*: `id` (PK), `quiz_attempt_id` (FK), `question_id` (FK), `response` (text, nullable), `is_correct` (boolean), `awarded_score` (double). *Unique composite key on (`quiz_attempt_id`, `question_id`).* Without this there is nowhere to record what a student answered, so a quiz cannot be graded or reviewed.
 32. **grades**: `id` (PK), `submission_id` (FK, nullable, unique), `quiz_attempt_id` (FK, nullable, unique), `calculated_score` (double).
 
 ---

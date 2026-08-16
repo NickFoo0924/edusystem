@@ -17,6 +17,7 @@ Cisco NetAcad.
 3. [Running it](#3-running-it)
 4. [Login accounts](#4-login-accounts)
 5. [Courses and who teaches them](#5-courses-and-who-teaches-them)
+5b. [Finding your way around](#5b-finding-your-way-around)
 6. [A 10-minute demo walkthrough](#6-a-10-minute-demo-walkthrough)
 7. [The five modules and their design patterns](#7-the-five-modules-and-their-design-patterns)
 8. [Where everything lives](#8-where-everything-lives)
@@ -261,6 +262,22 @@ on top of the individual ones.
 
 ---
 
+## 5b. Finding your way around
+
+Navigation lives in a **collapsible rail down the left**. The hamburger at the top-left folds it to
+icons only and expands it again; the choice is remembered between pages. Items are grouped under
+**Learning**, **Teaching** and **Administration**, and each one is gated on a permission — an
+administrator sees twelve, a lecturer four, a student five.
+
+The **top bar** holds only the menu toggle, the brand, the notification bell with its unread count,
+your avatar and log out. Clicking your avatar or name opens your profile, where you can set a
+display picture, a bio, and — if you teach — a school email and an optional phone number.
+
+Anywhere a lecturer is named, their name is a link to a read-only contact card: school email
+always, phone only if that lecturer chose to publish one.
+
+---
+
 ## 6. A 10-minute demo walkthrough
 
 This is the shortest route through every module. Use two browsers (or one normal and one
@@ -269,7 +286,11 @@ incognito window) so you can stay logged in as two people at once.
 ### Step 1 — Instructor publishes (Module 2, Adapter pattern)
 
 Sign in as **Malarvili A/P Nallayan** → **Courses** → **BMIT3173** → **Add material**.
-Choose *Link to an external resource*, paste any YouTube URL, and save.
+Choose a category, pick *Link to an external resource*, paste any YouTube URL, and save.
+
+Materials are filed under four fixed headings — **Lecture notes**, **Tutorial question**,
+**Practical question** and **Others** — and all four always appear with a count, so a student can
+see at a glance that nothing has been posted under one rather than wondering whether it exists.
 
 It appears in the same list as uploaded files, labelled **YouTube**. That is the Adapter at work:
 a bare URL and a stored file present themselves through one interface, so the view never asks
@@ -289,7 +310,7 @@ id returns 404.
 In the other browser, sign in as **Foo Chong Xian** → **Courses** → **BMIT3173** →
 **Discussion forum** → post a question.
 
-Switch back to the lecturer. **The bell in the navbar now shows a red unread badge.** Nothing in
+Switch back to the lecturer. **The bell in the top bar now shows a red unread badge.** Nothing in
 the forum code mentions notifications — the Observer wrote that row when the post was saved.
 
 ### Step 3 — Student takes the quiz (Module 4, Strategy pattern)
@@ -323,8 +344,8 @@ Writing that grade wakes the `CredentialAuthority`, which recalculates progress,
 snapshot, evaluates every badge rule, and — once the student passes the threshold — mints a
 certificate with a unique credential ID, an integrity hash and a QR-coded PDF.
 
-As the student, open **Dashboard** to see the progress chart move, **Trophies** for any new badge,
-and **Certificates** to download the PDF.
+As the student, open **Dashboard** in the left rail to see the progress chart move, **Trophy
+cabinet** for any new badge, and **My certificates** to download the PDF.
 
 ### Step 6 — Anyone verifies it, with no account at all
 
@@ -344,14 +365,14 @@ verification page. It now reports **TAMPERED** — the stored SHA-256 hash no lo
 
 Sign in as **Admin**:
 
-- **Permissions** — untick `certificate.view_own` for *student* and save. That student's
+- **Permissions** (Administration group in the left rail) — untick `certificate.view_own` for *student* and save. That student's
   Certificates menu vanishes and the page 403s. Tick it back. No code changed.
 - **Credentials** — revoke a certificate with a reason. The public page immediately says
   **REVOKED** and the download is refused.
-- **Invites** — invite an email address; the tokenised link appears on screen (and is written to
+- **Invitations** — invite an email address; the tokenised link appears on screen (and is written to
   `storage/logs/laravel.log`, since mail is in log mode). Open it in a private window to register.
 - **Accounts** — every action asks for *your own* password on a confirmation page first.
-- **Badges** / **Paths** / **Settings** — the badge criteria, learning paths and progress weighting
+- **Badge rules** / **Learning paths** / **System settings** — the badge criteria, learning paths and progress weighting
   are all data, not code.
 
 ---
@@ -471,6 +492,8 @@ Expected: **29 passed**. The tests run against an in-memory SQLite database and 
 | Certificate says TAMPERED | Its row was edited directly in the database. That is the integrity check doing its job. |
 | Page 403s unexpectedly | That role lacks the permission. Check Admin → **Permissions**. |
 | Changed a Blade file and nothing happened | Run `php artisan view:clear`. |
+| A colour or badge renders with no background | Tailwind strips class names it cannot find in the source. If you build one in PHP rather than writing it in a template, make sure the file is covered by `content` in `tailwind.config.js` — `./app/**/*.php` is already listed — then `npm run build`. |
+| The left rail is collapsed and will not stay open | The state is kept in `localStorage` under `learnsync.sidebar`. Clearing site data resets it, and it starts collapsed on narrow screens. |
 
 ---
 
