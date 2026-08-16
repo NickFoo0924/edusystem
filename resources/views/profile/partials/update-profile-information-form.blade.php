@@ -43,6 +43,38 @@
         </div>
 
         <div>
+            {{-- Contact details, shown only to people who teach: they are the
+                 only users with a public profile card. --}}
+            @can('course.create')
+                <div class="mb-6 rounded-lg border border-gray-200 bg-gray-50 p-4">
+                    <p class="text-sm font-medium text-gray-900">Contact details shown to students</p>
+                    <p class="mt-1 text-xs text-gray-500">
+                        Students can open your name from any course page. Your email address is always
+                        shown so they can reach you about coursework.
+                    </p>
+
+                    <div class="mt-4">
+                        <x-input-label for="phone" :value="__('Phone number (optional)')" />
+                        <x-text-input id="phone" name="phone" type="text" class="mt-1 block w-full"
+                                      :value="old('phone', $user->phone)" placeholder="+60 12-345 6789" />
+                        <x-input-error class="mt-2" :messages="$errors->get('phone')" />
+                    </div>
+
+                    <label class="mt-3 flex items-start gap-2">
+                        <input type="checkbox" name="show_phone" value="1"
+                               @checked(old('show_phone', $user->show_phone))
+                               class="mt-0.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                        <span class="text-sm text-gray-700">
+                            Show my phone number on my profile
+                            <span class="block text-xs text-gray-500">
+                                Leave this unticked to keep it private. Students then see "Not shared —
+                                please use email".
+                            </span>
+                        </span>
+                    </label>
+                </div>
+            @endcan
+
             <x-input-label for="bio" :value="__('Bio')" />
             <textarea id="bio" name="bio" rows="3"
                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">{{ old('bio', $user->bio) }}</textarea>

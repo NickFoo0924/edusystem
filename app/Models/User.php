@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
 
 class User extends Authenticatable
 {
@@ -35,6 +36,8 @@ class User extends Authenticatable
         'role',
         'avatar_path',
         'bio',
+        'phone',
+        'show_phone',
         'is_active',
         'failed_login_attempts',
         'locked_until',
@@ -63,10 +66,52 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',
+            'show_phone' => 'boolean',
             'must_change_password' => 'boolean',
             'locked_until' => 'datetime',
             'last_login_at' => 'datetime',
         ];
+    }
+
+    /**
+     * The phone number a student is allowed to see, or null.
+     *
+     * Both conditions must hold: a number exists, and its owner has chosen to
+     * publish it. Anything reading a phone number for display must come through
+     * here rather than touching $user->phone, so the opt-in cannot be bypassed
+     * by a view that forgot to check.
+     */
+    public function publicPhone(): ?string
+    {
+        if (! $this->show_phone || blank($this->phone)) {
+            return null;
+        }
+
+        return $this->phone;
+    }
+
+    /**
+     * Does this user have a public contact card?
+     *
+     * Only people who teach. Students must never be listed this way -- Section
+     * 7 is explicit that a student cannot browse another student's details.
+     */
+    public function hasPublicProfile(): bool
+    {
+        return $this->role === 'instructor';
+    }
+
+    /**
+     * Initials, for the avatar placeholder.
+     */
+    public function initials(): string
+    {
+        return Str::of($this->name)
+            ->explode(' ')
+            ->reject(fn ($part) => in_array(strtoupper($part), ['A/P', 'A/L', 'BIN', 'BINTI'], true))
+            ->take(2)
+            ->map(fn ($part) => Str::substr($part, 0, 1))
+            ->implode('');
     }
 
     /**

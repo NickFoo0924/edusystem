@@ -25,6 +25,7 @@ use App\Http\Controllers\CertificateController;
 use App\Http\Controllers\CertificateTemplateController;
 use App\Http\Controllers\CertificateVerificationController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\InstructorProfileController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\LearningPathController;
 use App\Http\Controllers\PermissionController;
@@ -94,6 +95,14 @@ Route::middleware('auth')->group(function () {
      * Adapter pattern: app/Patterns/Adapter
      * ---------------------------------------------------------------------
      */
+    /*
+     * A lecturer's read-only contact card, linked from everywhere their name
+     * appears. Deliberately show-only: there is no edit or update route here,
+     * so nothing a student can reach writes to another user's record.
+     */
+    Route::get('instructors/{user}', [InstructorProfileController::class, 'show'])
+        ->name('instructors.show');
+
     Route::resource('courses', CourseController::class);
 
     Route::post('courses/{course}/enrol', [EnrolmentController::class, 'store'])->name('courses.enrol');

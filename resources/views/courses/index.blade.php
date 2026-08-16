@@ -36,13 +36,24 @@
 @if ($enrolled->isNotEmpty())
     <h2 class="mt-8 text-sm font-semibold uppercase tracking-wide text-gray-500">Your courses</h2>
     <div class="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2">
+        {{-- A div, not an anchor: the lecturer name inside is its own link, and
+             an anchor nested inside an anchor is invalid HTML that browsers
+             silently discard. The title carries the link to the course instead. --}}
         @foreach ($enrolled as $course)
-            <a href="{{ route('courses.show', $course) }}"
-               class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm hover:border-blue-300">
-                <h3 class="font-semibold text-gray-900"><span class="mr-1.5 rounded bg-gray-100 px-1.5 py-0.5 font-mono text-[11px] font-medium text-gray-600">{{ $course->code }}</span>{{ $course->title }}</h3>
-                <p class="mt-1 text-xs text-gray-500">{{ $course->instructor->name }}</p>
+            <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm hover:border-blue-300">
+                <h3 class="font-semibold">
+                    <a href="{{ route('courses.show', $course) }}" class="text-gray-900 hover:text-blue-700">
+                        <span class="mr-1.5 rounded bg-gray-100 px-1.5 py-0.5 font-mono text-[11px] font-medium text-gray-600">{{ $course->code }}</span>{{ $course->title }}
+                    </a>
+                </h3>
+                <p class="mt-1 text-xs">
+                    <a href="{{ route('instructors.show', $course->instructor) }}"
+                       class="text-gray-500 underline decoration-gray-300 underline-offset-2 hover:text-blue-700">
+                        {{ $course->instructor->name }}
+                    </a>
+                </p>
                 <p class="mt-2 line-clamp-2 text-sm text-gray-600">{{ $course->description }}</p>
-            </a>
+            </div>
         @endforeach
     </div>
 @endif
@@ -54,7 +65,7 @@
             <div class="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
                 <div class="min-w-0">
                     <h3 class="font-semibold text-gray-900"><span class="mr-1.5 rounded bg-gray-100 px-1.5 py-0.5 font-mono text-[11px] font-medium text-gray-600">{{ $course->code }}</span>{{ $course->title }}</h3>
-                    <p class="text-xs text-gray-500">{{ $course->instructor->name }}</p>
+                    <p class="text-xs"><a href="{{ route('instructors.show', $course->instructor) }}" class="text-gray-500 underline decoration-gray-300 underline-offset-2 hover:text-blue-700">{{ $course->instructor->name }}</a></p>
                     <p class="mt-1 line-clamp-2 text-sm text-gray-600">{{ $course->description }}</p>
                 </div>
                 <form method="post" action="{{ route('courses.enrol', $course) }}">
@@ -100,7 +111,7 @@
                             </span>
                         </td>
                         <td class="px-5 py-3 font-medium text-gray-900">{{ $course->title }}</td>
-                        <td class="px-5 py-3 text-gray-600">{{ $course->instructor->name }}</td>
+                        <td class="px-5 py-3"><a href="{{ route('instructors.show', $course->instructor) }}" class="text-gray-500 underline decoration-gray-300 underline-offset-2 hover:text-blue-700">{{ $course->instructor->name }}</a></td>
                         <td class="px-5 py-3 text-gray-700">{{ $course->students_count }}</td>
                         <td class="px-5 py-3 text-gray-700">{{ $course->materials_count }}</td>
                         <td class="px-5 py-3 text-right">

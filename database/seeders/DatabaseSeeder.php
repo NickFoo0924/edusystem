@@ -176,13 +176,24 @@ class DatabaseSeeder extends Seeder
      */
     private function seedInstructors(): array
     {
+        /*
+         * Phone numbers are seeded in all three states a lecturer can be in, so
+         * the contact card demonstrates each: published, recorded but withheld,
+         * and never given. Email is always shown.
+         */
         $instructors = [
-            'BMCS3404' => ['name' => 'Ting Hie Choon', 'email' => 'tinghiechoon@gmail.com'],
-            'BMSE3153' => ['name' => 'Fatima Ahmed Mohamed Abdalla', 'email' => 'fatima.abdalla@yahoo.com'],
-            'BMIT3173' => ['name' => 'Malarvili A/P Nallayan', 'email' => 'malarvili.nallayan@gmail.com'],
-            'BMIT3123' => ['name' => 'Lim Mei Shyan', 'email' => 'limmeishyan@outlook.com'],
-            'BMIT3113' => ['name' => 'Wong Jee Fong', 'email' => 'wongjeefong@yahoo.com'],
-            'BMIT3084' => ['name' => 'Jessie Teoh Poh Lin', 'email' => 'jessieteoh@gmail.com'],
+            'BMCS3404' => ['name' => 'Ting Hie Choon', 'email' => 'tinghiechoon@gmail.com',
+                'phone' => '+60 3-4145 0123', 'show_phone' => true],
+            'BMSE3153' => ['name' => 'Fatima Ahmed Mohamed Abdalla', 'email' => 'fatima.abdalla@yahoo.com',
+                'phone' => '+60 3-4145 0124', 'show_phone' => false],
+            'BMIT3173' => ['name' => 'Malarvili A/P Nallayan', 'email' => 'malarvili.nallayan@gmail.com',
+                'phone' => '+60 3-4145 0125', 'show_phone' => true],
+            'BMIT3123' => ['name' => 'Lim Mei Shyan', 'email' => 'limmeishyan@outlook.com',
+                'phone' => null, 'show_phone' => false],
+            'BMIT3113' => ['name' => 'Wong Jee Fong', 'email' => 'wongjeefong@yahoo.com',
+                'phone' => '+60 3-4145 0127', 'show_phone' => true],
+            'BMIT3084' => ['name' => 'Jessie Teoh Poh Lin', 'email' => 'jessieteoh@gmail.com',
+                'phone' => null, 'show_phone' => false],
         ];
 
         $created = [];
@@ -193,7 +204,9 @@ class DatabaseSeeder extends Seeder
                 'email' => $instructor['email'],
                 'password' => self::DEMO_PASSWORD,
                 'role' => 'instructor',
-                'bio' => 'Lecturer at LearnSync.',
+                'bio' => 'Lecturer at LearnSync. Please email me about coursework in the first instance.',
+                'phone' => $instructor['phone'],
+                'show_phone' => $instructor['show_phone'],
                 'is_active' => true,
             ]);
         }

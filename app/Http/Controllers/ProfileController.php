@@ -40,9 +40,22 @@ class ProfileController extends Controller
         $request->validate([
             'bio' => ['nullable', 'string', 'max:1000'],
             'avatar' => ['nullable', 'image', 'max:2048'],
+            'phone' => ['nullable', 'string', 'max:30', 'regex:/^[0-9+\-\s()]+$/'],
+        ], [
+            'phone.regex' => 'A phone number may contain only digits, spaces and + - ( ).',
         ]);
 
         $user->bio = $request->input('bio');
+
+        /*
+         * Contact details for the public lecturer card. Publishing a number is
+         * opt-in and off by default: a lecturer may want one on record without
+         * handing it to every student.
+         */
+        if ($request->user()->can('course.create')) {
+            $user->phone = $request->input('phone');
+            $user->show_phone = $request->boolean('show_phone') && filled($request->input('phone'));
+        }
 
         if ($request->hasFile('avatar')) {
             $user->avatar_path = $this->storeAvatar($request, $user->avatar_path);

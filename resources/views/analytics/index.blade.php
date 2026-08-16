@@ -23,7 +23,7 @@
                 <div>
                     <h2 class="font-semibold text-gray-900"><span class="mr-1.5 rounded bg-gray-100 px-1.5 py-0.5 font-mono text-[11px] font-medium text-gray-600">{{ $course->code }}</span>{{ $course->title }}</h2>
                     <p class="text-xs text-gray-500">
-                        {{ $course->instructor->name }} &middot; {{ $course->students_count }} enrolled
+                        <a href="{{ route('instructors.show', $course->instructor) }}" class="text-gray-500 underline decoration-gray-300 underline-offset-2 hover:text-blue-700">{{ $course->instructor->name }}</a> &middot; {{ $course->students_count }} enrolled
                     </p>
                 </div>
                 <a href="{{ route('courses.show', $course) }}"
