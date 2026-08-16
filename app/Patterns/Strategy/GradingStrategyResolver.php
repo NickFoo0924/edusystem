@@ -23,6 +23,7 @@ class GradingStrategyResolver
     private const STRATEGIES = [
         Question::TYPE_MCQ => MCQGradingStrategy::class,
         Question::TYPE_TEXT => TextMatchGradingStrategy::class,
+        Question::TYPE_MULTI => MultipleAnswerGradingStrategy::class,
     ];
 
     public function for(Question $question): GradingStrategy
@@ -44,7 +45,8 @@ class GradingStrategyResolver
     public static function availableTypes(): array
     {
         return [
-            Question::TYPE_MCQ => 'Multiple choice',
+            Question::TYPE_MCQ => 'Multiple choice (one answer)',
+            Question::TYPE_MULTI => 'Multiple choice (several answers)',
             Question::TYPE_TEXT => 'Fill in the blank',
         ];
     }

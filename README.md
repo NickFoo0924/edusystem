@@ -296,10 +296,17 @@ the forum code mentions notifications — the Observer wrote that row when the p
 
 As the student: **BMIT3173** → *Web Services and Integration Basics* → **Start quiz**.
 
-There are two questions and each is marked by a completely different algorithm. Try
-`padding`-style near-misses on the written answer — deliberately misspell **MVC** as `MVCC` or
-answer `Model View Controller`, and it is still accepted. The multiple-choice question is an exact
-match. The controller never asks which type a question is; it asks the resolver for a strategy.
+Three question types, each marked by a completely different algorithm:
+
+- **One answer** — exact match against the option marked correct
+- **Several answers** — set comparison. The paper says *"Select exactly 2 answers"*, a live counter
+  tracks how many you have ticked, and the extra boxes stop accepting clicks once you reach the
+  limit. Submitting with the wrong number is refused, naming the questions at fault.
+- **Fill in the blank** — similarity, not equality. Misspell **MVC** as `MVCC`, or write
+  `Model View Controller`, and it is still accepted.
+
+The controller never asks which type a question is; it asks the resolver for a strategy and calls
+`grade()`. Adding the multiple-answer type needed no change to it at all.
 
 ### Step 4 — Student submits work (Module 5, State pattern)
 

@@ -48,7 +48,22 @@
                     <div class="flex gap-2">
                         <dt class="text-gray-500">Your answer:</dt>
                         <dd class="text-gray-900">
-                            @if ($question->type === 'mcq')
+                            @if ($question->type === 'multi')
+                                @php
+                                    // The response holds a comma-separated list of answer ids.
+                                    $chosenIds = collect(explode(',', (string) $answer->response))
+                                        ->map(fn ($id) => (int) trim($id))->filter();
+                                    $chosen = $question->answers->whereIn('id', $chosenIds);
+                                @endphp
+                                @forelse ($chosen as $option)
+                                    <span class="mr-1 inline-block rounded px-1.5 py-0.5 text-xs
+                                        {{ $option->is_correct ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800' }}">
+                                        {{ $option->answer_text }}
+                                    </span>
+                                @empty
+                                    —
+                                @endforelse
+                            @elseif ($question->type === 'mcq')
                                 {{ $question->answers->firstWhere('id', (int) $answer->response)?->answer_text ?? '—' }}
                             @else
                                 {{ $answer->response ?: '—' }}

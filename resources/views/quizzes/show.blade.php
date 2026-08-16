@@ -100,14 +100,14 @@
         <form method="post" action="{{ route('quizzes.questions.store', $quiz) }}" class="mt-5 space-y-5">
             @csrf
 
+            @php $selectedType = old('type', 'mcq'); @endphp
+
             <div>
                 <label for="type" class="block text-sm font-medium text-gray-700">Type</label>
-                <select id="type" name="type" onchange="
-                        document.getElementById('mcq-fields').hidden = this.value !== 'mcq';
-                        document.getElementById('text-fields').hidden = this.value !== 'text';"
+                <select id="type" name="type" onchange="learnsyncQuestionType(this.value)"
                         class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     @foreach ($questionTypes as $value => $label)
-                        <option value="{{ $value }}" @selected(old('type') === $value)>{{ $label }}</option>
+                        <option value="{{ $value }}" @selected($selectedType === $value)>{{ $label }}</option>
                     @endforeach
                 </select>
                 <p class="mt-1 text-xs text-gray-500">
@@ -121,22 +121,35 @@
                           class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">{{ old('question_text') }}</textarea>
             </div>
 
-            <div id="mcq-fields" @if (old('type') === 'text') hidden @endif>
+            {{-- One options block serves both choice types. The radio column is
+                 shown for a single answer, the checkbox column for several. --}}
+            <div id="option-fields" @if ($selectedType === 'text') hidden @endif>
                 <span class="block text-sm font-medium text-gray-700">Options</span>
-                <p class="text-xs text-gray-500">Select the radio button beside the correct one.</p>
+                <p id="option-hint" class="text-xs text-gray-500"></p>
+
                 <div class="mt-2 space-y-2">
-                    @for ($i = 0; $i < 4; $i++)
+                    @for ($i = 0; $i < 5; $i++)
                         <div class="flex items-center gap-3">
-                            <input type="radio" name="correct_option" value="{{ $i }}" @checked($i === 0)
-                                   class="border-gray-300 text-emerald-600 focus:ring-emerald-500">
+                            <input type="radio" name="correct_option" value="{{ $i }}"
+                                   @checked((int) old('correct_option', 0) === $i)
+                                   class="js-single border-gray-300 text-emerald-600 focus:ring-emerald-500">
+                            <input type="checkbox" name="correct_options[]" value="{{ $i }}"
+                                   @checked(in_array((string) $i, (array) old('correct_options', []), true))
+                                   class="js-multi rounded border-gray-300 text-emerald-600 focus:ring-emerald-500">
                             <input type="text" name="options[]" placeholder="Option {{ $i + 1 }}"
+                                   value="{{ old('options.'.$i) }}"
                                    class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
                         </div>
                     @endfor
                 </div>
+
+                <p id="multi-note" class="mt-2 rounded-lg bg-blue-50 px-3 py-2 text-xs text-blue-900" hidden>
+                    Tick at least {{ \App\Models\Question::MIN_MULTI_ANSWERS }} options. Students will be told
+                    exactly how many to select and cannot submit until they have picked that many.
+                </p>
             </div>
 
-            <div id="text-fields" @if (old('type') !== 'text') hidden @endif>
+            <div id="text-fields" @if ($selectedType !== 'text') hidden @endif>
                 <label for="accepted_answers" class="block text-sm font-medium text-gray-700">Accepted answers</label>
                 <textarea id="accepted_answers" name="accepted_answers" rows="3"
                           placeholder="One per line. Case and punctuation are ignored, and close typos are accepted."
@@ -148,6 +161,36 @@
             </button>
         </form>
     </section>
+
+    <script>
+        // Swaps the option block between one-answer and several-answers, and
+        // hides it entirely for a written answer.
+        function learnsyncQuestionType(type) {
+            var options = document.getElementById('option-fields');
+            var text = document.getElementById('text-fields');
+            var hint = document.getElementById('option-hint');
+            var note = document.getElementById('multi-note');
+
+            options.hidden = type === 'text';
+            text.hidden = type !== 'text';
+            note.hidden = type !== 'multi';
+
+            document.querySelectorAll('.js-single').forEach(function (el) {
+                el.style.display = type === 'mcq' ? '' : 'none';
+                el.disabled = type !== 'mcq';
+            });
+            document.querySelectorAll('.js-multi').forEach(function (el) {
+                el.style.display = type === 'multi' ? '' : 'none';
+                el.disabled = type !== 'multi';
+            });
+
+            hint.textContent = type === 'multi'
+                ? 'Tick every option that is correct.'
+                : 'Select the radio button beside the correct one.';
+        }
+
+        learnsyncQuestionType(document.getElementById('type').value);
+    </script>
 
 @endif
 

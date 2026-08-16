@@ -30,7 +30,7 @@ class CourseMaterialController extends Controller
 
         $data = $request->validate([
             'title' => ['required', 'string', 'max:255'],
-            'type' => ['required', 'in:lecture,tutorial,practical'],
+            'type' => ['required', 'in:'.implode(',', array_keys(CourseMaterial::CATEGORIES))],
             'source' => ['required', 'in:file,link'],
             'file' => ['required_if:source,file', 'file', 'max:20480'],
             'url' => ['required_if:source,link', 'nullable', 'url', 'max:255'],

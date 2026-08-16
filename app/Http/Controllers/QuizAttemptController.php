@@ -54,11 +54,22 @@ class QuizAttemptController extends Controller
 
         $data = $request->validate([
             'responses' => ['array'],
-            'responses.*' => ['nullable', 'string', 'max:2000'],
+            // A multiple-answer question posts an array of ids; the other two
+            // post a single string.
+            'responses.*' => ['nullable'],
+            'responses.*.*' => ['nullable', 'string', 'max:2000'],
             'duration_seconds' => ['nullable', 'integer', 'min:0'],
         ]);
 
-        $responses = $data['responses'] ?? [];
+        /*
+         * Flatten to one string per question, so every strategy receives the
+         * same shape and quiz_attempt_answers.response stays a single column.
+         */
+        $responses = collect($data['responses'] ?? [])
+            ->map(fn ($value) => is_array($value)
+                ? collect($value)->filter()->implode(',')
+                : $value)
+            ->all();
 
         $attempt = DB::transaction(function () use ($request, $quiz, $responses, $data) {
             $attempt = QuizAttempt::create([

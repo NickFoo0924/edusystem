@@ -395,6 +395,17 @@ class DatabaseSeeder extends Seeder
             Answer::create(['question_id' => $text->id, 'answer_text' => $accepted, 'is_correct' => true]);
         }
 
+        // A multiple-answer question, marked by the third grading Strategy.
+        // Two correct options, so the student is told to select exactly 2.
+        $multi = Question::create([
+            'quiz_id' => $quiz->id,
+            'type' => Question::TYPE_MULTI,
+            'question_text' => 'Which of these are valid HTTP methods? Select exactly 2.',
+        ]);
+        foreach ([['GET', true], ['POST', true], ['SEND', false], ['FETCH', false]] as [$text, $correct]) {
+            Answer::create(['question_id' => $multi->id, 'answer_text' => $text, 'is_correct' => $correct]);
+        }
+
         // MODULE 5 -- an assignment open for submission. Left on the default
         // late policy: accepted after the deadline, but marked "Turned in late".
         Assignment::create([

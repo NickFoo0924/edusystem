@@ -68,41 +68,61 @@
                 @endif
             </div>
 
-            <ul class="divide-y divide-gray-100">
-                @forelse ($materials as $entry)
-                    @php $display = $entry['display']; @endphp
-                    <li class="flex items-center gap-4 px-6 py-4">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
-                             class="h-6 w-6 shrink-0 text-gray-400">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="{{ $display->iconPath() }}" />
-                        </svg>
+            {{-- The four categories always appear, empty or not, so the shape
+                 of a course is the same everywhere in the system. --}}
+            <div class="divide-y divide-gray-200">
+                @foreach ($materialsByCategory as $type => $category)
+                    <section>
+                        <h3 class="bg-gray-50/60 px-6 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                            {{ $category['label'] }}
+                            <span class="ml-1 font-normal normal-case text-gray-400">
+                                ({{ count($category['items']) }})
+                            </span>
+                        </h3>
 
-                        <div class="min-w-0 flex-1">
-                            <a href="{{ $display->url() }}"
-                               @if ($display->opensExternally()) target="_blank" rel="noopener noreferrer" @endif
-                               class="block truncate font-medium text-gray-900 hover:text-blue-700">
-                                {{ $display->title() }}
-                            </a>
-                            <p class="text-xs text-gray-500">
-                                <span class="capitalize">{{ $entry['material']->type }}</span>
-                                &middot; {{ $display->kind() }} &middot; {{ $display->detail() }}
-                            </p>
-                        </div>
+                        <ul class="divide-y divide-gray-100">
+                            @forelse ($category['items'] as $entry)
+                                @php $display = $entry['display']; @endphp
+                                <li class="flex items-center gap-4 px-6 py-4">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                                         class="h-6 w-6 shrink-0 text-gray-400">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="{{ $display->iconPath() }}" />
+                                    </svg>
 
-                        @if ($isOwner)
-                            <form method="post"
-                                  action="{{ route('courses.materials.destroy', [$course, $entry['material']]) }}"
-                                  onsubmit="return confirm('Remove this material?');">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="text-sm text-red-700 hover:text-red-900">Remove</button>
-                            </form>
-                        @endif
-                    </li>
-                @empty
-                    <li class="px-6 py-10 text-center text-sm text-gray-500">No materials yet.</li>
-                @endforelse
-            </ul>
+                                    <div class="min-w-0 flex-1">
+                                        <a href="{{ $display->url() }}"
+                                           @if ($display->opensExternally()) target="_blank" rel="noopener noreferrer" @endif
+                                           class="block truncate font-medium text-gray-900 hover:text-blue-700">
+                                            {{ $display->title() }}
+                                        </a>
+                                        <p class="text-xs text-gray-500">
+                                            {{ $display->kind() }} &middot; {{ $display->detail() }}
+                                        </p>
+                                    </div>
+
+                                    @if ($isOwner)
+                                        <form method="post"
+                                              action="{{ route('courses.materials.destroy', [$course, $entry['material']]) }}"
+                                              onsubmit="return confirm('Remove this material?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="text-sm text-red-700 hover:text-red-900">Remove</button>
+                                        </form>
+                                    @endif
+                                </li>
+                            @empty
+                                <li class="px-6 py-3 text-sm text-gray-400">
+                                    Nothing posted here yet.
+                                    @if ($isOwner)
+                                        <a href="{{ route('courses.materials.create', ['course' => $course, 'type' => $type]) }}"
+                                           class="ml-1 font-medium text-blue-700 hover:text-blue-900">Add one</a>
+                                    @endif
+                                </li>
+                            @endforelse
+                        </ul>
+                    </section>
+                @endforeach
+            </div>
         </section>
 
         {{-- QUIZZES --}}

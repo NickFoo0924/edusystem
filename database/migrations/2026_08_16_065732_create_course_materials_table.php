@@ -20,7 +20,10 @@ return new class extends Migration
             $table->id();
             $table->foreignId('course_id')->constrained()->cascadeOnDelete();
             $table->string('title');
-            $table->enum('type', ['lecture', 'tutorial', 'practical']);
+            // "other" added to Section 3's list so a course can file anything
+            // that is not lecture, tutorial or practical material rather than
+            // forcing it into a category it does not belong in.
+            $table->enum('type', ['lecture', 'tutorial', 'practical', 'other']);
             $table->string('file_path');
             $table->boolean('is_external')->default(false);
             $table->timestamps();

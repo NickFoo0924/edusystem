@@ -363,6 +363,22 @@ class BulkStudentSeeder extends Seeder
      */
     private function responseFor(Question $question, bool $aimForCorrect): ?string
     {
+        if ($question->type === Question::TYPE_MULTI) {
+            $correct = $question->answers->where('is_correct', true);
+            $wrong = $question->answers->where('is_correct', false);
+
+            if ($aimForCorrect || $wrong->isEmpty()) {
+                return $correct->pluck('id')->implode(',');
+            }
+
+            // A near miss: one correct option swapped for a wrong one, which
+            // still satisfies the required count and earns partial credit.
+            return $correct->take(max(0, $correct->count() - 1))
+                ->pluck('id')
+                ->push($wrong->random()->id)
+                ->implode(',');
+        }
+
         if ($question->type === Question::TYPE_MCQ) {
             $answer = $aimForCorrect
                 ? $question->answers->firstWhere('is_correct', true)

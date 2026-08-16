@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Course;
+use App\Models\CourseMaterial;
 use App\Models\DiscussionForum;
 use App\Patterns\Adapter\MaterialAdapterFactory;
 use Illuminate\Http\RedirectResponse;
@@ -103,11 +104,25 @@ class CourseController extends Controller
             'forum',
         ]);
 
+        /*
+         * Materials are grouped into the four fixed categories, and every
+         * category is present even when empty -- a student should be able to
+         * see at a glance that, say, no practical questions have been posted
+         * yet, rather than wondering whether the section exists at all.
+         */
+        $materialsByCategory = collect(CourseMaterial::CATEGORIES)
+            ->map(fn (string $label, string $type) => [
+                'label' => $label,
+                // Every material arrives as a DisplayableMaterial, so the view
+                // has no idea which are files and which are external links.
+                'items' => MaterialAdapterFactory::forAll(
+                    $course->materials->where('type', $type)
+                ),
+            ]);
+
         return view('courses.show', [
             'course' => $course,
-            // Every material arrives as a DisplayableMaterial, so the view has
-            // no idea which are files and which are external links.
-            'materials' => MaterialAdapterFactory::forAll($course->materials),
+            'materialsByCategory' => $materialsByCategory,
             'isEnrolled' => $request->user()->can('course.enroll') && $course->hasStudent($request->user()),
             'isOwner' => $course->instructor_id === $request->user()->id,
         ]);

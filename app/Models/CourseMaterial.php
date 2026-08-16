@@ -14,6 +14,28 @@ class CourseMaterial extends Model
 {
     use HasFactory;
 
+    /**
+     * The fixed sections every course page shows, in display order.
+     *
+     * Kept here rather than in a view so the upload form, the course page and
+     * the validation rules all read the same list -- adding a category is one
+     * edit, not four.
+     */
+    public const CATEGORIES = [
+        'lecture' => 'Lecture notes',
+        'tutorial' => 'Tutorial question',
+        'practical' => 'Practical question',
+        'other' => 'Others',
+    ];
+
+    /**
+     * The heading this material files under.
+     */
+    public function categoryLabel(): string
+    {
+        return self::CATEGORIES[$this->type] ?? self::CATEGORIES['other'];
+    }
+
     protected $fillable = [
         'course_id',
         'title',

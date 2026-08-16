@@ -33,8 +33,8 @@
             <label for="type" class="block text-sm font-medium text-gray-700">Category</label>
             <select id="type" name="type"
                     class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                @foreach (['lecture' => 'Lecture notes', 'tutorial' => 'Tutorial', 'practical' => 'Practical'] as $value => $label)
-                    <option value="{{ $value }}" @selected(old('type') === $value)>{{ $label }}</option>
+                @foreach (\App\Models\CourseMaterial::CATEGORIES as $value => $label)
+                    <option value="{{ $value }}" @selected(old('type', request('type')) === $value)>{{ $label }}</option>
                 @endforeach
             </select>
         </div>
