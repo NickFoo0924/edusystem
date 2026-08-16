@@ -344,10 +344,14 @@ app/
 database/
   migrations/          41 tables
   seeders/             DatabaseSeeder builds the whole demo
+docs/                  the specification, the practical PDF and the pattern catalogue
 resources/views/       Blade templates, all extending layout.blade.php
 routes/web.php         every route, grouped and commented by module
 tests/                 29 automated tests
 ```
+
+See **[`docs/README.md`](docs/README.md)** for how each section of the specification maps onto the
+code, the schema deviations to carry into the ERD, and an honest list of known gaps.
 
 All database access uses **Eloquent ORM**. There is no raw SQL anywhere — no `DB::raw()`,
 no `DB::select()`.

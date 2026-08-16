@@ -1,0 +1,35 @@
+Creational Design Patterns
+Creational Design Patterns deal with object creation in a flexible and efficient manner. They help you control how and when objects are instantiated.
+
+Singleton Pattern
+Factory Method Pattern
+Abstract Factory Pattern
+Builder Pattern
+Prototype Pattern
+Object Pool Pattern
+Lazy Initialization
+
+Structural Design Patterns
+Structural patterns explain how classes and objects are combined to form larger structures. They improve code flexibility by simplifying relationships between components.
+
+Adapter Pattern
+Decorator Pattern
+Facade Pattern
+Composite Pattern
+Proxy Pattern
+Bridge Pattern
+Flyweight Pattern
+
+Behavioral Design Patterns
+Behavioral patterns define how objects communicate and distribute responsibilities. They help manage workflows, interactions, and decision-making within a system
+
+Observer Pattern
+Strategy Pattern
+Command Pattern
+Chain of Responsibility Pattern
+Template Method Pattern
+Iterator Pattern
+State Pattern
+Mediator Pattern
+Memento Pattern
+Visitor Pattern
