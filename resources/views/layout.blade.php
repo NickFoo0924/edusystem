@@ -31,12 +31,10 @@
         .sidebar-closed #sidebar { width: 4.5rem; }
 
         .sidebar-closed .sidebar-label,
-        .sidebar-closed .sidebar-group-title,
-        .sidebar-closed .sidebar-badge { display: none; }
+        .sidebar-closed .sidebar-group-title { display: none; }
 
+        /* Collapsed, the group headings go, so a rule stands in for them. */
         .sidebar-closed .sidebar-divider { display: block; }
-
-        .sidebar-closed .sidebar-dot { display: block; }
 
         .sidebar-closed .sidebar-link {
             justify-content: center;
@@ -71,6 +69,27 @@
         </div>
 
         <div class="flex items-center gap-2">
+            {{-- The bell belongs where people look for it. Module 3 produces
+                 these events; Module 1 owns the inbox (EduSystem.md 2A). --}}
+            @php
+                $unread = \App\Models\Notification::where('user_id', auth()->id())
+                    ->where('is_read', false)->count();
+            @endphp
+            <a href="{{ route('notifications.index') }}"
+               title="{{ $unread ? $unread.' unread' : 'Notifications' }}"
+               class="relative rounded-full p-2 transition hover:bg-gray-100
+                      {{ request()->routeIs('notifications.*') ? 'bg-gray-100 text-gray-900' : 'text-gray-600' }}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" class="h-6 w-6">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+                </svg>
+                @if ($unread > 0)
+                    <span class="absolute right-1 top-1 min-w-[1.05rem] rounded-full bg-red-600 px-1 text-center text-[10px] font-semibold leading-4 text-white">
+                        {{ $unread > 9 ? '9+' : $unread }}
+                    </span>
+                @endif
+            </a>
+
             <a href="{{ route('profile.edit') }}"
                title="Manage your profile"
                class="flex items-center gap-2 rounded-full py-0.5 pl-0.5 pr-3 text-sm transition hover:bg-gray-100">
