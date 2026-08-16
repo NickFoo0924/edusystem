@@ -14,6 +14,7 @@ use App\Models\Setting;
 use App\Models\StudentProgress;
 use App\Models\Submission;
 use App\Models\User;
+use App\Support\GradeScale;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
@@ -614,6 +615,19 @@ final class CredentialAuthority
         // their progress percentage: it attests to how well they did.
         $score = $this->averageScoreIn($student, $course) ?? $progress->completion_percentage;
 
+        /*
+         * Completion and achievement are separate tests, and both must pass.
+         *
+         * completion_percentage measures engagement -- work handed in, quizzes
+         * sat, forum joined -- so a diligent student who understood little
+         * could reach the threshold on participation alone. Issuing on that
+         * basis produced certificates carrying a failing average, which is not
+         * something a verifiable credential may ever attest to.
+         */
+        if (! GradeScale::isPass($score)) {
+            return null;
+        }
+
         return $this->issueCertificate($student, $course, $score);
     }
 
@@ -623,7 +637,14 @@ final class CredentialAuthority
      */
     private function quizzesPassedIn(User $student, Course $course): int
     {
-        $threshold = $this->setting('certificate.pass_threshold', 80);
+        /*
+         * The academic pass mark, not the certificate threshold. These are two
+         * different bars and conflating them was wrong: with a four-question
+         * quiz, scoring 3 out of 4 was being recorded as a failed quiz because
+         * 75% fell short of the 80% needed for a *certificate*. Passing a quiz
+         * is a D or above; earning a certificate is 80% of overall progress.
+         */
+        $threshold = GradeScale::PASS_MARK;
 
         return Grade::whereIn(
             'quiz_attempt_id',

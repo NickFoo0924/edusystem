@@ -169,6 +169,35 @@ To stop it, press `Ctrl + C` in that terminal. To use the system again later you
 > **Resetting.** `php artisan migrate:fresh --seed` wipes everything and rebuilds the demo data.
 > Use it whenever you want a clean slate before a presentation.
 
+### Optional: a full cohort of 50 students
+
+The default seed gives 12 accounts — enough to demonstrate every feature. For screens that only
+look real with volume (class analytics, grade distributions, the activity log), load a simulated
+term instead:
+
+```bash
+php artisan db:seed --class=BulkStudentSeeder
+```
+
+Run it **after** `migrate:fresh --seed`. It takes about 30 seconds, because it renders a real PDF
+for every certificate earned. It adds:
+
+- **50 students**, `student1` … `student50`, emails `student1@gmail.com` … `student50@gmail.com`,
+  same password
+- a quiz and two assignments for every course
+- around **170 enrolments**, **120 quiz attempts**, **210 submissions**, **270 grades**,
+  **120 forum posts** and **80 certificates**
+
+Nothing is fabricated. Quiz answers are marked by the real grading Strategy, submissions move
+through the real State pattern, and each grade wakes the CredentialAuthority exactly as a live one
+would — so the progress curves, badges and certificates are genuine consequences of the data.
+History is generated on a simulated clock spanning a 14-week term, which is why the dashboard
+chart has a real shape and the activity log reads like a term's use.
+
+Each student has a hidden ability score, so marks cluster like a real cohort rather than spreading
+evenly, and roughly one submission in eight is left as an unsubmitted draft — the case the
+**Due soon** panel exists to catch.
+
 ---
 
 ## 4. Login accounts
