@@ -51,8 +51,10 @@
                 <div class="flex flex-wrap items-center gap-3">
                     <dt class="w-16 shrink-0 text-gray-500">Email</dt>
                     <dd>
-                        <a href="mailto:{{ $instructor->email }}"
-                           class="font-medium text-blue-700 hover:text-blue-900">{{ $instructor->email }}</a>
+                        {{-- The institutional address when there is one, so a
+                             student is never handed a personal inbox. --}}
+                        <a href="mailto:{{ $instructor->contactEmail() }}"
+                           class="font-medium text-blue-700 hover:text-blue-900">{{ $instructor->contactEmail() }}</a>
                     </dd>
                 </div>
 

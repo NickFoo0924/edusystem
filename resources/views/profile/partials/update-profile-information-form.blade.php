@@ -54,6 +54,18 @@
                     </p>
 
                     <div class="mt-4">
+                        <x-input-label for="school_email" :value="__('School email')" />
+                        <x-text-input id="school_email" name="school_email" type="email" class="mt-1 block w-full"
+                                      :value="old('school_email', $user->school_email)"
+                                      placeholder="yourname@tarc.edu.my" />
+                        <p class="mt-1 text-xs text-gray-500">
+                            Shown on your profile instead of your sign-in address. Leave blank to show
+                            your sign-in address instead.
+                        </p>
+                        <x-input-error class="mt-2" :messages="$errors->get('school_email')" />
+                    </div>
+
+                    <div class="mt-4">
                         <x-input-label for="phone" :value="__('Phone number (optional)')" />
                         <x-text-input id="phone" name="phone" type="text" class="mt-1 block w-full"
                                       :value="old('phone', $user->phone)" placeholder="+60 12-345 6789" />

@@ -20,15 +20,26 @@
 @if ($teaching->isNotEmpty())
     <h2 class="mt-8 text-sm font-semibold uppercase tracking-wide text-gray-500">Courses you teach</h2>
     <div class="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2">
+        {{-- A div rather than an anchor, so the lecturer link below is not
+             nested inside another link. --}}
         @foreach ($teaching as $course)
-            <a href="{{ route('courses.show', $course) }}"
-               class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm hover:border-blue-300">
-                <h3 class="font-semibold text-gray-900"><span class="mr-1.5 rounded bg-gray-100 px-1.5 py-0.5 font-mono text-[11px] font-medium text-gray-600">{{ $course->code }}</span>{{ $course->title }}</h3>
-                <p class="mt-1 line-clamp-2 text-sm text-gray-600">{{ $course->description }}</p>
+            <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm hover:border-blue-300">
+                <h3 class="font-semibold">
+                    <a href="{{ route('courses.show', $course) }}" class="text-gray-900 hover:text-blue-700">
+                        <span class="mr-1.5 rounded bg-gray-100 px-1.5 py-0.5 font-mono text-[11px] font-medium text-gray-600">{{ $course->code }}</span>{{ $course->title }}
+                    </a>
+                </h3>
+                <p class="mt-1 text-xs">
+                    <a href="{{ route('instructors.show', $course->instructor) }}"
+                       class="text-gray-500 underline decoration-gray-300 underline-offset-2 hover:text-blue-700">
+                        {{ $course->instructor->name }}
+                    </a>
+                </p>
+                <p class="mt-2 line-clamp-2 text-sm text-gray-600">{{ $course->description }}</p>
                 <p class="mt-3 text-xs text-gray-500">
                     {{ $course->students_count }} enrolled &middot; {{ $course->materials_count }} materials
                 </p>
-            </a>
+            </div>
         @endforeach
     </div>
 @endif

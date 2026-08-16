@@ -32,6 +32,7 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'school_email',
         'password',
         'role',
         'avatar_path',
@@ -71,6 +72,18 @@ class User extends Authenticatable
             'locked_until' => 'datetime',
             'last_login_at' => 'datetime',
         ];
+    }
+
+    /**
+     * The address to publish on a contact card.
+     *
+     * The institutional one when it exists, otherwise the account address.
+     * Never null, because "email is always shown" is the whole point of the
+     * card -- a student must never land on it with no way to make contact.
+     */
+    public function contactEmail(): string
+    {
+        return filled($this->school_email) ? $this->school_email : $this->email;
     }
 
     /**

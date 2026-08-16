@@ -183,16 +183,22 @@ class DatabaseSeeder extends Seeder
          */
         $instructors = [
             'BMCS3404' => ['name' => 'Ting Hie Choon', 'email' => 'tinghiechoon@gmail.com',
+                'school_email' => 'tinghc@tarc.edu.my',
                 'phone' => '+60 3-4145 0123', 'show_phone' => true],
             'BMSE3153' => ['name' => 'Fatima Ahmed Mohamed Abdalla', 'email' => 'fatima.abdalla@yahoo.com',
+                'school_email' => 'fatimaama@tarc.edu.my',
                 'phone' => '+60 3-4145 0124', 'show_phone' => false],
             'BMIT3173' => ['name' => 'Malarvili A/P Nallayan', 'email' => 'malarvili.nallayan@gmail.com',
+                'school_email' => 'malarvili@tarc.edu.my',
                 'phone' => '+60 3-4145 0125', 'show_phone' => true],
             'BMIT3123' => ['name' => 'Lim Mei Shyan', 'email' => 'limmeishyan@outlook.com',
+                'school_email' => 'limms@tarc.edu.my',
                 'phone' => null, 'show_phone' => false],
             'BMIT3113' => ['name' => 'Wong Jee Fong', 'email' => 'wongjeefong@yahoo.com',
+                'school_email' => 'wongjf@tarc.edu.my',
                 'phone' => '+60 3-4145 0127', 'show_phone' => true],
             'BMIT3084' => ['name' => 'Jessie Teoh Poh Lin', 'email' => 'jessieteoh@gmail.com',
+                'school_email' => 'jessietpl@tarc.edu.my',
                 'phone' => null, 'show_phone' => false],
         ];
 
@@ -202,6 +208,7 @@ class DatabaseSeeder extends Seeder
             $created[$code] = User::create([
                 'name' => $instructor['name'],
                 'email' => $instructor['email'],
+                'school_email' => $instructor['school_email'],
                 'password' => self::DEMO_PASSWORD,
                 'role' => 'instructor',
                 'bio' => 'Lecturer at LearnSync. Please email me about coursework in the first instance.',

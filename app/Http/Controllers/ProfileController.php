@@ -41,6 +41,7 @@ class ProfileController extends Controller
             'bio' => ['nullable', 'string', 'max:1000'],
             'avatar' => ['nullable', 'image', 'max:2048'],
             'phone' => ['nullable', 'string', 'max:30', 'regex:/^[0-9+\-\s()]+$/'],
+            'school_email' => ['nullable', 'email', 'max:255'],
         ], [
             'phone.regex' => 'A phone number may contain only digits, spaces and + - ( ).',
         ]);
@@ -53,6 +54,7 @@ class ProfileController extends Controller
          * handing it to every student.
          */
         if ($request->user()->can('course.create')) {
+            $user->school_email = $request->input('school_email');
             $user->phone = $request->input('phone');
             $user->show_phone = $request->boolean('show_phone') && filled($request->input('phone'));
         }

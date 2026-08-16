@@ -29,7 +29,8 @@ class CourseController extends Controller
         $user = $request->user();
 
         $teaching = $user->can('course.create')
-            ? Course::withCount(['students', 'materials'])->where('instructor_id', $user->id)->orderBy('code')->get()
+            ? Course::with('instructor')->withCount(['students', 'materials'])
+                ->where('instructor_id', $user->id)->orderBy('code')->get()
             : collect();
 
         $enrolled = $user->can('course.enroll')

@@ -216,14 +216,14 @@ password
 
 ### Lecturers
 
-| Name | Email | Teaches |
-|---|---|---|
-| Ting Hie Choon | `tinghiechoon@gmail.com` | BMCS3404 Project I |
-| Fatima Ahmed Mohamed Abdalla | `fatima.abdalla@yahoo.com` | BMSE3153 Software Project Management |
-| Malarvili A/P Nallayan | `malarvili.nallayan@gmail.com` | BMIT3173 Integrative Programming |
-| Lim Mei Shyan | `limmeishyan@outlook.com` | BMIT3123 Vulnerability Assessment and Penetration Testing |
-| Wong Jee Fong | `wongjeefong@yahoo.com` | BMIT3113 Systems Administration |
-| Jessie Teoh Poh Lin | `jessieteoh@gmail.com` | BMIT3084 Enterprise Networking |
+| Name | Sign-in email | School email (shown to students) | Teaches |
+|---|---|---|---|
+| Ting Hie Choon | `tinghiechoon@gmail.com` | `tinghc@tarc.edu.my` | BMCS3404 Project I |
+| Fatima Ahmed Mohamed Abdalla | `fatima.abdalla@yahoo.com` | `fatimaama@tarc.edu.my` | BMSE3153 Software Project Management |
+| Malarvili A/P Nallayan | `malarvili.nallayan@gmail.com` | `malarvili@tarc.edu.my` | BMIT3173 Integrative Programming |
+| Lim Mei Shyan | `limmeishyan@outlook.com` | `limms@tarc.edu.my` | BMIT3123 Vulnerability Assessment and Penetration Testing |
+| Wong Jee Fong | `wongjeefong@yahoo.com` | `wongjf@tarc.edu.my` | BMIT3113 Systems Administration |
+| Jessie Teoh Poh Lin | `jessieteoh@gmail.com` | `jessietpl@tarc.edu.my` | BMIT3084 Enterprise Networking |
 
 ### Students — the project group
 
@@ -274,6 +274,15 @@ Choose *Link to an external resource*, paste any YouTube URL, and save.
 It appears in the same list as uploaded files, labelled **YouTube**. That is the Adapter at work:
 a bare URL and a stored file present themselves through one interface, so the view never asks
 which it is dealing with.
+
+### Step 1b — Student finds how to contact their lecturer
+
+On any course page, click the lecturer's name under the title. Their contact card opens: school
+email always shown, phone only if that lecturer chose to publish one, plus the courses they teach.
+
+The page is read-only — there is no edit route on it at all, so nothing a student can reach writes
+to another user's record. Only lecturers have a card; requesting a student's or the administrator's
+id returns 404.
 
 ### Step 2 — Student asks a question (Module 3, Observer pattern)
 
