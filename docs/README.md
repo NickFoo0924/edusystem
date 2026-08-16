@@ -11,7 +11,6 @@ them.
 | **`EduSystem.md`** | The specification, and the source of truth. Section 2 assigns each of the five modules its GoF design pattern; Section 2A draws the module boundaries; Section 3 gives the exact schema and marks tables `[CORE]` or `[STRETCH]`; Section 4 gives the end-to-end workflow; Section 5 lists the hard constraints; Section 7 is the RBAC matrix; Section 8 gives the Module 1 build order. |
 | **`Laravel Tutorial.pdf`** | BAIT3173 Appendix 3.1, the lecturer's practical. Dictates the coding conventions this project follows: `make:model X -m`, resource controllers bound to a model, resource routes in `routes/web.php`, Blade views extending a shared `layout.blade.php`, `$fillable` on every model, and the snake_case-plural / PascalCase-singular naming rules. Its `ordersystem` / `products` example is replaced throughout by `edusystem` and the real entities from Section 3. |
 | **`Design Patterns.txt`** | The GoF catalogue grouped Creational / Structural / Behavioural. Used to confirm each pattern's category when writing the report. |
-| **`AI_BUILD_PROMPT.md`** | The build brief that drove development, including the phase order and the hard rules (Eloquent only, one pattern per module, patterns never inside controllers). |
 
 ## How the specification maps onto the code
 
