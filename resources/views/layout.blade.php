@@ -6,6 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('title', config('app.name'))</title>
 
+    {{-- The tab icon. favicon.png is a 64px cut of the same artwork, small
+         enough that it costs nothing on every page; logo.png is the 256px
+         one iOS uses when the site is saved to a home screen. --}}
+    <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('logo.png') }}">
+
     {{-- Restore the rail's open/closed state before the first paint, so it
          never flashes open and then snap shut. --}}
     <script>
@@ -51,9 +57,14 @@
 
 @auth
 
+    {{-- The signed-in shell is exactly the viewport tall and never scrolls
+         itself. The rail and the content pane each scroll independently
+         inside it, so moving one leaves the other where it was. --}}
+    <div class="flex h-screen flex-col overflow-hidden">
+
     {{-- TOP BAR: menu toggle, brand, and the account controls only.
          Everything else lives in the rail. --}}
-    <header class="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-gray-200 bg-white px-4 py-2.5">
+    <header class="flex shrink-0 items-center justify-between gap-3 border-b border-gray-200 bg-white px-4 py-2.5">
         <div class="flex items-center gap-3">
             <button type="button" id="sidebar-toggle"
                     title="Main menu" aria-label="Toggle the main menu" aria-expanded="true"
@@ -63,12 +74,30 @@
                 </svg>
             </button>
 
-            <a href="{{ route('dashboard') }}" class="text-lg font-semibold tracking-tight text-gray-900">
+            <a href="{{ route('dashboard') }}"
+               class="flex items-center gap-2 text-lg font-semibold tracking-tight text-gray-900">
+                <img src="{{ asset('favicon.png') }}" alt=""
+                     class="h-8 w-8 rounded-full" width="32" height="32">
                 {{ config('app.name') }}
             </a>
         </div>
 
         <div class="flex items-center gap-2">
+            {{-- Join a course by class code, from anywhere. Only students see
+                 it: enrolment is theirs alone (EduSystem.md Section 7), so for
+                 a lecturer or an administrator it would be a button that
+                 always 403s. --}}
+            @can('course.enroll')
+                <a href="{{ route('courses.join') }}"
+                   title="Join a course with a class code"
+                   class="rounded-full p-2 transition hover:bg-gray-100
+                          {{ request()->routeIs('courses.join') ? 'bg-gray-100 text-gray-900' : 'text-gray-600' }}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" class="h-6 w-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    </svg>
+                </a>
+            @endcan
+
             {{-- The bell belongs where people look for it. Module 3 produces
                  these events; Module 1 owns the inbox (EduSystem.md 2A). --}}
             @php
@@ -107,10 +136,15 @@
         </div>
     </header>
 
-    <div class="flex items-start">
+    {{-- min-h-0 lets the two panes shrink inside the flex column, which is what
+         allows them to scroll rather than pushing the shell taller. Nothing
+         here may be items-start: the rail stretches to the full height, so it
+         reaches the bottom of the screen instead of stopping under its last
+         link. --}}
+    <div class="flex min-h-0 flex-1">
         @include('partials.sidebar')
 
-        <div class="min-w-0 flex-1">
+        <div class="min-w-0 flex-1 overflow-y-auto">
             <main class="mx-auto max-w-6xl px-6 py-8">
                 @yield('content')
             </main>
@@ -121,6 +155,8 @@
             </footer>
         </div>
     </div>
+
+    </div>{{-- /viewport shell --}}
 
     <script>
         // Toggling the rail writes the choice to localStorage, so it is
@@ -146,7 +182,10 @@
          This is what a guest verifying a credential sees. --}}
     <header class="border-b border-gray-200 bg-white">
         <div class="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
-            <a href="{{ url('/') }}" class="text-lg font-semibold tracking-tight text-gray-900">
+            <a href="{{ url('/') }}"
+               class="flex items-center gap-2 text-lg font-semibold tracking-tight text-gray-900">
+                <img src="{{ asset('favicon.png') }}" alt=""
+                     class="h-8 w-8 rounded-full" width="32" height="32">
                 {{ config('app.name') }}
             </a>
             <a href="{{ route('login') }}" class="text-sm text-gray-600 hover:text-gray-900">Log in</a>

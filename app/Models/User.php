@@ -181,6 +181,15 @@ class User extends Authenticatable
     }
 
     /**
+     * Course invitations addressed to this student. A pending one is the only
+     * way an uninvited course appears on their Courses page at all.
+     */
+    public function courseInvitations(): HasMany
+    {
+        return $this->hasMany(CourseInvitation::class, 'student_id');
+    }
+
+    /**
      * One progress record per course this student is enrolled in.
      */
     public function studentProgress(): HasMany

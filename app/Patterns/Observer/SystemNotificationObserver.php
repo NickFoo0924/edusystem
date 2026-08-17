@@ -2,6 +2,7 @@
 
 namespace App\Patterns\Observer;
 
+use App\Models\AnnouncementComment;
 use App\Models\Notification;
 use App\Models\NotificationPreference;
 use App\Models\Post;
@@ -33,6 +34,8 @@ class SystemNotificationObserver
 
     public const TYPE_NEW_REPLY = 'forum.reply';
 
+    public const TYPE_ANNOUNCEMENT_COMMENT = 'announcement.comment';
+
     /**
      * Fired by Eloquent when a Post or a Reply is created.
      *
@@ -44,6 +47,7 @@ class SystemNotificationObserver
         match (true) {
             $model instanceof Post => $this->onPostCreated($model),
             $model instanceof Reply => $this->onReplyCreated($model),
+            $model instanceof AnnouncementComment => $this->onAnnouncementCommentCreated($model),
             default => null,
         };
     }
@@ -88,6 +92,32 @@ class SystemNotificationObserver
             type: self::TYPE_NEW_REPLY,
             message: "{$reply->author->name} replied to your question",
             link: route('forums.show', $post->forum_id).'#post-'.$post->id,
+        );
+    }
+
+    /**
+     * Somebody commented under an announcement: tell whoever posted it.
+     *
+     * A third subject for the same observer, added without the announcement
+     * code learning that notifications exist -- which is the whole claim the
+     * pattern makes.
+     */
+    private function onAnnouncementCommentCreated(AnnouncementComment $comment): void
+    {
+        $comment->loadMissing(['announcement', 'author']);
+
+        $announcement = $comment->announcement;
+
+        // Commenting on your own notice is not news.
+        if ($announcement === null || $announcement->author_id === $comment->user_id) {
+            return;
+        }
+
+        $this->notify(
+            userId: $announcement->author_id,
+            type: self::TYPE_ANNOUNCEMENT_COMMENT,
+            message: "{$comment->author->name} commented on your announcement",
+            link: route('announcements.index').'#announcement-'.$announcement->id,
         );
     }
 

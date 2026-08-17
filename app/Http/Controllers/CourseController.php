@@ -38,10 +38,19 @@ class CourseController extends Controller
             ? $user->courses()->with('instructor')->withCount('materials')->orderBy('code')->get()
             : collect();
 
-        $available = $user->can('course.enroll')
-            ? Course::with('instructor')
-                ->whereNotIn('id', $enrolled->pluck('id'))
-                ->orderBy('code')
+        /*
+         * There is no "courses you could enrol in" list any more, and its
+         * absence is the policy: a student who browses to this page sees only
+         * what they are already in, plus any course a lecturer has explicitly
+         * invited them to. Everything else is reachable only with the class
+         * code, which is the lecturer's to give out.
+         */
+        $invitations = $user->can('course.enroll')
+            ? $user->courseInvitations()
+                ->whereNull('accepted_at')
+                ->whereNotIn('course_id', $enrolled->pluck('id'))
+                ->with('course.instructor')
+                ->latest()
                 ->get()
             : collect();
 
@@ -55,7 +64,7 @@ class CourseController extends Controller
             ? Course::with('instructor')->withCount(['students', 'materials'])->orderBy('code')->get()
             : collect();
 
-        return view('courses.index', compact('teaching', 'enrolled', 'available', 'all'));
+        return view('courses.index', compact('teaching', 'enrolled', 'invitations', 'all'));
     }
 
     public function create(Request $request): View
@@ -99,6 +108,7 @@ class CourseController extends Controller
             'instructor',
             'materials',
             'announcements.author',
+            'announcements.comments.author',
             'quizzes.questions',
             'assignments',
             'forum',
@@ -125,6 +135,14 @@ class CourseController extends Controller
             'materialsByCategory' => $materialsByCategory,
             'isEnrolled' => $request->user()->can('course.enroll') && $course->hasStudent($request->user()),
             'isOwner' => $course->instructor_id === $request->user()->id,
+            // The roster panel is the owner's alone, so the query is skipped
+            // entirely for everyone else rather than fetched and then hidden.
+            'roster' => $course->instructor_id === $request->user()->id
+                ? $course->students()->orderBy('name')->get()
+                : collect(),
+            'pendingInvitations' => $course->instructor_id === $request->user()->id
+                ? $course->invitations()->whereNull('accepted_at')->with('student')->latest()->get()
+                : collect(),
         ]);
     }
 

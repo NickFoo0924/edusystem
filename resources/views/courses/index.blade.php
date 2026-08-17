@@ -69,17 +69,23 @@
     </div>
 @endif
 
-@can('course.enroll')
-    <h2 class="mt-8 text-sm font-semibold uppercase tracking-wide text-gray-500">Available to enrol</h2>
+{{-- Invitations, not a catalogue. A student sees a course here only because a
+     lecturer named them; anything they were not invited to needs the class
+     code instead. --}}
+@if ($invitations->isNotEmpty())
+    <h2 class="mt-8 text-sm font-semibold uppercase tracking-wide text-gray-500">Invitations</h2>
     <div class="mt-3 space-y-3">
-        @forelse ($available as $course)
-            <div class="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+        @foreach ($invitations as $invitation)
+            <div class="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-blue-200 bg-blue-50 p-5 shadow-sm">
                 <div class="min-w-0">
-                    <h3 class="font-semibold text-gray-900"><span class="mr-1.5 rounded bg-gray-100 px-1.5 py-0.5 font-mono text-[11px] font-medium text-gray-600">{{ $course->code }}</span>{{ $course->title }}</h3>
-                    <p class="text-xs"><a href="{{ route('instructors.show', $course->instructor) }}" class="text-gray-500 underline decoration-gray-300 underline-offset-2 hover:text-blue-700">{{ $course->instructor->name }}</a></p>
-                    <p class="mt-1 line-clamp-2 text-sm text-gray-600">{{ $course->description }}</p>
+                    <h3 class="font-semibold text-gray-900"><span class="mr-1.5 rounded bg-white px-1.5 py-0.5 font-mono text-[11px] font-medium text-gray-600">{{ $invitation->course->code }}</span>{{ $invitation->course->title }}</h3>
+                    <p class="text-xs">
+                        <a href="{{ route('instructors.show', $invitation->course->instructor) }}" class="text-gray-500 underline decoration-gray-300 underline-offset-2 hover:text-blue-700">{{ $invitation->course->instructor->name }}</a>
+                        invited you {{ $invitation->created_at->diffForHumans() }}
+                    </p>
+                    <p class="mt-1 line-clamp-2 text-sm text-gray-600">{{ $invitation->course->description }}</p>
                 </div>
-                <form method="post" action="{{ route('courses.enrol', $course) }}">
+                <form method="post" action="{{ route('courses.enrol', $invitation->course) }}">
                     @csrf
                     <button type="submit"
                             class="rounded-lg bg-blue-700 px-4 py-2 text-sm font-medium text-white hover:bg-blue-800">
@@ -87,12 +93,25 @@
                     </button>
                 </form>
             </div>
-        @empty
-            <p class="rounded-xl border border-dashed border-gray-300 bg-white p-8 text-center text-sm text-gray-500">
-                You are enrolled in every available course.
-            </p>
-        @endforelse
+        @endforeach
     </div>
+@endif
+
+@can('course.enroll')
+    @if ($enrolled->isEmpty() && $invitations->isEmpty())
+        <div class="mt-8 rounded-xl border border-dashed border-gray-300 bg-white p-10 text-center">
+            <p class="text-sm text-gray-500">
+                You are not in any course yet, and you have no invitations waiting.
+            </p>
+            <p class="mt-1 text-sm text-gray-500">
+                Your lecturer either invites you, or gives you a class code to join with.
+            </p>
+            <a href="{{ route('courses.join') }}"
+               class="mt-5 inline-block rounded-lg bg-blue-700 px-4 py-2 text-sm font-medium text-white hover:bg-blue-800">
+                Join with a class code
+            </a>
+        </div>
+    @endif
 @endcan
 
 {{-- Administrators teach and enrol in nothing, so they get the full catalogue
@@ -137,6 +156,8 @@
 @endif
 
 @if ($teaching->isEmpty() && $enrolled->isEmpty() && $all->isEmpty() && ! auth()->user()->can('course.enroll'))
+    {{-- Lecturers with nothing yet. Students get the invitation-aware empty
+         state above instead. --}}
     <div class="mt-8 rounded-xl border border-dashed border-gray-300 bg-white p-10 text-center">
         <p class="text-sm text-gray-500">You have no courses.</p>
     </div>

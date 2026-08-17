@@ -20,9 +20,46 @@ class Course extends Model
     protected $fillable = [
         'instructor_id',
         'code',
+        'class_code',
         'title',
         'description',
     ];
+
+    /**
+     * Characters a join code may contain. 0/O and 1/l/I are left out because
+     * these codes get read off a slide and typed by hand, and a code that
+     * cannot be transcribed is a support request rather than a shortcut.
+     */
+    private const CODE_ALPHABET = 'abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
+    /**
+     * Every course gets a join code the moment it exists, so no creation path
+     * -- controller, seeder or factory -- has to remember to supply one, and
+     * the NOT NULL column can never be the thing that fails.
+     */
+    protected static function booted(): void
+    {
+        static::creating(function (Course $course) {
+            $course->class_code ??= static::generateClassCode();
+        });
+    }
+
+    /**
+     * A fresh join code, checked against the table so the unique index is never
+     * the thing that discovers a collision.
+     */
+    public static function generateClassCode(): string
+    {
+        do {
+            $code = '';
+
+            for ($i = 0; $i < 6; $i++) {
+                $code .= self::CODE_ALPHABET[random_int(0, strlen(self::CODE_ALPHABET) - 1)];
+            }
+        } while (static::where('class_code', $code)->exists());
+
+        return $code;
+    }
 
     /**
      * Code and name together, the way a course is normally referred to.
@@ -44,6 +81,14 @@ class Course extends Model
     {
         return $this->belongsToMany(User::class, 'course_student', 'course_id', 'student_id')
             ->withTimestamps();
+    }
+
+    /**
+     * Instructor invitations issued for this course, accepted or not.
+     */
+    public function invitations(): HasMany
+    {
+        return $this->hasMany(CourseInvitation::class);
     }
 
     /**

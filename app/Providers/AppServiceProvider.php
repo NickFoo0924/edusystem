@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\ActivityLog;
+use App\Models\AnnouncementComment;
 use App\Models\Grade;
 use App\Models\Post;
 use App\Models\Reply;
@@ -47,6 +48,7 @@ class AppServiceProvider extends ServiceProvider
     {
         Post::observe(SystemNotificationObserver::class);
         Reply::observe(SystemNotificationObserver::class);
+        AnnouncementComment::observe(SystemNotificationObserver::class);
 
         $this->registerGradeTrigger();
     }

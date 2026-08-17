@@ -19,7 +19,8 @@
 
 <div class="mt-8 space-y-4">
     @forelse ($announcements as $announcement)
-        <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+        <div id="announcement-{{ $announcement->id }}"
+             class="scroll-mt-4 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
             <div class="flex flex-wrap items-start justify-between gap-3">
                 <div class="flex items-center gap-2">
                     @if ($announcement->isGlobal())
@@ -47,6 +48,8 @@
             <p class="mt-3 text-xs text-gray-400">
                 {{ $announcement->author->name }} &middot; {{ $announcement->created_at->diffForHumans() }}
             </p>
+
+            @include('partials.announcement-comments')
         </div>
     @empty
         <div class="rounded-xl border border-dashed border-gray-300 bg-white p-10 text-center">

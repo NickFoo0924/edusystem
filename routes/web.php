@@ -2,11 +2,13 @@
 
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\AnalyticsController;
+use App\Http\Controllers\AnnouncementCommentController;
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\AssignmentController;
 use App\Http\Controllers\Auth\InvitedRegistrationController;
 use App\Http\Controllers\BadgeController;
 use App\Http\Controllers\CourseController;
+use App\Http\Controllers\CourseInvitationController;
 use App\Http\Controllers\CourseMaterialController;
 use App\Http\Controllers\EnrolmentController;
 use App\Http\Controllers\ForumController;
@@ -103,10 +105,27 @@ Route::middleware('auth')->group(function () {
     Route::get('instructors/{user}', [InstructorProfileController::class, 'show'])
         ->name('instructors.show');
 
+    /*
+     * Joining by class code. Registered before the resource on purpose:
+     * `courses/{course}` would otherwise match "join" as a course id and this
+     * page would 404.
+     */
+    Route::get('courses/join', [EnrolmentController::class, 'create'])->name('courses.join');
+    Route::post('courses/join', [EnrolmentController::class, 'join'])->name('courses.join.store');
+
     Route::resource('courses', CourseController::class);
 
+    // The two ways into a course: accepting an invitation, or the code above.
     Route::post('courses/{course}/enrol', [EnrolmentController::class, 'store'])->name('courses.enrol');
     Route::delete('courses/{course}/enrol', [EnrolmentController::class, 'destroy'])->name('courses.unenrol');
+
+    // The instructor's side of enrolment.
+    Route::post('courses/{course}/invitations', [CourseInvitationController::class, 'store'])
+        ->name('courses.invitations.store');
+    Route::delete('courses/{course}/invitations/{invitation}', [CourseInvitationController::class, 'destroy'])
+        ->name('courses.invitations.destroy');
+    Route::post('courses/{course}/class-code', [CourseInvitationController::class, 'rotate'])
+        ->name('courses.class-code.rotate');
 
     Route::get('courses/{course}/materials/create', [CourseMaterialController::class, 'create'])
         ->name('courses.materials.create');
@@ -120,6 +139,12 @@ Route::middleware('auth')->group(function () {
     Route::post('announcements', [AnnouncementController::class, 'store'])->name('announcements.store');
     Route::delete('announcements/{announcement}', [AnnouncementController::class, 'destroy'])
         ->name('announcements.destroy');
+
+    // The discussion under an announcement -- instructors and students both.
+    Route::post('announcements/{announcement}/comments', [AnnouncementCommentController::class, 'store'])
+        ->name('announcements.comments.store');
+    Route::delete('announcements/{announcement}/comments/{comment}', [AnnouncementCommentController::class, 'destroy'])
+        ->name('announcements.comments.destroy');
 
     /*
      * ---------------------------------------------------------------------

@@ -186,6 +186,117 @@
 
     </div>
 
+    {{-- THE RIGHT-HAND COLUMN.
+
+         One grid cell holding every side panel, stacked. It has to be a single
+         child of the grid: left as siblings, the third panel would land in the
+         next row's first column -- underneath the main content on the left,
+         rather than under the panel above it on the right. --}}
+    <div class="space-y-6">
+
+    {{-- CLASS CODE AND ROSTER -- the owner's panel.
+
+         Both ways into this course are driven from here: hand out the code, or
+         name a student directly. Students never see this block, which is the
+         point -- the code is only a control while it is the lecturer's to
+         give. --}}
+    @if ($isOwner)
+        <aside class="space-y-6">
+
+            <section class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+                <div class="border-b border-gray-200 bg-gray-50 px-5 py-3">
+                    <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-600">Class code</h2>
+                </div>
+                <div class="px-5 py-4">
+                    <p class="font-mono text-2xl font-semibold tracking-widest text-gray-900">{{ $course->class_code }}</p>
+                    <p class="mt-2 text-xs text-gray-500">
+                        Anyone with this code can join without an invitation. It is not the course
+                        code &mdash; give it out only to the class.
+                    </p>
+                    <form method="post" action="{{ route('courses.class-code.rotate', $course) }}"
+                          onsubmit="return confirm('Issue a new class code? The current one stops working immediately.');"
+                          class="mt-3">
+                        @csrf
+                        <button type="submit" class="text-sm font-medium text-blue-700 hover:text-blue-900">
+                            Issue a new code
+                        </button>
+                    </form>
+                </div>
+            </section>
+
+            <section class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+                <div class="border-b border-gray-200 bg-gray-50 px-5 py-3">
+                    <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-600">
+                        Students ({{ $roster->count() }})
+                    </h2>
+                </div>
+
+                <ul class="divide-y divide-gray-100">
+                    @forelse ($roster as $student)
+                        <li class="flex items-center gap-3 px-5 py-3">
+                            <x-avatar :user="$student" size="sm" />
+                            <div class="min-w-0">
+                                <p class="truncate text-sm font-medium text-gray-900">{{ $student->name }}</p>
+                                <p class="truncate text-xs text-gray-500">{{ $student->email }}</p>
+                            </div>
+                        </li>
+                    @empty
+                        <li class="px-5 py-8 text-center text-sm text-gray-500">Nobody has joined yet.</li>
+                    @endforelse
+                </ul>
+
+                @if ($pendingInvitations->isNotEmpty())
+                    <div class="border-t border-gray-200 bg-gray-50 px-5 py-2">
+                        <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                            Invited, not yet accepted
+                        </h3>
+                    </div>
+                    <ul class="divide-y divide-gray-100">
+                        @foreach ($pendingInvitations as $invitation)
+                            <li class="flex items-center justify-between gap-3 px-5 py-3">
+                                <div class="min-w-0">
+                                    <p class="truncate text-sm text-gray-700">{{ $invitation->student->name }}</p>
+                                    <p class="truncate text-xs text-gray-400">
+                                        invited {{ $invitation->created_at->diffForHumans() }}
+                                    </p>
+                                </div>
+                                <form method="post"
+                                      action="{{ route('courses.invitations.destroy', [$course, $invitation]) }}"
+                                      onsubmit="return confirm('Withdraw this invitation?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="text-xs font-medium text-gray-500 hover:text-red-700">
+                                        Withdraw
+                                    </button>
+                                </form>
+                            </li>
+                        @endforeach
+                    </ul>
+                @endif
+
+                <div class="border-t border-gray-200 px-5 py-4">
+                    <form method="post" action="{{ route('courses.invitations.store', $course) }}">
+                        @csrf
+                        <label for="email" class="block text-xs font-semibold uppercase tracking-wide text-gray-500">
+                            Invite a student
+                        </label>
+                        <div class="mt-2 flex gap-2">
+                            <input type="email" name="email" id="email" required
+                                   placeholder="student@example.com"
+                                   class="min-w-0 flex-1 rounded-lg border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            <button type="submit"
+                                    class="shrink-0 rounded-lg bg-blue-700 px-3 py-2 text-sm font-medium text-white hover:bg-blue-800">
+                                Invite
+                            </button>
+                        </div>
+                        <x-input-error :messages="$errors->get('email')" class="mt-2" />
+                    </form>
+                </div>
+            </section>
+
+        </aside>
+    @endif
+
     {{-- ANNOUNCEMENTS --}}
     <aside class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
         <div class="border-b border-gray-200 bg-gray-50 px-5 py-3">
@@ -193,17 +304,21 @@
         </div>
         <ul class="divide-y divide-gray-100">
             @forelse ($course->announcements->sortByDesc('created_at') as $announcement)
-                <li class="px-5 py-4">
+                <li id="announcement-{{ $announcement->id }}" class="scroll-mt-4 px-5 py-4">
                     <p class="text-sm text-gray-700">{{ $announcement->content }}</p>
                     <p class="mt-2 text-xs text-gray-400">
                         {{ $announcement->author->name }} &middot; {{ $announcement->created_at->diffForHumans() }}
                     </p>
+
+                    @include('partials.announcement-comments')
                 </li>
             @empty
                 <li class="px-5 py-8 text-center text-sm text-gray-500">Nothing announced yet.</li>
             @endforelse
         </ul>
     </aside>
+
+    </div>{{-- /right-hand column --}}
 
 </div>
 

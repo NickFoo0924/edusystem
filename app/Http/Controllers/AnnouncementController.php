@@ -20,7 +20,9 @@ class AnnouncementController extends Controller
     {
         $user = $request->user();
 
-        $announcements = Announcement::with(['author', 'course'])
+        // comments.author is eager-loaded so a page of announcements is not one
+        // query per thread -- the partial reads the relation directly.
+        $announcements = Announcement::with(['author', 'course', 'comments.author'])
             ->where(function ($query) use ($user) {
                 // Global announcements reach everybody.
                 $query->whereNull('course_id');

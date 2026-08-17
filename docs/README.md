@@ -27,15 +27,38 @@ them.
 
 Documented here so the ERD can be updated before submission.
 
-**One new table**
+**Three new tables**
 
 - `quiz_attempt_answers` — Section 3 gives `quiz_attempts` only a duration, leaving nowhere to
   record what a student actually answered. Grading and reviewing an attempt are both impossible
   without it.
+- `course_invitations` — Section 3 has `course_student` and nothing else, which makes enrolment a
+  thing a student simply does. Section 7 gives them the `course.enroll` permission but says nothing
+  about *which* course, so the only implementable reading was a catalogue anyone could enrol from.
+  This table restores the instructor's decision: `(course_id, student_id, invited_by, accepted_at)`,
+  unique on the first two. A row is not an enrolment — accepting is what writes `course_student`,
+  and `accepted_at` separates the two states.
+- `announcement_comments` — Section 3 makes an announcement a one-way broadcast, so the obvious
+  question about a notice had nowhere to go but a forum thread detached from it.
+  `(announcement_id, user_id, body)`, flat and deliberately unthreaded: anything needing a real
+  thread belongs in Module 3's forum. Observed by `SystemNotificationObserver`, which makes it the
+  Observer pattern's third subject.
+
+**One new permission**
+
+- `announcement.comment`, held by instructor and student. Administrators are excluded for the same
+  reason Section 7 keeps them out of forums — they can read and moderate every thread, but they do
+  not take part. This brings the matrix to 34 keys. It is inserted by both the seeder and its own
+  migration, because a fresh `migrate:fresh --seed` rebuilds the matrix from the seeder while an
+  existing database only runs migrations; the seeder uses `updateOrCreate` so the two paths cannot
+  collide.
 
 **Added columns**
 
 - `courses.code` — a course is identified by its code as much as its name, e.g. `BMIT3173`
+- `courses.class_code` — the six-character join code a student can enrol with unaided. Deliberately
+  not `code`: that one is public and guessable, so letting it grant enrolment would make the policy
+  above unenforceable. Unique, and regenerating it revokes the previous one.
 - `course_materials.title` — a resource list of bare file paths is unusable
 - `assignments.description` — an assignment with no brief cannot be acted on
 - `assignments.allow_late_submission` — the per-assignment late policy; defaults to accepting late

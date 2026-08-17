@@ -3,11 +3,13 @@
 namespace Database\Seeders;
 
 use App\Models\Announcement;
+use App\Models\AnnouncementComment;
 use App\Models\Answer;
 use App\Models\Assignment;
 use App\Models\Badge;
 use App\Models\CertificateTemplate;
 use App\Models\Course;
+use App\Models\CourseInvitation;
 use App\Models\CourseMaterial;
 use App\Models\DiscussionForum;
 use App\Models\LearningPath;
@@ -108,6 +110,9 @@ class DatabaseSeeder extends Seeder
             'material.create' => ['Upload course materials', 'Course Management', ['instructor']],
             'material.view' => ['View and download course materials', 'Course Management', ['instructor', 'student']],
             'announcement.create' => ['Post announcements', 'Course Management', ['admin', 'instructor']],
+            // Admins are excluded for the same reason Section 7 keeps them out
+            // of forums: they administer the class, they are not in it.
+            'announcement.comment' => ['Comment on an announcement', 'Course Management', ['instructor', 'student']],
 
             // Assessment -- Modules 4 and 5.
             'quiz.create' => ['Create quizzes and questions', 'Assessment', ['instructor']],
@@ -138,15 +143,21 @@ class DatabaseSeeder extends Seeder
             'notification.preferences' => ['Manage own notification preferences', 'Profile', ['admin', 'instructor', 'student']],
         ];
 
+        /*
+         * updateOrCreate rather than create: a permission may already exist
+         * because the migration that introduced it inserted it, which is how an
+         * existing database picks up a new key without being re-seeded. On a
+         * fresh migrate:fresh --seed the two paths meet here, and a plain
+         * create() would collide on the unique key.
+         */
         foreach ($permissions as $key => [$label, $group, $roles]) {
-            $permission = Permission::create([
-                'key' => $key,
-                'label' => $label,
-                'group' => $group,
-            ]);
+            $permission = Permission::updateOrCreate(
+                ['key' => $key],
+                ['label' => $label, 'group' => $group]
+            );
 
             foreach ($roles as $role) {
-                PermissionRole::create([
+                PermissionRole::firstOrCreate([
                     'permission_id' => $permission->id,
                     'role' => $role,
                 ]);
@@ -281,12 +292,18 @@ class DatabaseSeeder extends Seeder
                 'title' => 'Enterprise Networking',
                 'description' => 'Design and configure switched and routed enterprise networks, including VLANs, routing protocols and WAN links.',
                 'enrol' => [1, 2, 3, 4],
+                // Serena is invited but has not accepted, so the Invitations
+                // section on the Courses page has something in it out of the
+                // box. Without a row like this the flow is invisible until
+                // someone invites by hand.
+                'invite' => [0],
             ],
             [
                 'code' => 'BMIT3113',
                 'title' => 'Systems Administration',
                 'description' => 'Administer server operating systems: users and permissions, services, storage, backup and monitoring.',
                 'enrol' => [2, 3, 4],
+                'invite' => [0, 1],
             ],
             [
                 'code' => 'BMIT3123',
@@ -306,6 +323,16 @@ class DatabaseSeeder extends Seeder
 
             $enrolledIds = array_map(fn (int $index) => $students[$index]->id, $course['enrol']);
             $created->students()->attach($enrolledIds);
+
+            // Pending invitations: named by the lecturer, still waiting on the
+            // student to accept.
+            foreach ($course['invite'] ?? [] as $index) {
+                CourseInvitation::create([
+                    'course_id' => $created->id,
+                    'student_id' => $students[$index]->id,
+                    'invited_by' => $created->instructor_id,
+                ]);
+            }
 
             // Module 3 gives every course exactly one forum.
             DiscussionForum::create([
@@ -355,10 +382,33 @@ class DatabaseSeeder extends Seeder
             'content' => 'Welcome to LearnSync. Certificates issued here carry a QR code anyone can verify publicly.',
         ]);
 
-        Announcement::create([
+        $courseNotice = Announcement::create([
             'course_id' => $first->id,
             'author_id' => $first->instructor_id,
             'content' => 'Week 1 materials are up. Watch the REST walkthrough first, then attempt the quiz.',
+        ]);
+
+        /*
+         * A short exchange under that notice, so the comment thread is not an
+         * empty box on a fresh install. Written oldest-first: a student asks,
+         * the lecturer answers, which is the shape the feature exists for.
+         */
+        AnnouncementComment::create([
+            'announcement_id' => $courseNotice->id,
+            'user_id' => $students[1]->id,
+            'body' => 'Is the quiz open book, and does the attempt count if I run out of time?',
+        ]);
+
+        AnnouncementComment::create([
+            'announcement_id' => $courseNotice->id,
+            'user_id' => $first->instructor_id,
+            'body' => 'Open book, yes. The timer is a guide for now, so a slow attempt still submits and still counts.',
+        ]);
+
+        AnnouncementComment::create([
+            'announcement_id' => $courseNotice->id,
+            'user_id' => $students[3]->id,
+            'body' => 'Thanks — the walkthrough link worked for me once I signed in.',
         ]);
 
         // MODULE 3 -- a question already waiting in the forum.

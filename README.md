@@ -432,6 +432,24 @@ There is also a **learning path**, "Network Infrastructure and Security Pathway"
 `BMIT3084` → `BMIT3113` → `BMIT3123`. Finishing all three earns a higher-tier pathway certificate
 on top of the individual ones.
 
+### How a student gets into a course
+
+There is no browsable catalogue and no self-service enrolment. A student sees a course only if one
+of two things has happened, and if neither has, the course does not appear on their side at all:
+
+1. **The lecturer invited them.** It shows up under **Invitations** on their Courses page with an
+   **Enrol** button. Until they press it they are invited, not enrolled.
+2. **They typed the class code.** The **+** in the top bar opens the join page.
+
+The **class code** is not the course code. `BMIT3173` is public, printed on every timetable, and
+identifies the course; the class code is six random characters like `mFiJQT` that the lecturer
+hands out, and holding it is itself the evidence they meant you to join. It appears on the course
+page for the lecturer who owns it, alongside the roster and the invite box, and **Issue a new code**
+revokes the old one immediately.
+
+Forging the enrol request for a course you were not invited to returns **403** — the invitation is
+the authorisation, not the button.
+
 ---
 
 ## 5b. Finding your way around
@@ -484,6 +502,19 @@ In the other browser, sign in as **Foo Chong Xian** → **Courses** → **BMIT31
 
 Switch back to the lecturer. **The bell in the top bar now shows a red unread badge.** Nothing in
 the forum code mentions notifications — the Observer wrote that row when the post was saved.
+
+### Step 2b — The conversation under an announcement
+
+Open **News**. Each announcement carries its own comment thread, **collapsed** behind
+*View 3 comments* so a busy notice board stays readable — expand only the one you care about.
+
+Students and lecturers both take part; the lecturer's own replies are tagged **author**, so an
+answer is distinguishable from a classmate's guess. Commenting fires the same Observer as the
+forum, so the notice's author gets a bell notification — and commenting on your own announcement
+notifies nobody.
+
+Administrators can read and delete any thread but have **no comment box**, which is Section 7's
+rule about forums applied here: they run the class, they are not in it.
 
 ### Step 3 — Student takes the quiz (Module 4, Strategy pattern)
 
@@ -609,7 +640,7 @@ and it takes effect on the next request.
 | Mark submissions | — | ✅ | — |
 | Enrol, take quizzes, submit work | — | — | ✅ |
 | Own certificates, badges, progress | — | — | ✅ |
-| Forum | — | ✅ | ✅ |
+| Forum, and comments under announcements | — | ✅ | ✅ |
 | Class analytics | ✅ | ✅ (own courses) | — |
 | Invitations, accounts, permission matrix, activity log | ✅ | — | — |
 | Badges, learning paths, templates, settings | ✅ | — | — |
