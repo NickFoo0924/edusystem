@@ -23,7 +23,7 @@
             <div>
                 <a href="/">
                     <img src="{{ asset('logo.png') }}" alt="{{ config('app.name') }}"
-                         class="w-20 h-20 rounded-full" width="80" height="80">
+                         class="w-20 h-20" width="80" height="80">
                 </a>
             </div>
 

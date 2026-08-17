@@ -76,8 +76,11 @@
 
             <a href="{{ route('dashboard') }}"
                class="flex items-center gap-2 text-lg font-semibold tracking-tight text-gray-900">
+                {{-- Not rounded: the artwork is transparent, so there is no
+                     backing shape to round, and the arrowheads reach past the
+                     inscribed circle -- a round crop would clip them. --}}
                 <img src="{{ asset('favicon.png') }}" alt=""
-                     class="h-8 w-8 rounded-full" width="32" height="32">
+                     class="h-8 w-8" width="32" height="32">
                 {{ config('app.name') }}
             </a>
         </div>
@@ -184,8 +187,11 @@
         <div class="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
             <a href="{{ url('/') }}"
                class="flex items-center gap-2 text-lg font-semibold tracking-tight text-gray-900">
+                {{-- Not rounded: the artwork is transparent, so there is no
+                     backing shape to round, and the arrowheads reach past the
+                     inscribed circle -- a round crop would clip them. --}}
                 <img src="{{ asset('favicon.png') }}" alt=""
-                     class="h-8 w-8 rounded-full" width="32" height="32">
+                     class="h-8 w-8" width="32" height="32">
                 {{ config('app.name') }}
             </a>
             <a href="{{ route('login') }}" class="text-sm text-gray-600 hover:text-gray-900">Log in</a>
