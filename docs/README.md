@@ -23,11 +23,19 @@ them.
 | Section 7 — RBAC matrix | seeded into `permissions` / `permission_role`, resolved by a Gate, editable at `/permissions` |
 | Section 8 — Module 1 build order | all seven items built; see the root `README.md` |
 
+**The calendar belongs to Module 2.** It is not in Section 2's original five, so its ownership had
+to be decided. It went to Foo Chong Xian's Academic Resources Repository because the problem it
+solves is the one that module's pattern already exists for: a calendar must present a scheduled
+event and an assignment deadline — two models with nothing in common, one with a duration and a
+room, the other a bare `due_date` — through a single interface the view can iterate blindly. That
+is the same Adapter that already reconciles uploaded files with external links, applied to a second
+mismatched pair. See `app/Patterns/Adapter/CalendarEntry.php`.
+
 ## Deviations from Section 3
 
 Documented here so the ERD can be updated before submission.
 
-**Three new tables**
+**Four new tables**
 
 - `quiz_attempt_answers` — Section 3 gives `quiz_attempts` only a duration, leaving nowhere to
   record what a student actually answered. Grading and reviewing an attempt are both impossible
@@ -38,20 +46,41 @@ Documented here so the ERD can be updated before submission.
   This table restores the instructor's decision: `(course_id, student_id, invited_by, accepted_at)`,
   unique on the first two. A row is not an enrolment — accepting is what writes `course_student`,
   and `accepted_at` separates the two states.
+- `course_events` — Section 3 has no notion of a timetable, so an online class or a consultation
+  had nowhere to live. `(course_id, created_by, title, description, type, location, meeting_url,
+  starts_at, ends_at)`, with a null `course_id` meaning institution-wide exactly as it does on
+  `announcements`. Deliberately holds **only** scheduled events: assignment deadlines get no row
+  here, because `assignments.due_date` already is the deadline and a copy would disagree with it
+  the first time an instructor moved one.
 - `announcement_comments` — Section 3 makes an announcement a one-way broadcast, so the obvious
   question about a notice had nowhere to go but a forum thread detached from it.
   `(announcement_id, user_id, body)`, flat and deliberately unthreaded: anything needing a real
   thread belongs in Module 3's forum. Observed by `SystemNotificationObserver`, which makes it the
   Observer pattern's third subject.
 
-**One new permission**
+**Two new permissions**
 
+- `event.manage`, held by instructor and admin — the same split as `announcement.create`: an
+  instructor schedules for the courses they own, an administrator can also schedule
+  institution-wide. Students hold no calendar permission at all; reading is governed by enrolment,
+  not by a key.
 - `announcement.comment`, held by instructor and student. Administrators are excluded for the same
   reason Section 7 keeps them out of forums — they can read and moderate every thread, but they do
-  not take part. This brings the matrix to 34 keys. It is inserted by both the seeder and its own
-  migration, because a fresh `migrate:fresh --seed` rebuilds the matrix from the seeder while an
-  existing database only runs migrations; the seeder uses `updateOrCreate` so the two paths cannot
-  collide.
+  not take part.
+
+Together these bring the matrix to **35 keys**. Each is inserted by both the seeder and its own
+migration, because a fresh `migrate:fresh --seed` rebuilds the matrix from the seeder while an
+existing database only runs migrations; the seeder uses `updateOrCreate` so the two paths cannot
+collide.
+
+**Added column, and why it exists**
+
+- `notifications.reference` -- what a notification is *about*, e.g. `event:12` or
+  `assignment_due:3`. Event-driven notifications never needed it: a reply is posted once, so
+  writing a row when it happens cannot duplicate. Reminders are asked "what is due soon?" every few
+  minutes and would answer the same thing every time. Deduplicating on `link` was rejected because
+  lecturers reuse a single meeting URL across a term, which would have silently suppressed every
+  reminder after the first.
 
 **Added columns**
 
@@ -101,6 +130,18 @@ Documented here so the ERD can be updated before submission.
 
 - Two certificate templates rather than one, because a pathway certificate has to read "the
   learning path", not "the course".
+
+## Where the calendar reminders sit
+
+Module 2 owns *what is on* -- the calendar, its events and the adapters. Module 3 owns *telling
+people* -- the Notifier, the inbox, the preferences. `reminders:send` reads the first and writes
+the second, which is exactly the boundary those modules already have (Section 2A).
+
+It is **not** an Observer, and the report should not claim it is. Module 3's Observer is Eloquent's
+model-observer mechanism: a model is saved, registered observers run. Nothing is saved when a
+deadline approaches -- the passage of time is not a model event and there is no subject to observe.
+The honest description is a scheduled producer that shares the Observer's delivery path: both go
+through `Notifier::send()`, so preferences are applied in one place rather than two.
 
 ## Known gaps
 

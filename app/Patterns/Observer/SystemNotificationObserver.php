@@ -3,10 +3,9 @@
 namespace App\Patterns\Observer;
 
 use App\Models\AnnouncementComment;
-use App\Models\Notification;
-use App\Models\NotificationPreference;
 use App\Models\Post;
 use App\Models\Reply;
+use App\Support\Notifier;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -122,27 +121,15 @@ class SystemNotificationObserver
     }
 
     /**
-     * Write the inbox row, unless the recipient has switched this type off.
+     * Hand the row to Module 3's shared sender, which applies the recipient's
+     * notification preferences.
      *
-     * Preferences are opt-out: a missing row means the user has never changed
-     * the setting, and silence should not mean "send nothing".
+     * No reference is passed: an observed event happens once, so there is
+     * nothing to deduplicate. Reminders repeat on a schedule and do supply one
+     * -- see the Notifier.
      */
     private function notify(int $userId, string $type, string $message, string $link): void
     {
-        $preference = NotificationPreference::where('user_id', $userId)
-            ->where('type', $type)
-            ->first();
-
-        if ($preference !== null && ! $preference->enabled) {
-            return;
-        }
-
-        Notification::create([
-            'user_id' => $userId,
-            'type' => $type,
-            'message' => $message,
-            'link' => $link,
-            'is_read' => false,
-        ]);
+        Notifier::send($userId, $type, $message, $link);
     }
 }

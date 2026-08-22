@@ -13,7 +13,7 @@
             <span class="mr-2 rounded bg-gray-100 px-2 py-0.5 font-mono text-base font-medium text-gray-600">{{ $course->code }}</span>
             {{ $course->title }}
         </h1>
-        {{-- Clickable so a student can find how to contact their lecturer. --}}
+
         <p class="mt-1 text-sm">
             <a href="{{ route('instructors.show', $course->instructor) }}"
                class="inline-flex items-center gap-1 text-gray-500 underline decoration-gray-300 underline-offset-2 hover:text-blue-700 hover:decoration-blue-400">

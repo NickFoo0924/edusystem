@@ -46,17 +46,23 @@
 
             <div>
                 <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
-                <input id="password" name="password" type="password" required autocomplete="new-password"
-                       class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                <div class="relative mt-1">
+                    <input id="password" name="password" type="password" required autocomplete="new-password"
+                           class="block w-full rounded-lg border-gray-300 pe-10 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <x-password-toggle for="password" />
+                </div>
             </div>
 
             <div>
                 <label for="password_confirmation" class="block text-sm font-medium text-gray-700">
                     Confirm password
                 </label>
-                <input id="password_confirmation" name="password_confirmation" type="password" required
-                       autocomplete="new-password"
-                       class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                <div class="relative mt-1">
+                    <input id="password_confirmation" name="password_confirmation" type="password" required
+                           autocomplete="new-password"
+                           class="block w-full rounded-lg border-gray-300 pe-10 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <x-password-toggle for="password_confirmation" />
+                </div>
             </div>
 
         </div>

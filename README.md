@@ -16,6 +16,7 @@ Cisco NetAcad.
 1. [What you need before starting](#1-what-you-need-before-starting)
 2. [Setting the system up](#2-setting-the-system-up)
 3. [Running it](#3-running-it)
+3a. [Restoring the full demo data](#restoring-the-full-demo-data)
 3b. [Moving it to another device](#3b-moving-it-to-another-device)
 4. [Login accounts](#4-login-accounts)
 5. [Courses and who teaches them](#5-courses-and-who-teaches-them)
@@ -81,6 +82,10 @@ php artisan serve
 Open **http://localhost:8000** and sign in as `learnsync.admin@gmail.com` with the password
 `password`. Every account uses that same password — the full list is in
 [section 4](#4-login-accounts).
+
+That gives you the 12-account demo. For the full 50-student cohort, the populated calendar and the
+reminder notifications, run the two extra commands in
+[Restoring the full demo data](#restoring-the-full-demo-data).
 
 Two things that are easy to miss, because they are the only real prerequisites beyond Laravel
 itself:
@@ -217,7 +222,7 @@ php artisan migrate:fresh --seed
 You should see a list of migrations ending with:
 
 ```
-Seeded 12 users, 6 courses, 33 permissions, 5 badges.
+Seeded 12 users, 6 courses, 35 permissions, 5 badges.
 Log in as learnsync.admin@gmail.com / password
 ```
 
@@ -244,37 +249,82 @@ Leave that terminal open — it is the web server. Then visit:
 To stop it, press `Ctrl + C` in that terminal. To use the system again later you only need to
 (1) start MySQL in XAMPP and (2) run `php artisan serve`. The setup steps are one-time.
 
-> **Resetting.** `php artisan migrate:fresh --seed` wipes everything and rebuilds the demo data.
-> Use it whenever you want a clean slate before a presentation.
+> **Resetting.** `php artisan migrate:fresh --seed` wipes everything and rebuilds the 12-account
+> demo. Use it whenever you want a clean slate before a presentation — but note it does **not**
+> bring back the 50-student cohort. To restore all of the data, see
+> [Restoring the full demo data](#restoring-the-full-demo-data) immediately below.
 
-### Optional: a full cohort of 50 students
+### Restoring the full demo data
 
-The default seed gives 12 accounts — enough to demonstrate every feature. For screens that only
-look real with volume (class analytics, grade distributions, the activity log), load a simulated
-term instead:
+**These three commands rebuild everything from empty.** Run them in this order — the whole thing
+takes about a minute, most of it spent rendering a real PDF for every certificate earned:
+
+```bash
+php artisan migrate:fresh --seed
+```
 
 ```bash
 php artisan db:seed --class=BulkStudentSeeder
 ```
 
-Run it **after** `migrate:fresh --seed`. It takes about 30 seconds, because it renders a real PDF
-for every certificate earned. It adds:
+```bash
+php artisan reminders:send
+```
+
+> **`migrate:fresh` drops every table first.** That is how it gives you a clean slate, and also how
+> a cohort gets lost: running it on its own rebuilds the 12-account demo and *not* the 50 students.
+> If you want them back, run all three.
+
+**What each one does:**
+
+| Command | What it puts in |
+|---|---|
+| `migrate:fresh --seed` | the 12 named accounts, 6 courses, the 35-key permission matrix, badge rules, certificate templates, and a small amount of demo content |
+| `db:seed --class=BulkStudentSeeder` | the 50-student cohort and a term of history, plus the calendar, invitations and announcement threads |
+| `reminders:send` | the reminder notifications for whatever is currently imminent |
+
+The cohort adds roughly this much -- the figures move by a few percent on each reseed, because
+the course-selection draw uses PHP's CSPRNG rather than the seeded generator:
 
 - **50 students**, `student1` … `student50`, emails `student1@gmail.com` … `student50@gmail.com`,
   same password
 - a quiz and two assignments for every course
-- around **170 enrolments**, **120 quiz attempts**, **210 submissions**, **270 grades**,
-  **120 forum posts** and **80 certificates**
+- around **160 enrolments**, **110 quiz attempts**, **210 submissions**, **260 grades**,
+  **105 forum posts** with **50 replies**, and **79 certificates** with **99 badges** awarded
+- **113 calendar events** — a weekly lecture slot for every course running from the start of term
+  to three weeks ahead, online consultations carrying meeting links, and two institution-wide
+  events from the administrator
+- **8 announcements with 27 comments**, and **15 pending course invitations**
 
 Nothing is fabricated. Quiz answers are marked by the real grading Strategy, submissions move
-through the real State pattern, and each grade wakes the CredentialAuthority exactly as a live one
-would — so the progress curves, badges and certificates are genuine consequences of the data.
-History is generated on a simulated clock spanning a 14-week term, which is why the dashboard
-chart has a real shape and the activity log reads like a term's use.
+through the real State pattern — including the demo ones, which are created as drafts and then
+submitted through the state object rather than by writing the column — and each grade wakes the
+CredentialAuthority exactly as a live one would. So the progress curves, badges and certificates
+are genuine consequences of the data. History is generated on a simulated clock spanning a 14-week
+term, which is why the dashboard chart has a real shape and the activity log reads like a term's
+use.
 
 Each student has a hidden ability score, so marks cluster like a real cohort rather than spreading
 evenly, and roughly one submission in eight is left as an unsubmitted draft — the case the
 **Due soon** panel exists to catch.
+
+### Seeing the reminders
+
+The cohort deliberately includes three things that are **about to happen**, because otherwise the
+reminder feature looks broken when it is merely idle: a revision session starting within the hour,
+an assignment due tomorrow that nobody has submitted, and one that closed three hours ago with
+submissions waiting. `php artisan reminders:send` turns those into about **56 notifications**.
+
+Sign in as **`serenalim@gmail.com`** to see the result — an unread count on the bell, pending
+invitations on her Courses page, and entries across the calendar.
+
+Re-running `reminders:send` is safe and sends nothing the second time: each reminder carries a
+reference, so nobody is told the same thing twice. For reminders to appear on their own as time
+passes, leave a scheduler running in a spare terminal:
+
+```bash
+php artisan schedule:work
+```
 
 ---
 
@@ -457,7 +507,7 @@ the authorisation, not the button.
 Navigation lives in a **collapsible rail down the left**. The hamburger at the top-left folds it to
 icons only and expands it again; the choice is remembered between pages. Items are grouped under
 **Learning**, **Teaching** and **Administration**, and each one is gated on a permission — an
-administrator sees twelve, a lecturer four, a student five.
+administrator sees thirteen, a lecturer five, a student six.
 
 The **top bar** holds only the menu toggle, the brand, the notification bell with its unread count,
 your avatar and log out. Clicking your avatar or name opens your profile, where you can set a
@@ -515,6 +565,54 @@ notifies nobody.
 
 Administrators can read and delete any thread but have **no comment box**, which is Section 7's
 rule about forums applied here: they run the class, they are not in it.
+
+### Step 2c — The calendar (Module 2, Adapter again)
+
+Open **Calendar** in the rail. A lecturer or administrator gets **Schedule an event** for a class,
+an online meeting or a briefing; give it a meeting link and the entry on the grid clicks straight
+through to it. An administrator can also schedule institution-wide, the same privilege they hold
+over global announcements. Students schedule nothing — they read the calendar for the courses they
+are enrolled in.
+
+**Assignment deadlines are not scheduled, and that is the point.** They have no row in
+`course_events`. The calendar reads `assignments.due_date` and adapts it into the same
+`CalendarEntry` interface a scheduled event arrives through, so the grid iterates one list without
+knowing which is which. Change an assignment's due date and the calendar moves with it, because
+there is only ever one date — nothing to copy and nothing to fall out of step.
+
+That is the Adapter doing the same job it does for materials, on a second mismatched pair: an event
+has a duration and a room, a deadline has neither and means "by" rather than "at".
+
+### Step 2d — The calendar reminds people (Module 3)
+
+A calendar nobody looks at reminds nobody, so the entries produce notifications:
+
+- **A class or meeting is about to start** — everyone it concerns, students and the lecturer both,
+  an hour ahead by default.
+- **An assignment is due soon** — but only the students who have **not** submitted. Reminding
+  someone to do a thing they already did is how people learn to ignore notifications.
+- **An assignment has closed** — the lecturer, told how many submissions are waiting to be marked.
+
+These are produced by a command, not by the Observer, and the difference is worth stating in the
+report: the Observer fires when a model is *saved*, and nothing is saved when a deadline
+approaches. Time passing is not an Eloquent event. So this is a scheduled producer feeding the same
+inbox through the same sender, honouring the same per-user preferences — each of the three can be
+switched off individually under notification preferences.
+
+**Reminders only fire while a scheduler is running.** In a spare terminal:
+
+```bash
+php artisan schedule:work
+```
+
+For a demo you can skip that and produce them on demand:
+
+```bash
+php artisan reminders:send
+```
+
+Either way it is safe to run repeatedly. Every reminder carries a reference — `event:12`,
+`assignment_due:3` — and nobody is told the same thing twice.
 
 ### Step 3 — Student takes the quiz (Module 4, Strategy pattern)
 
@@ -587,7 +685,7 @@ Every pattern lives in `app/Patterns/`. **No pattern logic sits inside a control
 | # | Module | Owner | Pattern | Where |
 |---|---|---|---|---|
 | 1 | Identity, Access & Digital Credentialing | Serena Lim Sze Kee | **Singleton** (Creational) | `app/Patterns/Singleton/CredentialAuthority.php` |
-| 2 | Academic Resources Repository | Foo Chong Xian | **Adapter** (Structural) | `app/Patterns/Adapter/` |
+| 2 | Academic Resources Repository, and the calendar | Foo Chong Xian | **Adapter** (Structural) | `app/Patterns/Adapter/` |
 | 3 | Student Forum & Notifications | Ong Shun Yan | **Observer** (Behavioural) | `app/Patterns/Observer/SystemNotificationObserver.php` |
 | 4 | Skill Assessment & Quiz | Wong Siew Lam | **Strategy** (Behavioural) | `app/Patterns/Strategy/` |
 | 5 | Academic Progress Analytics | Ong Kwong Wei | **State** (Behavioural) | `app/Patterns/State/` |
@@ -641,6 +739,8 @@ and it takes effect on the next request.
 | Enrol, take quizzes, submit work | — | — | ✅ |
 | Own certificates, badges, progress | — | — | ✅ |
 | Forum, and comments under announcements | — | ✅ | ✅ |
+| Schedule classes and meetings on the calendar | ✅ (institution-wide) | ✅ (own courses) | — |
+| Read the calendar | ✅ | ✅ | ✅ |
 | Class analytics | ✅ | ✅ (own courses) | — |
 | Invitations, accounts, permission matrix, activity log | ✅ | — | — |
 | Badges, learning paths, templates, settings | ✅ | — | — |
@@ -695,6 +795,9 @@ Expected: **29 passed**. The tests run against an in-memory SQLite database and 
 | Certificate says TAMPERED | Its row was edited directly in the database. That is the integrity check doing its job. |
 | Page 403s unexpectedly | That role lacks the permission. Check Admin → **Permissions**. |
 | Changed a Blade file and nothing happened | Run `php artisan view:clear`. |
+| The 50 students / calendar / cohort data have vanished | `migrate:fresh` drops every table, and `--seed` only rebuilds the 12-account demo. Re-run all three commands in [Restoring the full demo data](#restoring-the-full-demo-data). |
+| Calendar reminders never arrive | Nothing is scheduling them. Run `php artisan schedule:work` in a spare terminal, or `php artisan reminders:send` once by hand. |
+| A reminder arrived only once and not again | Correct. Each carries a reference so nobody is told the same thing twice. |
 | A colour or badge renders with no background | Tailwind strips class names it cannot find in the source. If you build one in PHP rather than writing it in a template, make sure the file is covered by `content` in `tailwind.config.js` — `./app/**/*.php` is already listed — then `npm run build`. |
 | The left rail is collapsed and will not stay open | The state is kept in `localStorage` under `learnsync.sidebar`. Clearing site data resets it, and it starts collapsed on narrow screens. |
 

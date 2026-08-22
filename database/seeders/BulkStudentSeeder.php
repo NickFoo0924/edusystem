@@ -2,9 +2,13 @@
 
 namespace Database\Seeders;
 
+use App\Models\Announcement;
+use App\Models\AnnouncementComment;
 use App\Models\Answer;
 use App\Models\Assignment;
 use App\Models\Course;
+use App\Models\CourseEvent;
+use App\Models\CourseInvitation;
 use App\Models\Grade;
 use App\Models\Post;
 use App\Models\Question;
@@ -44,8 +48,15 @@ class BulkStudentSeeder extends Seeder
     private const TERM_WEEKS = 14;
 
     /**
-     * Fixed so the demo cohort is identical on every reseed. A marker seeing
-     * the same numbers twice is a feature.
+     * Seeds mt_rand, which drives the ability scores, the mark spread and the
+     * submission timings -- so the *shape* of the cohort is stable.
+     *
+     * It does not make the reseed byte-identical, and the totals shift by a few
+     * percent each time. Collection::shuffle() and Collection::random(), used
+     * below to pick which courses a student takes and which wrong answer they
+     * choose, draw from PHP's CSPRNG rather than the mt_rand sequence, and
+     * nothing can seed that. Quote the counts from a run rather than assuming
+     * the next one repeats them.
      */
     private const RANDOM_SEED = 20260816;
 
@@ -74,6 +85,16 @@ class BulkStudentSeeder extends Seeder
 
         // Never leave the clock frozen -- everything afterwards would inherit it.
         Carbon::setTestNow();
+
+        /*
+         * Deliberately last, and on the real clock. The calendar is mostly
+         * about what is coming, so these need genuine future dates rather than
+         * the simulated ones the history above runs on -- and running after
+         * seedHistory leaves the cohort's random draws untouched, so the same
+         * students still get the same marks on a reseed.
+         */
+        $this->command->info('Filling the calendar, invitations and announcement threads...');
+        $this->seedEngagement($termStart);
 
         $this->report();
     }
@@ -178,9 +199,15 @@ class BulkStudentSeeder extends Seeder
 
                 Assignment::create([
                     'course_id' => $course->id,
-                    'title' => $course->code.' '.$title,
+                    // No course code in the title: every screen that shows an
+                    // assignment already shows which course it belongs to, and
+                    // on the calendar the code is rendered beside it -- so
+                    // baking it in here read as "BMIT3173 BMIT3173 Coursework 2".
+                    'title' => $title,
                     'description' => 'Submit your work as a PDF or zip archive.',
-                    'due_date' => $termStart->copy()->addWeeks($week),
+                    // Late afternoon rather than midnight, so a deadline on the
+                    // calendar does not read as 12:00am the day it is set.
+                    'due_date' => $termStart->copy()->addWeeks($week)->setTime(17, 0),
                     'allow_late_submission' => true,
                 ]);
             }
@@ -475,6 +502,229 @@ class BulkStudentSeeder extends Seeder
         );
     }
 
+    /**
+     * The three features a fresh cohort would otherwise leave empty: the
+     * calendar, pending course invitations, and discussion under announcements.
+     *
+     * A timetable is the point of a calendar, so every course gets a genuinely
+     * weekly slot rather than a couple of scattered events -- paging back
+     * through the term then shows a term, and paging forward shows what is
+     * coming.
+     */
+    private function seedEngagement(Carbon $termStart): void
+    {
+        $courses = Course::with('instructor')->orderBy('code')->get();
+        $admin = User::where('email', 'learnsync.admin@gmail.com')->first();
+        $horizon = $this->realNow->copy()->addWeeks(3);
+
+        // A distinct weekly slot per course, so a student in several courses
+        // sees a plausible week rather than six clashes.
+        $slots = [
+            [Carbon::MONDAY, 9], [Carbon::TUESDAY, 12], [Carbon::WEDNESDAY, 14],
+            [Carbon::THURSDAY, 10], [Carbon::FRIDAY, 16], [Carbon::TUESDAY, 9],
+        ];
+
+        $events = 0;
+        $comments = 0;
+        $invitations = 0;
+
+        foreach ($courses->values() as $index => $course) {
+            [$weekday, $hour] = $slots[$index % count($slots)];
+
+            // Weekly lecture, term start through three weeks ahead.
+            $cursor = $termStart->copy()->next($weekday)->setTime($hour, 0);
+
+            while ($cursor->lte($horizon)) {
+                CourseEvent::create([
+                    'course_id' => $course->id,
+                    'created_by' => $course->instructor_id,
+                    'title' => 'Lecture',
+                    'type' => 'class',
+                    'location' => 'D'.(303 + $index).'B',
+                    'starts_at' => $cursor->copy(),
+                    'ends_at' => $cursor->copy()->addHours(2),
+                ]);
+
+                $cursor->addWeek();
+                $events++;
+            }
+
+            // One online consultation ahead, which is what the meeting link and
+            // the violet colouring on the grid exist to show.
+            CourseEvent::create([
+                'course_id' => $course->id,
+                'created_by' => $course->instructor_id,
+                'title' => 'Consultation (online)',
+                'description' => 'Drop in with questions about the current assignment.',
+                'type' => 'meeting',
+                'meeting_url' => 'https://meet.google.com/'.strtolower($course->code).'-consult',
+                'starts_at' => $this->realNow->copy()->addDays(2 + $index)->setTime(20, 0),
+                'ends_at' => $this->realNow->copy()->addDays(2 + $index)->setTime(21, 0),
+            ]);
+            $events++;
+
+            $comments += $this->seedAnnouncementThread($course);
+            $invitations += $this->seedPendingInvitations($course);
+        }
+
+        // Institution-wide, from the administrator.
+        foreach ([['Semester break begins', 9], ['Results release', 16]] as $offset => [$title, $hour]) {
+            CourseEvent::create([
+                'course_id' => null,
+                'created_by' => $admin->id,
+                'title' => $title,
+                'type' => 'other',
+                'starts_at' => $this->realNow->copy()->addDays(10 + ($offset * 12))->setTime($hour, 0),
+            ]);
+            $events++;
+        }
+
+        $events += $this->seedImminentItems($courses->first());
+
+        $this->engagementCounts = compact('events', 'comments', 'invitations');
+    }
+
+    /**
+     * Something actually about to happen, so `php artisan reminders:send`
+     * produces visible reminders straight after seeding.
+     *
+     * Without this the calendar is full but nothing is imminent, and the
+     * reminder feature looks broken when it is merely idle. New assignments are
+     * created rather than existing due dates moved: shifting a deadline that
+     * already has graded submissions against it would retroactively relabel
+     * them late and distort the badge data the history above produced.
+     */
+    private function seedImminentItems(Course $course): int
+    {
+        // Starts within the hour -> everyone on the course gets a reminder.
+        CourseEvent::create([
+            'course_id' => $course->id,
+            'created_by' => $course->instructor_id,
+            'title' => 'Revision session',
+            'type' => 'meeting',
+            'meeting_url' => 'https://meet.google.com/'.strtolower($course->code).'-revision',
+            'starts_at' => $this->realNow->copy()->addMinutes(45),
+            'ends_at' => $this->realNow->copy()->addMinutes(105),
+        ]);
+
+        // Due tomorrow, nobody has submitted -> every enrolled student is
+        // reminded they still owe it.
+        Assignment::create([
+            'course_id' => $course->id,
+            'title' => 'Reading response 3',
+            'description' => 'A one-page response to this week\'s reading.',
+            'due_date' => $this->realNow->copy()->addHours(20),
+            'allow_late_submission' => true,
+        ]);
+
+        // Closed a few hours ago -> the lecturer is told there is marking to do.
+        $closed = Assignment::create([
+            'course_id' => $course->id,
+            'title' => 'Lab exercise 2',
+            'description' => 'Complete the lab worksheet and upload your answers.',
+            'due_date' => $this->realNow->copy()->subHours(3),
+            'allow_late_submission' => false,
+        ]);
+
+        /*
+         * Submitted through the real State pattern, not by setting the column:
+         * the state object is what stamps submitted_at and decides the
+         * transition is legal, and writing 'submitted' directly would be the
+         * one row in this seeder the application itself did not produce.
+         */
+        foreach ($course->students()->orderBy('users.id')->take(3)->get() as $offset => $student) {
+            Carbon::setTestNow($this->realNow->copy()->subHours(4 + $offset));
+
+            $submission = Submission::create([
+                'assignment_id' => $closed->id,
+                'student_id' => $student->id,
+                'state' => 'draft',
+                'file_path' => 'submissions/lab-exercise-2.pdf',
+            ]);
+
+            $submission->state()->submit($submission);
+        }
+
+        Carbon::setTestNow();
+
+        return 1;
+    }
+
+    /**
+     * An announcement with a short exchange under it: a student asks, the
+     * lecturer answers, a classmate adds something.
+     */
+    private function seedAnnouncementThread(Course $course): int
+    {
+        $students = $course->students()->orderBy('users.id')->take(3)->get();
+
+        if ($students->isEmpty()) {
+            return 0;
+        }
+
+        $announcement = Announcement::create([
+            'course_id' => $course->id,
+            'author_id' => $course->instructor_id,
+            'content' => 'This week\'s materials are up, and the consultation slot is on the calendar. '
+                .'Bring questions about the assignment rather than saving them for the last day.',
+        ]);
+
+        $exchange = [
+            [$students[0]->id, 'Is the consultation recorded for anyone who cannot make 8pm?'],
+            [$course->instructor_id, 'Not recorded, but I will post a summary of anything asked more than once.'],
+        ];
+
+        if ($students->count() > 1) {
+            $exchange[] = [$students[1]->id, 'Noted, thanks. Is the deadline on the calendar the final one?'];
+            $exchange[] = [$course->instructor_id, 'Yes -- what the calendar shows is the assignment\'s own due date, so it is always current.'];
+        }
+
+        foreach ($exchange as $offset => [$userId, $body]) {
+            AnnouncementComment::create([
+                'announcement_id' => $announcement->id,
+                'user_id' => $userId,
+                'body' => $body,
+                'created_at' => $this->realNow->copy()->subDays(2)->addMinutes($offset * 37),
+                'updated_at' => $this->realNow->copy()->subDays(2)->addMinutes($offset * 37),
+            ]);
+        }
+
+        return count($exchange);
+    }
+
+    /**
+     * A couple of students invited to a course but not yet enrolled, so the
+     * Invitations panel and the students' Courses page both have something in
+     * them.
+     */
+    private function seedPendingInvitations(Course $course): int
+    {
+        $enrolled = $course->students()->pluck('users.id');
+
+        $candidates = User::where('name', 'like', 'student%')
+            ->whereNotIn('id', $enrolled)
+            ->orderBy('id')
+            ->take(2)
+            ->pluck('id');
+
+        foreach ($candidates as $studentId) {
+            CourseInvitation::create([
+                'course_id' => $course->id,
+                'student_id' => $studentId,
+                'invited_by' => $course->instructor_id,
+            ]);
+        }
+
+        return $candidates->count();
+    }
+
+    /**
+     * Counts from seedEngagement, for the closing report.
+     *
+     * @var array<string, int>
+     */
+    private array $engagementCounts = ['events' => 0, 'comments' => 0, 'invitations' => 0];
+
     private function report(): void
     {
         $this->command->info('');
@@ -487,5 +737,8 @@ class BulkStudentSeeder extends Seeder
         $this->command->info('  progress records  '.\App\Models\StudentProgress::count());
         $this->command->info('  certificates      '.\App\Models\Certificate::count());
         $this->command->info('  badges awarded    '.\DB::table('badge_student')->count());
+        $this->command->info('  calendar events   '.CourseEvent::count());
+        $this->command->info('  announcements     '.Announcement::count().' with '.AnnouncementComment::count().' comments');
+        $this->command->info('  open invitations  '.CourseInvitation::whereNull('accepted_at')->count());
     }
 }

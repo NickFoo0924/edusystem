@@ -24,6 +24,10 @@ class Notification extends Model
         'type',
         'message',
         'link',
+        // What the notification is about, e.g. "event:12". Reminders set it so
+        // the same person is never told the same thing twice; event-driven
+        // notifications leave it null.
+        'reference',
         'is_read',
     ];
 

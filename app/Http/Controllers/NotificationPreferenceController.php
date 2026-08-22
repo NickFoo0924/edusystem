@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Console\Commands\SendScheduledReminders;
 use App\Models\NotificationPreference;
 use App\Patterns\Observer\SystemNotificationObserver;
 use Illuminate\Http\RedirectResponse;
@@ -23,6 +24,9 @@ class NotificationPreferenceController extends Controller
         SystemNotificationObserver::TYPE_NEW_POST => 'Someone posts a question in a course I teach',
         SystemNotificationObserver::TYPE_NEW_REPLY => 'Someone replies to my forum post',
         SystemNotificationObserver::TYPE_ANNOUNCEMENT_COMMENT => 'Someone comments on my announcement',
+        SendScheduledReminders::TYPE_EVENT_SOON => 'A class or meeting on my calendar is about to start',
+        SendScheduledReminders::TYPE_ASSIGNMENT_DUE => 'An assignment I have not submitted is due soon',
+        SendScheduledReminders::TYPE_ASSIGNMENT_CLOSED => 'An assignment I set has closed and has work to review',
         'certificate.issued' => 'I earn a new certificate',
         'badge.awarded' => 'I earn a new badge',
     ];

@@ -7,7 +7,9 @@ use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\AssignmentController;
 use App\Http\Controllers\Auth\InvitedRegistrationController;
 use App\Http\Controllers\BadgeController;
+use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\CourseController;
+use App\Http\Controllers\CourseEventController;
 use App\Http\Controllers\CourseInvitationController;
 use App\Http\Controllers\CourseMaterialController;
 use App\Http\Controllers\EnrolmentController;
@@ -133,6 +135,17 @@ Route::middleware('auth')->group(function () {
         ->name('courses.materials.store');
     Route::delete('courses/{course}/materials/{material}', [CourseMaterialController::class, 'destroy'])
         ->name('courses.materials.destroy');
+
+    /*
+     * The calendar. Reads scheduled events and assignment deadlines through
+     * one adapted interface -- see app/Patterns/Adapter/CalendarEntry.php.
+     * `events/create` is registered before the {event} routes for the same
+     * reason join was: otherwise "create" matches as an event id.
+     */
+    Route::get('calendar', [CalendarController::class, 'index'])->name('calendar.index');
+    Route::get('calendar/events/create', [CourseEventController::class, 'create'])->name('events.create');
+    Route::post('calendar/events', [CourseEventController::class, 'store'])->name('events.store');
+    Route::delete('calendar/events/{event}', [CourseEventController::class, 'destroy'])->name('events.destroy');
 
     Route::get('announcements', [AnnouncementController::class, 'index'])->name('announcements.index');
     Route::get('announcements/create', [AnnouncementController::class, 'create'])->name('announcements.create');

@@ -10,6 +10,7 @@ use App\Models\Badge;
 use App\Models\CertificateTemplate;
 use App\Models\Course;
 use App\Models\CourseInvitation;
+use App\Models\CourseEvent;
 use App\Models\CourseMaterial;
 use App\Models\DiscussionForum;
 use App\Models\LearningPath;
@@ -113,6 +114,9 @@ class DatabaseSeeder extends Seeder
             // Admins are excluded for the same reason Section 7 keeps them out
             // of forums: they administer the class, they are not in it.
             'announcement.comment' => ['Comment on an announcement', 'Course Management', ['instructor', 'student']],
+            // Instructors schedule for their own courses; an administrator can
+            // also schedule institution-wide, the same split as announcements.
+            'event.manage' => ['Schedule classes and meetings', 'Course Management', ['admin', 'instructor']],
 
             // Assessment -- Modules 4 and 5.
             'quiz.create' => ['Create quizzes and questions', 'Assessment', ['instructor']],
@@ -464,6 +468,43 @@ class DatabaseSeeder extends Seeder
             'description' => 'Write a small client that calls a public REST API, parses the JSON response and displays it. Submit your source as a zip archive with a short report.',
             'due_date' => now()->addWeeks(2),
             'allow_late_submission' => true,
+        ]);
+
+        /*
+         * MODULE 2 -- a few things in the diary, so the calendar is not an
+         * empty grid on a fresh install. Dates are relative to seeding time so
+         * they always sit around "today" whenever this is run.
+         *
+         * No deadline is seeded here on purpose: the assignment above already
+         * carries one, and the calendar adapts it rather than storing a copy.
+         */
+        CourseEvent::create([
+            'course_id' => $first->id,
+            'created_by' => $first->instructor_id,
+            'title' => 'Week 3 lecture: REST and JSON',
+            'type' => 'class',
+            'location' => 'D303B',
+            'starts_at' => now()->addDays(2)->setTime(10, 0),
+            'ends_at' => now()->addDays(2)->setTime(12, 0),
+        ]);
+
+        CourseEvent::create([
+            'course_id' => $first->id,
+            'created_by' => $first->instructor_id,
+            'title' => 'Assignment consultation (online)',
+            'description' => 'Drop in with questions about the REST API assignment.',
+            'type' => 'meeting',
+            'meeting_url' => 'https://meet.google.com/abc-defg-hij',
+            'starts_at' => now()->addDays(5)->setTime(20, 0),
+            'ends_at' => now()->addDays(5)->setTime(21, 0),
+        ]);
+
+        CourseEvent::create([
+            'course_id' => null,
+            'created_by' => $admin->id,
+            'title' => 'Semester break begins',
+            'type' => 'other',
+            'starts_at' => now()->addDays(9)->setTime(9, 0),
         ]);
     }
 

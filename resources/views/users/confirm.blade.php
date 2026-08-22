@@ -60,9 +60,12 @@
                 <label for="confirm_password" class="block text-sm font-medium text-gray-700">
                     Enter your own password to confirm
                 </label>
-                <input id="confirm_password" name="confirm_password" type="password" required autofocus
-                       autocomplete="current-password"
-                       class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                <div class="relative mt-1">
+                    <input id="confirm_password" name="confirm_password" type="password" required autofocus
+                           autocomplete="current-password"
+                           class="block w-full rounded-lg border-gray-300 pe-10 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <x-password-toggle for="confirm_password" />
+                </div>
                 <p class="mt-1 text-xs text-gray-500">
                     This is your password, not the account holder's. Nothing happens until it is correct.
                 </p>
