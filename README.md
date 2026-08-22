@@ -520,8 +520,30 @@ always, phone only if that lecturer chose to publish one.
 
 ## 6. A 10-minute demo walkthrough
 
-This is the shortest route through every module. Use two browsers (or one normal and one
-incognito window) so you can stay logged in as two people at once.
+This is the shortest route through every module.
+
+### Demonstrating three roles at once
+
+A browser holds **one login at a time**. Signing in as somebody else in a second tab replaces the
+session in every tab of that browser, and reloading the first tab shows the new user. That is how
+HTTP cookies work -- one cookie jar per browser profile, shared by every tab -- and Google
+Classroom, Moodle and every other cookie-based application behave identically. Nothing in LearnSync
+is caching a user.
+
+To show admin, lecturer and student side by side, give each one **its own cookie jar**:
+
+| Role | Where to open it |
+|---|---|
+| Administrator | a normal window |
+| Lecturer | a private / incognito window |
+| Student | a second browser (Edge, Firefox) or a second browser profile |
+
+All three logins then coexist, and each window keeps its own. The signed-in name and **role** are
+shown in the top bar of every page, so there is never any doubt which window is which.
+
+If a page is left open while the session changes underneath it, submitting from it does **not**
+act as the other user: the CSRF token belongs to the old session, so the write is refused. You are
+redirected with an explanation rather than being shown a bare "Page Expired".
 
 ### Step 1 — Instructor publishes (Module 2, Adapter pattern)
 

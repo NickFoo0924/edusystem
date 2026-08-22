@@ -126,7 +126,20 @@
                title="Manage your profile"
                class="flex items-center gap-2 rounded-full py-0.5 pl-0.5 pr-3 text-sm transition hover:bg-gray-100">
                 <x-avatar :user="auth()->user()" size="sm" />
-                <span class="hidden text-gray-600 sm:inline">{{ auth()->user()->name }}</span>
+
+                {{-- Name and role together. A browser holds one login at a
+                     time, so when three roles are being demonstrated across
+                     windows the only thing distinguishing them is this label
+                     -- and "which role is this tab?" is otherwise a guess. --}}
+                <span class="hidden leading-tight sm:block">
+                    <span class="block text-gray-700">{{ auth()->user()->name }}</span>
+                    <span class="block text-[11px] uppercase tracking-wide
+                        {{ match (auth()->user()->role) {
+                            'admin' => 'text-rose-600',
+                            'instructor' => 'text-violet-600',
+                            default => 'text-emerald-600',
+                        } }}">{{ auth()->user()->role }}</span>
+                </span>
             </a>
 
             <form method="post" action="{{ route('logout') }}">
