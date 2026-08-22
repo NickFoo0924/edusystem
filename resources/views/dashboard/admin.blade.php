@@ -31,16 +31,16 @@
 <section class="mt-8 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
     <div class="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-6 py-3">
         <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-600">Recent activity</h2>
-        <div class="flex items-center gap-4">
-            <x-list-toggle for="recent-activity" :total="$recentActivity->count()" />
-            @can('activitylog.view')
-                <a href="{{ route('activity-logs.index') }}" class="text-sm font-medium text-blue-700 hover:text-blue-900">
-                    Full log
-                </a>
-            @endcan
-        </div>
+        {{-- No expander here. The controller already caps this at ten, and
+             Full log leads to the filterable history, which is a better answer
+             than opening ten rows in place. --}}
+        @can('activitylog.view')
+            <a href="{{ route('activity-logs.index') }}" class="text-sm font-medium text-blue-700 hover:text-blue-900">
+                Full log
+            </a>
+        @endcan
     </div>
-    <x-expandable-list id="recent-activity">
+    <ul class="divide-y divide-gray-100">
         @forelse ($recentActivity as $log)
             <li class="flex items-center justify-between px-6 py-3 text-sm">
                 <span>
@@ -52,7 +52,7 @@
         @empty
             <li class="px-6 py-10 text-center text-sm text-gray-500">No activity recorded.</li>
         @endforelse
-    </x-expandable-list>
+    </ul>
 </section>
 
 @endsection
