@@ -2,37 +2,28 @@
 
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\AnalyticsController;
-use App\Http\Controllers\AnnouncementCommentController;
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\AssignmentController;
 use App\Http\Controllers\Auth\InvitedRegistrationController;
 use App\Http\Controllers\BadgeController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\CourseController;
-use App\Http\Controllers\CourseEventController;
-use App\Http\Controllers\CourseInvitationController;
 use App\Http\Controllers\CourseMaterialController;
 use App\Http\Controllers\EnrolmentController;
 use App\Http\Controllers\ForumController;
 use App\Http\Controllers\NotificationController;
-use App\Http\Controllers\NotificationPreferenceController;
-use App\Http\Controllers\PostController;
-use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\QuizAttemptController;
 use App\Http\Controllers\QuizController;
-use App\Http\Controllers\ReplyController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\SubmissionController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CertificateController;
 use App\Http\Controllers\CertificateTemplateController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\InstructorProfileController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\LearningPathController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\TrophyCabinetController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -89,7 +80,7 @@ Route::middleware('auth')->group(function () {
 
     // The student's own trophy cabinet. Given its own path rather than
     // badges/cabinet so it cannot be mistaken for badges/{badge}.
-    Route::get('trophy-cabinet', [TrophyCabinetController::class, 'index'])->name('badges.cabinet');
+    Route::get('trophy-cabinet', [BadgeController::class, 'cabinet'])->name('badges.cabinet');
 
     /*
      * ---------------------------------------------------------------------
@@ -102,7 +93,7 @@ Route::middleware('auth')->group(function () {
      * appears. Deliberately show-only: there is no edit or update route here,
      * so nothing a student can reach writes to another user's record.
      */
-    Route::get('instructors/{user}', [InstructorProfileController::class, 'show'])
+    Route::get('instructors/{user}', [ProfileController::class, 'showInstructor'])
         ->name('instructors.show');
 
     /*
@@ -120,11 +111,11 @@ Route::middleware('auth')->group(function () {
     Route::delete('courses/{course}/enrol', [EnrolmentController::class, 'destroy'])->name('courses.unenrol');
 
     // The instructor's side of enrolment.
-    Route::post('courses/{course}/invitations', [CourseInvitationController::class, 'store'])
+    Route::post('courses/{course}/invitations', [EnrolmentController::class, 'invite'])
         ->name('courses.invitations.store');
-    Route::delete('courses/{course}/invitations/{invitation}', [CourseInvitationController::class, 'destroy'])
+    Route::delete('courses/{course}/invitations/{invitation}', [EnrolmentController::class, 'withdrawInvitation'])
         ->name('courses.invitations.destroy');
-    Route::post('courses/{course}/class-code', [CourseInvitationController::class, 'rotate'])
+    Route::post('courses/{course}/class-code', [EnrolmentController::class, 'rotateClassCode'])
         ->name('courses.class-code.rotate');
 
     Route::get('courses/{course}/materials/create', [CourseMaterialController::class, 'create'])
@@ -141,9 +132,9 @@ Route::middleware('auth')->group(function () {
      * reason join was: otherwise "create" matches as an event id.
      */
     Route::get('calendar', [CalendarController::class, 'index'])->name('calendar.index');
-    Route::get('calendar/events/create', [CourseEventController::class, 'create'])->name('events.create');
-    Route::post('calendar/events', [CourseEventController::class, 'store'])->name('events.store');
-    Route::delete('calendar/events/{event}', [CourseEventController::class, 'destroy'])->name('events.destroy');
+    Route::get('calendar/events/create', [CalendarController::class, 'createEvent'])->name('events.create');
+    Route::post('calendar/events', [CalendarController::class, 'storeEvent'])->name('events.store');
+    Route::delete('calendar/events/{event}', [CalendarController::class, 'destroyEvent'])->name('events.destroy');
 
     Route::get('announcements', [AnnouncementController::class, 'index'])->name('announcements.index');
     Route::get('announcements/create', [AnnouncementController::class, 'create'])->name('announcements.create');
@@ -152,9 +143,9 @@ Route::middleware('auth')->group(function () {
         ->name('announcements.destroy');
 
     // The discussion under an announcement -- instructors and students both.
-    Route::post('announcements/{announcement}/comments', [AnnouncementCommentController::class, 'store'])
+    Route::post('announcements/{announcement}/comments', [AnnouncementController::class, 'storeComment'])
         ->name('announcements.comments.store');
-    Route::delete('announcements/{announcement}/comments/{comment}', [AnnouncementCommentController::class, 'destroy'])
+    Route::delete('announcements/{announcement}/comments/{comment}', [AnnouncementController::class, 'destroyComment'])
         ->name('announcements.comments.destroy');
 
     /*
@@ -164,10 +155,10 @@ Route::middleware('auth')->group(function () {
      * ---------------------------------------------------------------------
      */
     Route::get('forums/{forum}', [ForumController::class, 'show'])->name('forums.show');
-    Route::post('forums/{forum}/posts', [PostController::class, 'store'])->name('forums.posts.store');
-    Route::delete('posts/{post}', [PostController::class, 'destroy'])->name('posts.destroy');
-    Route::post('posts/{post}/replies', [ReplyController::class, 'store'])->name('posts.replies.store');
-    Route::delete('replies/{reply}', [ReplyController::class, 'destroy'])->name('replies.destroy');
+    Route::post('forums/{forum}/posts', [ForumController::class, 'storePost'])->name('forums.posts.store');
+    Route::delete('posts/{post}', [ForumController::class, 'destroyPost'])->name('posts.destroy');
+    Route::post('posts/{post}/replies', [ForumController::class, 'storeReply'])->name('posts.replies.store');
+    Route::delete('replies/{reply}', [ForumController::class, 'destroyReply'])->name('replies.destroy');
 
     // The inbox itself is Module 1's (EduSystem.md Section 2A).
     Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
@@ -175,9 +166,9 @@ Route::middleware('auth')->group(function () {
     Route::post('notifications/{notification}/read', [NotificationController::class, 'read'])->name('notifications.read');
     Route::delete('notifications/{notification}', [NotificationController::class, 'destroy'])
         ->name('notifications.destroy');
-    Route::get('notification-preferences', [NotificationPreferenceController::class, 'edit'])
+    Route::get('notification-preferences', [NotificationController::class, 'editPreferences'])
         ->name('notifications.preferences.edit');
-    Route::put('notification-preferences', [NotificationPreferenceController::class, 'update'])
+    Route::put('notification-preferences', [NotificationController::class, 'updatePreferences'])
         ->name('notifications.preferences.update');
 
     /*
@@ -190,8 +181,8 @@ Route::middleware('auth')->group(function () {
     Route::post('courses/{course}/quizzes', [QuizController::class, 'store'])->name('courses.quizzes.store');
     Route::get('quizzes/{quiz}', [QuizController::class, 'show'])->name('quizzes.show');
     Route::delete('quizzes/{quiz}', [QuizController::class, 'destroy'])->name('quizzes.destroy');
-    Route::post('quizzes/{quiz}/questions', [QuestionController::class, 'store'])->name('quizzes.questions.store');
-    Route::delete('questions/{question}', [QuestionController::class, 'destroy'])->name('questions.destroy');
+    Route::post('quizzes/{quiz}/questions', [QuizController::class, 'storeQuestion'])->name('quizzes.questions.store');
+    Route::delete('questions/{question}', [QuizController::class, 'destroyQuestion'])->name('questions.destroy');
 
     // Sitting a quiz. The Strategy is chosen per question inside store().
     Route::get('quizzes/{quiz}/attempt', [QuizAttemptController::class, 'create'])->name('quizzes.attempt');

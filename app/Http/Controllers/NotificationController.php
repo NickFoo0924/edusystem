@@ -6,6 +6,9 @@ use App\Models\Notification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use App\Console\Commands\SendScheduledReminders;
+use App\Models\NotificationPreference;
+use App\Patterns\Observer\SystemNotificationObserver;
 
 /**
  * MODULE 1 (1E) -- the notification inbox.
@@ -53,5 +56,58 @@ class NotificationController extends Controller
         $notification->delete();
 
         return back()->with('success', 'Notification removed.');
+    }
+
+    /*
+     * Per-user notification preferences (EduSystem.md 1E).
+     *
+     * Two methods rather than a resource: there is one preferences record per
+     * user and it is only ever edited in place. The sender consults these
+     * before writing a row, so switching a type off stops it being produced
+     * rather than merely hiding it.
+     */
+    /**
+     * The switchable types, with the wording shown to the user.
+     */
+    public const TYPES = [
+        SystemNotificationObserver::TYPE_NEW_POST => 'Someone posts a question in a course I teach',
+        SystemNotificationObserver::TYPE_NEW_REPLY => 'Someone replies to my forum post',
+        SystemNotificationObserver::TYPE_ANNOUNCEMENT_COMMENT => 'Someone comments on my announcement',
+        SendScheduledReminders::TYPE_EVENT_SOON => 'A class or meeting on my calendar is about to start',
+        SendScheduledReminders::TYPE_ASSIGNMENT_DUE => 'An assignment I have not submitted is due soon',
+        SendScheduledReminders::TYPE_ASSIGNMENT_CLOSED => 'An assignment I set has closed and has work to review',
+        'certificate.issued' => 'I earn a new certificate',
+        'badge.awarded' => 'I earn a new badge',
+    ];
+
+    public function editPreferences(Request $request): View
+    {
+        abort_unless($request->user()->can('notification.preferences'), 403);
+
+        // Missing rows mean "never changed", which is treated as enabled.
+        $current = NotificationPreference::where('user_id', $request->user()->id)
+            ->pluck('enabled', 'type');
+
+        return view('notifications.preferences', [
+            'types' => self::TYPES,
+            'current' => $current,
+        ]);
+    }
+
+    public function updatePreferences(Request $request): RedirectResponse
+    {
+        abort_unless($request->user()->can('notification.preferences'), 403);
+
+        $enabled = $request->input('types', []);
+
+        foreach (array_keys(self::TYPES) as $type) {
+            NotificationPreference::updateOrCreate(
+                ['user_id' => $request->user()->id, 'type' => $type],
+                ['enabled' => in_array($type, $enabled, true)]
+            );
+        }
+
+        return redirect()->route('notifications.preferences.edit')
+            ->with('success', 'Notification preferences saved.');
     }
 }

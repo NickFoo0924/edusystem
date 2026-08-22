@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use Intervention\Image\Drivers\Gd\Driver;
 use Intervention\Image\ImageManager;
+use App\Models\User;
 
 class ProfileController extends Controller
 {
@@ -109,5 +110,43 @@ class ProfileController extends Controller
         $request->session()->regenerateToken();
 
         return Redirect::to('/');
+    }
+
+    /*
+     * A lecturer's public contact card, linked from wherever their name
+     * appears.
+     *
+     * Read-only by design and it must stay that way: there is no update path
+     * from here, so nothing a student can reach writes to another user's
+     * record. Only lecturers have a card -- asking for a student's or the
+     * administrator's id returns 404.
+     */
+    public function showInstructor(Request $request, User $user): View
+    {
+        /*
+         * Only people who teach have a card. Students must never be browsable
+         * this way: Section 7 forbids a student viewing another student's
+         * details, and an admin's contact details are not a student's business
+         * either.
+         */
+        abort_unless($user->hasPublicProfile(), 404);
+
+        // A deactivated or deleted account is not a contact.
+        abort_if($user->trashed() || ! $user->is_active, 404);
+
+        $user->loadCount('coursesTeaching');
+
+        return view('instructors.show', [
+            'instructor' => $user,
+            'courses' => $user->coursesTeaching()->withCount('students')->orderBy('code')->get(),
+            // Resolved through the model so the opt-in cannot be sidestepped.
+            'phone' => $user->publicPhone(),
+            // Whether the viewer is currently taught by this lecturer, which is
+            // worth saying on the card.
+            'sharesCourse' => $request->user()->can('course.enroll')
+                && $request->user()->courses()
+                    ->whereIn('courses.id', $user->coursesTeaching()->select('id'))
+                    ->exists(),
+        ]);
     }
 }

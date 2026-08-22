@@ -727,7 +727,7 @@ a private constructor with a static accessor, and `$this->app->singleton()` in
 ```
 app/
   Patterns/            all five design patterns, one folder each
-  Http/Controllers/    one controller per feature area
+  Http/Controllers/    one controller per resource, actions grouped on it
   Models/              30 Eloquent models
   Support/GradeScale   the A-F letter grade scale
 database/
