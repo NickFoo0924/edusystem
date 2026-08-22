@@ -24,10 +24,8 @@ use App\Http\Controllers\ReplyController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\SubmissionController;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\CertificateAdminController;
 use App\Http\Controllers\CertificateController;
 use App\Http\Controllers\CertificateTemplateController;
-use App\Http\Controllers\CertificateVerificationController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InstructorProfileController;
 use App\Http\Controllers\InvitationController;
@@ -48,7 +46,7 @@ Route::get('/', function () {
  * certificate's authenticity. This route is what the QR code printed on every
  * certificate PDF points at, so it must resolve for someone with no account.
  */
-Route::get('/verify/{credential_id}', [CertificateVerificationController::class, 'show'])
+Route::get('/verify/{credential_id}', [CertificateController::class, 'verify'])
     ->name('certificates.verify');
 
 /*
@@ -242,13 +240,13 @@ Route::middleware('auth')->group(function () {
      * middleware, because the index is readable with either certificate.issue
      * or certificate.revoke, and the `can:` middleware only takes one ability.
      */
-    Route::get('admin/certificates', [CertificateAdminController::class, 'index'])
+    Route::get('admin/certificates', [CertificateController::class, 'adminIndex'])
         ->name('admin.certificates.index');
-    Route::get('admin/certificates/create', [CertificateAdminController::class, 'create'])
+    Route::get('admin/certificates/create', [CertificateController::class, 'create'])
         ->name('admin.certificates.create');
-    Route::post('admin/certificates', [CertificateAdminController::class, 'store'])
+    Route::post('admin/certificates', [CertificateController::class, 'store'])
         ->name('admin.certificates.store');
-    Route::patch('admin/certificates/{certificate}/revoke', [CertificateAdminController::class, 'revoke'])
+    Route::patch('admin/certificates/{certificate}/revoke', [CertificateController::class, 'revoke'])
         ->name('admin.certificates.revoke');
 
     Route::resource('learning-paths', LearningPathController::class)
