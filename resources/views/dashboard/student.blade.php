@@ -34,9 +34,10 @@
             @endif
             {{ $outstanding->count() }} outstanding in the next 7 days
         </span>
+        <x-list-toggle for="due-soon" :total="$outstanding->count()" />
     </div>
 
-    <ul class="divide-y divide-gray-100 bg-white">
+    <x-expandable-list id="due-soon" class="bg-white">
         @forelse ($outstanding as $item)
             @php
                 $assignment = $item['assignment'];
@@ -87,7 +88,7 @@
                 <p class="mt-1 text-xs text-gray-400">You are up to date on everything with a deadline.</p>
             </li>
         @endforelse
-    </ul>
+    </x-expandable-list>
 </section>
 
 <div class="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -106,12 +107,13 @@
 
 {{-- Progress towards the certificate threshold, per course. --}}
 <section class="mt-8 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-    <div class="border-b border-gray-200 bg-gray-50 px-6 py-3">
+    <div class="flex items-center justify-between gap-4 border-b border-gray-200 bg-gray-50 px-6 py-3">
         <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-600">
             Progress towards certification ({{ rtrim(rtrim(number_format($threshold, 1), '0'), '.') }}% needed)
         </h2>
+        <x-list-toggle for="course-progress" :total="$progress->count()" />
     </div>
-    <ul class="divide-y divide-gray-100">
+    <x-expandable-list id="course-progress">
         @forelse ($progress as $row)
             @php $met = $row->completion_percentage >= $threshold; @endphp
             <li class="px-6 py-4">
@@ -136,7 +138,7 @@
                 No progress recorded yet. Take a quiz or submit an assignment to get started.
             </li>
         @endforelse
-    </ul>
+    </x-expandable-list>
 </section>
 
 {{-- EduSystem.md 1B: the progress-over-time line chart, drawn from
@@ -158,10 +160,11 @@
 
 @if ($certificates->isNotEmpty())
     <section class="mt-6 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-        <div class="border-b border-gray-200 bg-gray-50 px-6 py-3">
+        <div class="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-6 py-3">
             <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-600">Your credentials</h2>
+            <x-list-toggle for="credentials" :total="$certificates->count()" />
         </div>
-        <ul class="divide-y divide-gray-100">
+        <x-expandable-list id="credentials">
             @foreach ($certificates as $certificate)
                 <li class="flex items-center justify-between px-6 py-4">
                     <div>
@@ -174,7 +177,7 @@
                        class="text-sm font-medium text-blue-700 hover:text-blue-900">View</a>
                 </li>
             @endforeach
-        </ul>
+        </x-expandable-list>
     </section>
 @endif
 

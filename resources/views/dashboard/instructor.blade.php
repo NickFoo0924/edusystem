@@ -21,12 +21,13 @@
 @include('partials.flash')
 
 <section class="mt-8 overflow-hidden rounded-xl border {{ $awaitingReview->isEmpty() ? 'border-gray-200' : 'border-amber-300' }} bg-white shadow-sm">
-    <div class="border-b border-gray-200 bg-gray-50 px-6 py-3">
+    <div class="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-6 py-3">
         <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-600">
             Awaiting your review ({{ $awaitingReview->count() }})
         </h2>
+        <x-list-toggle for="review-queue" :total="$awaitingReview->count()" />
     </div>
-    <ul class="divide-y divide-gray-100">
+    <x-expandable-list id="review-queue">
         @forelse ($awaitingReview as $submission)
             <li class="flex items-center justify-between px-6 py-4">
                 <div>
@@ -44,7 +45,7 @@
         @empty
             <li class="px-6 py-10 text-center text-sm text-gray-500">Nothing waiting. All caught up.</li>
         @endforelse
-    </ul>
+    </x-expandable-list>
 </section>
 
 <h2 class="mt-8 text-sm font-semibold uppercase tracking-wide text-gray-500">Your courses</h2>

@@ -42,6 +42,12 @@
         /* Collapsed, the group headings go, so a rule stands in for them. */
         .sidebar-closed .sidebar-divider { display: block; }
 
+        /* Dashboard lists show three rows until asked for the rest. Plain CSS
+           rather than a utility class, because the rows must already be hidden
+           on first paint -- hiding them from script would show the full list
+           and then collapse it. */
+        .expandable-list:not(.is-open) > *:nth-child(n+4) { display: none; }
+
         .sidebar-closed .sidebar-link {
             justify-content: center;
             padding-left: 0.75rem;
