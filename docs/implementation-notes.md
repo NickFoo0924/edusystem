@@ -33,6 +33,54 @@ room, the other a bare `due_date` — through a single interface the view can it
 is the same Adapter that already reconciles uploaded files with external links, applied to a second
 mismatched pair. See `app/Patterns/Adapter/CalendarEntry.php`.
 
+## The analytics chart: an XML pipeline
+
+The completion-trend chart on `/analytics` is produced by an XML pipeline rather than a JavaScript
+charting library.
+
+**Syllabus topics demonstrated:** XML document construction (Chapter 4A), XSD schema validation
+with typed restrictions and enumerations (4A), XSLT transformation and XPath (4B), and SVG as an
+XML vocabulary.
+
+**The pipeline, in one line:**
+Eloquent → `DOMDocument` → XSD validation → XSLT → SVG.
+
+| Artifact | Where |
+|---|---|
+| Document construction, validation, transform | `AnalyticsController` — `buildXml()`, `validates()`, `renderChart()` |
+| Schema | `resources/xml/analytics.xsd` |
+| Stylesheet | `resources/xml/analytics-chart.xsl` |
+| XML export route | `GET /analytics/export.xml` (`analytics.export`) |
+| Rendered output | the Completion trend card in `resources/views/analytics/index.blade.php` |
+
+**Why this and not Chart.js.** A production system would reach for a charting library, and that is
+the honest comparison — this approach is more work for the same picture. It is used here because
+SVG *is* an XML vocabulary, which makes drawing the chart a genuine XML-to-XML transformation
+rather than an exercise contrived to demonstrate one. Nothing else in the system exercises XML,
+schema validation or XSLT, and the syllabus covers all three. The document is also a real data
+export in its own right, served at `/analytics/export.xml`, so it is not an intermediate artifact
+that exists only to be consumed a line later.
+
+`DOMDocument` is the DOM half of the DOM-versus-SAX pair Chapter 4B teaches: a tree held in memory
+with a read/write API. SAX is streaming and read-only, so it could not build a document.
+
+**Why XSD and not DTD.** A DTD can require an attribute but can only type it as CDATA, so `150`,
+`-4` and `banana` would all satisfy it. The point of validating here is to constrain the values the
+stylesheet performs arithmetic on: percentages are a `decimal` restricted to 0–100, counts are
+`nonNegativeInteger`, dates are `xs:date`, the generation stamp is `xs:dateTime`, and the grade
+letter is an enumeration of exactly A/B/C/D/F.
+
+The schema is enforced, not decorative — a document carrying an average of `150` is rejected with
+`[facet 'maxInclusive'] The value '150' is greater than the maximum value allowed ('100')`.
+
+Validation failure is not fatal. Errors are written to the log and the page renders without the
+chart, so a schema fault can never take down a working analytics screen.
+
+**Requires `ext-xsl`.** See the setup instructions in `tutorial.md`; without it the chart is
+skipped and a warning is logged, while the rest of the page continues to work.
+
+---
+
 ## Deviations from Section 3
 
 Documented here so the ERD can be updated before submission.

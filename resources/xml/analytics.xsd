@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Schema for the analytics export (resources/xml/analytics.xsd).
+
+    XSD rather than DTD, and the choice matters here. A DTD can say that a
+    <point> must carry an "average" attribute, but it can only type that
+    attribute as CDATA — so "150", "-4" and "banana" would all satisfy it.
+    The whole reason for validating this document is to constrain the values
+    the stylesheet is about to do arithmetic on, which is exactly what a DTD
+    cannot express.
+
+    Built from the constructs Chapter 4A covers: xs:element, xs:attribute,
+    complexType, simpleType, restriction and enumeration.
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           elementFormDefault="qualified">
+
+    <!-- ============================================================
+         Reusable value types
+         ============================================================ -->
+
+    <!--
+        A completion figure. Bounded at both ends because the stylesheet maps
+        this onto the height of the plot area: a value above 100 would draw a
+        point outside the chart, and a negative one would draw it below the
+        axis.
+    -->
+    <xs:simpleType name="percentage">
+        <xs:restriction base="xs:decimal">
+            <xs:minInclusive value="0"/>
+            <xs:maxInclusive value="100"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <!--
+        The letter grades the system issues. An enumeration rather than a
+        string, so a typo in a grade band cannot reach the stylesheet and be
+        drawn with no colour.
+    -->
+    <xs:simpleType name="gradeLetter">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="A"/>
+            <xs:enumeration value="B"/>
+            <xs:enumeration value="C"/>
+            <xs:enumeration value="D"/>
+            <xs:enumeration value="F"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <!-- A course code such as BMIT3173: letters then digits, nothing else. -->
+    <xs:simpleType name="courseCode">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Z]{2,6}[0-9]{3,5}"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <!-- ============================================================
+         Document structure
+         ============================================================ -->
+
+    <!--
+        One reading of the cohort's average completion on one date.
+
+        Both attributes are required: the transform plots x from @date and y
+        from @average, so a point missing either could not be drawn.
+    -->
+    <xs:complexType name="pointType">
+        <xs:attribute name="date" type="xs:date" use="required"/>
+        <xs:attribute name="average" type="percentage" use="required"/>
+    </xs:complexType>
+
+    <!--
+        A grade band and how many students fall in it. Present in the schema
+        because the export carries the same figures the page shows; the chart
+        does not plot it, since the page already renders that distribution as
+        CSS bars and drawing it twice would demonstrate nothing.
+    -->
+    <xs:complexType name="bandType">
+        <xs:attribute name="letter" type="gradeLetter" use="required"/>
+        <xs:attribute name="count" type="xs:nonNegativeInteger" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="courseType">
+        <xs:sequence>
+            <!-- A course with no snapshots yet is valid and has no points. -->
+            <xs:element name="point" type="pointType" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="band" type="bandType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+        <xs:attribute name="code" type="courseCode" use="required"/>
+        <xs:attribute name="title" type="xs:string" use="required"/>
+        <xs:attribute name="students" type="xs:nonNegativeInteger" use="required"/>
+    </xs:complexType>
+
+    <xs:element name="analytics">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="course" type="courseType" minOccurs="0" maxOccurs="unbounded"/>
+            </xs:sequence>
+            <xs:attribute name="generated" type="xs:dateTime" use="required"/>
+        </xs:complexType>
+    </xs:element>
+
+</xs:schema>

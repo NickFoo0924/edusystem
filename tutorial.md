@@ -77,8 +77,8 @@ reminder notifications, run the two extra commands in
 Two things that are easy to miss, because they are the only real prerequisites beyond Laravel
 itself:
 
-- **The GD extension must be enabled** in `C:\xampp\php\php.ini`, or `composer install` stops with
-  *"requires ext-gd"*. See [section 2](#2-what-you-need-before-starting).
+- **The GD and XSL extensions must be enabled** in `C:\xampp\php\php.ini`. Without GD,
+  `composer install` stops with *"requires ext-gd"*; without XSL the analytics chart is skipped. See [section 2](#2-what-you-need-before-starting).
 - **Apache is not needed.** `php artisan serve` is the web server; XAMPP is only there for MySQL.
 
 ### Already ran the setup before?
@@ -115,7 +115,7 @@ php -v && composer -V && node -v
 
 If any command is not recognised, install that tool and reopen the terminal.
 
-### One PHP extension must be enabled
+### Two PHP extensions must be enabled
 
 The QR code library needs **GD**. Open `C:\xampp\php\php.ini`, find this line:
 
@@ -130,6 +130,22 @@ php -m | findstr gd
 ```
 
 It should print `gd`. Without this, step 3.3 fails with *"requires ext-gd"*.
+
+The analytics chart needs **XSL**. In the same file, find:
+
+```
+;extension=xsl
+```
+
+Remove the leading semicolon so it reads `extension=xsl`, save, and confirm with:
+
+```bash
+php -m | findstr xsl
+```
+
+Without it the analytics page still works, but the completion-trend chart is skipped and a warning
+is written to `storage/logs/laravel.log`. The chart is produced by an XSLT transformation, which
+needs this extension.
 
 ---
 

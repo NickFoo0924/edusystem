@@ -251,6 +251,10 @@ Route::middleware('auth')->group(function () {
      */
     // Module 5's cohort analytics (EduSystem.md Section 2A).
     Route::get('analytics', [AnalyticsController::class, 'index'])->name('analytics.index');
+    // The same figures as XML, so the document is a data export rather than
+    // only an intermediate step on the way to the chart.
+    Route::get('analytics/export.xml', [AnalyticsController::class, 'exportXml'])
+        ->name('analytics.export');
 
     // The admin-configurable numbers, and the certificate designs.
     Route::get('settings', [SettingController::class, 'edit'])->name('settings.edit');
