@@ -58,6 +58,11 @@
 
     <div class="space-y-6 lg:col-span-2">
 
+        {{-- What to do next, before what the course contains. --}}
+        @if ($plan->isNotEmpty())
+            @include('partials.study-plan')
+        @endif
+
         {{-- MATERIALS -- rendered entirely through the Adapter interface. --}}
         <section class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
             <div class="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-6 py-3">

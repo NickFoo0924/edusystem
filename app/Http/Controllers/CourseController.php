@@ -6,6 +6,7 @@ use App\Models\Course;
 use App\Models\CourseMaterial;
 use App\Models\DiscussionForum;
 use App\Patterns\Adapter\MaterialAdapterFactory;
+use App\Support\StudyPlan;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -133,6 +134,14 @@ class CourseController extends Controller
         return view('courses.show', [
             'course' => $course,
             'materialsByCategory' => $materialsByCategory,
+            /*
+             * The suggested order to work through the course, for the student
+             * doing the working. An instructor is looking at their own course
+             * rather than studying it, so they get the roster panel instead.
+             */
+            'plan' => $request->user()->can('course.enroll') && $course->hasStudent($request->user())
+                ? StudyPlan::for($course, $request->user())
+                : collect(),
             'isEnrolled' => $request->user()->can('course.enroll') && $course->hasStudent($request->user()),
             'isOwner' => $course->instructor_id === $request->user()->id,
             // The roster panel is the owner's alone, so the query is skipped
