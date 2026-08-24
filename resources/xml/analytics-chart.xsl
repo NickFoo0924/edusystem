@@ -194,11 +194,14 @@
 
             <circle cx="{$x}" cy="{$y}" r="2.5" fill="{$colour}"/>
 
+            <!--
+                The last reading gets a larger marker, but its value is printed
+                in the legend rather than beside the line. Two courses that both
+                finish at 100% end at the same coordinates, and labels drawn
+                there would sit exactly on top of one another.
+            -->
             <xsl:if test="position() = last()">
-                <text x="{$x + 8}" y="{$y + 4}" font-family="system-ui, sans-serif"
-                      font-size="11" font-weight="600" fill="{$colour}">
-                    <xsl:value-of select="format-number(@average, '0.#')"/>%
-                </text>
+                <circle cx="{$x}" cy="{$y}" r="4" fill="{$colour}"/>
             </xsl:if>
         </xsl:for-each>
     </xsl:template>
@@ -225,7 +228,13 @@
                 <xsl:value-of select="@code"/>
                 <xsl:text> · </xsl:text>
                 <xsl:value-of select="@students"/>
-                <xsl:text> students</xsl:text>
+                <xsl:text> students · </xsl:text>
+                <!-- The course's most recent reading, which is where its line
+                     ends on the plot. -->
+                <tspan font-weight="600" fill="{$colour}">
+                    <xsl:value-of select="format-number(point[last()]/@average, '0.#')"/>
+                    <xsl:text>%</xsl:text>
+                </tspan>
             </text>
         </xsl:for-each>
     </xsl:template>

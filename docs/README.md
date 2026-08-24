@@ -348,19 +348,21 @@ a private constructor with a static accessor, and `$this->app->singleton()` in
 ```
 app/
   Patterns/            all five design patterns, one folder each
-  Http/Controllers/    one controller per resource, actions grouped on it
-  Models/              30 Eloquent models
-  Support/GradeScale   the A-F letter grade scale
+  Http/Controllers/    23 controllers, one per resource, actions grouped on it
+  Models/              33 Eloquent models
+  Support/             GradeScale, Notifier, Mentions, StudyPlan
+  Console/Commands/    the scheduled reminder command
 database/
-  migrations/          41 tables
-  seeders/             DatabaseSeeder builds the whole demo
-docs/                  the specification, the practical PDF and the pattern catalogue
+  migrations/          43 migrations, 44 tables
+  seeders/             DatabaseSeeder plus BulkStudentSeeder for the full cohort
+docs/                  this file, the setup guide, the specification and the audits
 resources/views/       Blade templates, all extending layout.blade.php
+resources/xml/         the analytics schema and stylesheet
 routes/web.php         every route, grouped and commented by module
 tests/                 29 automated tests
 ```
 
-See **[`docs/implementation-notes.md`](docs/implementation-notes.md)** for how each section of the specification maps onto the
+See **[`implementation-notes.md`](implementation-notes.md)** for how each section of the specification maps onto the
 code, the schema deviations to carry into the ERD, and an honest list of known gaps.
 
 All database access uses **Eloquent ORM**. There is no raw SQL anywhere — no `DB::raw()`,

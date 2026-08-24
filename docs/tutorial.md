@@ -143,9 +143,51 @@ Remove the leading semicolon so it reads `extension=xsl`, save, and confirm with
 php -m | findstr xsl
 ```
 
-Without it the analytics page still works, but the completion-trend chart is skipped and a warning
-is written to `storage/logs/laravel.log`. The chart is produced by an XSLT transformation, which
-needs this extension.
+#### Checking whether it is on
+
+```bash
+php -m | findstr xsl
+```
+
+If `xsl` is not listed, run this for the full picture:
+
+```bash
+php -r "echo class_exists('XSLTProcessor') ? 'XSL ready' : 'XSL missing';"
+```
+
+A machine without it reports no `XSLTProcessor` and no libxslt version, while `dom`, `libxml` and
+`SimpleXML` are still loaded and `DOMDocument::schemaValidate()` still works. That combination is
+worth recognising: the XML is still built and still validated against the schema, and only the
+transformation step is unavailable — which is why the analytics page keeps working and only the
+chart goes missing.
+
+#### Turning it on
+
+The extension ships with XAMPP; it is only switched off. `C:\xampp\php\ext\php_xsl.dll` is already
+there, and around line 951 of `C:\xampp\php\php.ini` you will find:
+
+```
+;extension=xsl
+```
+
+Remove the leading semicolon so it reads `extension=xsl`, save, then **restart**: stop
+`php artisan serve` with `Ctrl + C` and start it again, and restart Apache too if you use it.
+
+The restart is not optional. PHP reads `php.ini` once when a process starts, so a server that was
+already running when the file changed keeps the old settings. This is the usual explanation when
+the setting looks correct but the chart is still absent.
+
+#### The symptom
+
+The analytics page loads normally, the stat tiles, grade distribution and submissions panels are
+all present, and the **Completion trend** card simply is not there. No error appears on screen,
+because a missing extension is handled rather than thrown — `storage/logs/laravel.log` records:
+
+```
+local.WARNING: The XSL extension is not enabled, so the analytics chart was skipped.
+```
+
+One line per page load. If that message stops appearing after a restart, the extension is active.
 
 ---
 
@@ -453,6 +495,7 @@ Expected: **29 passed**. The tests run against an in-memory SQLite database and 
 | Page 403s unexpectedly | That role lacks the permission. Check Admin → **Permissions**. |
 | Changed a Blade file and nothing happened | Run `php artisan view:clear`. |
 | The 50 students / calendar / cohort data have vanished | `migrate:fresh` drops every table, and `--seed` only rebuilds the 12-account demo. Re-run all three commands in [Restoring the full demo data](#restoring-the-full-demo-data). |
+| The analytics chart is missing, page otherwise fine | `ext-xsl` is off, or the server was started before it was enabled. Check `php -m | findstr xsl`, then restart `php artisan serve`. `storage/logs/laravel.log` will say so. |
 | Calendar reminders never arrive | Nothing is scheduling them. Run `php artisan schedule:work` in a spare terminal, or `php artisan reminders:send` once by hand. |
 | A reminder arrived only once and not again | Correct. Each carries a reference so nobody is told the same thing twice. |
 | A colour or badge renders with no background | Tailwind strips class names it cannot find in the source. If you build one in PHP rather than writing it in a template, make sure the file is covered by `content` in `tailwind.config.js` — `./app/**/*.php` is already listed — then `npm run build`. |
