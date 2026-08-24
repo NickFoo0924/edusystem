@@ -33,7 +33,13 @@
                             <span class="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-gray-500">Inactive</span>
                         @endif
                     </div>
-                    <p class="mt-2 whitespace-pre-line text-xs text-gray-500">{{ Str::limit($template->body_text, 220) }}</p>
+                    {{-- Sample values rather than the stored placeholders. The
+                         template is a form with blanks; printing the blanks shows
+                         field names to no purpose, when what a reader wants is what
+                         the certificate will say. Truncated on a word so it never
+                         breaks mid-term. --}}
+                    <p class="mt-2 whitespace-pre-line text-xs text-gray-500">{{ Str::words($template->previewBody(), 45) }}</p>
+                    <p class="mt-1 text-[11px] text-gray-400">Preview, using example details</p>
                     <p class="mt-2 text-xs text-gray-400">{{ $template->certificates_count }} {{ Str::plural('certificate', $template->certificates_count) }} issued from it</p>
                 </div>
 

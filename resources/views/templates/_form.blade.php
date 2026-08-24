@@ -13,17 +13,48 @@
         <textarea id="body_text" name="body_text" rows="8" required
                   class="mt-1 block w-full rounded-lg border-gray-300 font-mono text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">{{ old('body_text', $template->body_text ?? '') }}</textarea>
 
+        {{-- Buttons rather than a list of tokens to copy. The author picks a
+             field by its name and it is written into the text for them, so the
+             placeholder syntax never has to be read or typed. --}}
         <div class="mt-3 rounded-lg bg-gray-50 p-4">
-            <p class="text-xs font-medium text-gray-700">Placeholders substituted at issuance</p>
-            <dl class="mt-2 space-y-1">
-                @foreach ($placeholders as $token => $meaning)
-                    <div class="flex gap-2 text-xs">
-                        <dt><code class="rounded bg-white px-1.5 py-0.5 text-blue-700">{{ $token }}</code></dt>
-                        <dd class="text-gray-500">{{ $meaning }}</dd>
-                    </div>
+            <p class="text-xs font-medium text-gray-700">
+                Insert a detail — it is filled in when the certificate is issued
+            </p>
+
+            <div class="mt-2 flex flex-wrap gap-2">
+                @foreach (\App\Models\CertificateTemplate::SLOTS as $token => $slot)
+                    <button type="button"
+                            data-insert-token="{{ $token }}"
+                            class="rounded-full border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-700 transition hover:border-blue-400 hover:text-blue-700">
+                        {{ $slot['label'] }}
+                    </button>
                 @endforeach
-            </dl>
+            </div>
+
+            <p class="mt-2 text-[11px] text-gray-400">
+                For example, Student name becomes the holder's full name on the issued certificate.
+            </p>
         </div>
+
+        <script>
+            // Writes the chosen field into the body at the cursor, so the author
+            // never types the placeholder syntax themselves.
+            document.addEventListener('click', function (event) {
+                var button = event.target.closest('[data-insert-token]');
+
+                if (! button) {
+                    return;
+                }
+
+                var field = document.getElementById('body_text');
+                var token = button.dataset.insertToken;
+                var at = field.selectionStart || 0;
+
+                field.value = field.value.slice(0, at) + token + field.value.slice(field.selectionEnd || at);
+                field.focus();
+                field.setSelectionRange(at + token.length, at + token.length);
+            });
+        </script>
     </div>
 
     <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
