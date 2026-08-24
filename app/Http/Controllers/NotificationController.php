@@ -72,6 +72,7 @@ class NotificationController extends Controller
     public const TYPES = [
         SystemNotificationObserver::TYPE_NEW_POST => 'Someone posts a question in a course I teach',
         SystemNotificationObserver::TYPE_NEW_REPLY => 'Someone replies to my forum post',
+        SystemNotificationObserver::TYPE_MENTION => 'Someone mentions me with an @ in a forum message',
         SystemNotificationObserver::TYPE_ANNOUNCEMENT_COMMENT => 'Someone comments on my announcement',
         SendScheduledReminders::TYPE_EVENT_SOON => 'A class or meeting on my calendar is about to start',
         SendScheduledReminders::TYPE_ASSIGNMENT_DUE => 'An assignment I have not submitted is due soon',

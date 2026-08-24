@@ -3,8 +3,11 @@
 namespace App\Patterns\Observer;
 
 use App\Models\AnnouncementComment;
+use App\Models\Course;
 use App\Models\Post;
 use App\Models\Reply;
+use App\Models\User;
+use App\Support\Mentions;
 use App\Support\Notifier;
 use Illuminate\Database\Eloquent\Model;
 
@@ -35,6 +38,8 @@ class SystemNotificationObserver
 
     public const TYPE_ANNOUNCEMENT_COMMENT = 'announcement.comment';
 
+    public const TYPE_MENTION = 'forum.mention';
+
     /**
      * Fired by Eloquent when a Post or a Reply is created.
      *
@@ -60,7 +65,18 @@ class SystemNotificationObserver
 
         $course = $post->forum?->course;
 
-        if ($course === null || $course->instructor_id === $post->user_id) {
+        if ($course === null) {
+            return;
+        }
+
+        $link = route('forums.show', $post->forum_id).'#post-'.$post->id;
+
+        // Anyone named with an @ hears about it first, and hearing about it
+        // once is enough -- so the instructor notice below is skipped for
+        // someone who has already been told they were mentioned.
+        $mentioned = $this->notifyMentions($post->content, $course, $post->author, $link);
+
+        if ($course->instructor_id === $post->user_id || $mentioned->contains($course->instructor_id)) {
             return;
         }
 
@@ -68,7 +84,7 @@ class SystemNotificationObserver
             userId: $course->instructor_id,
             type: self::TYPE_NEW_POST,
             message: "{$post->author->name} posted in {$course->title}",
-            link: route('forums.show', $post->forum_id).'#post-'.$post->id,
+            link: $link,
         );
     }
 
@@ -80,9 +96,18 @@ class SystemNotificationObserver
         $reply->loadMissing(['post.forum', 'author']);
 
         $post = $reply->post;
+        $course = $post?->forum?->course;
 
-        // Replying to yourself is not news.
-        if ($post === null || $post->user_id === $reply->user_id) {
+        if ($post === null || $course === null) {
+            return;
+        }
+
+        $link = route('forums.show', $post->forum_id).'#post-'.$post->id;
+
+        $mentioned = $this->notifyMentions($reply->content, $course, $reply->author, $link);
+
+        // Replying to yourself is not news, and neither is being told twice.
+        if ($post->user_id === $reply->user_id || $mentioned->contains($post->user_id)) {
             return;
         }
 
@@ -90,8 +115,29 @@ class SystemNotificationObserver
             userId: $post->user_id,
             type: self::TYPE_NEW_REPLY,
             message: "{$reply->author->name} replied to your question",
-            link: route('forums.show', $post->forum_id).'#post-'.$post->id,
+            link: $link,
         );
+    }
+
+    /**
+     * Tell everyone named with an @ in a forum message.
+     *
+     * Candidates are drawn from the course, so a mention cannot reach somebody
+     * outside the conversation, and naming yourself notifies nobody.
+     *
+     * @return \Illuminate\Support\Collection<int, int>  ids actually notified
+     */
+    private function notifyMentions(string $body, Course $course, ?User $author, string $link)
+    {
+        return Mentions::parse($body, $course)
+            ->reject(fn (User $user) => $author && $user->id === $author->id)
+            ->each(fn (User $user) => $this->notify(
+                userId: $user->id,
+                type: self::TYPE_MENTION,
+                message: ($author?->name ?? 'Someone')." mentioned you in {$course->title}",
+                link: $link,
+            ))
+            ->pluck('id');
     }
 
     /**
