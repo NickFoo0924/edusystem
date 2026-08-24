@@ -49,8 +49,9 @@ an invented feature.
 | **CSRF** | Laravel's token on every form; a form submitted after its session changed is refused | Fully |
 | **XSS** | Blade auto-escaping, as above | Fully |
 | **SQL injection** | Eloquent parameter binding, as above | Fully |
-| **XML: encoding, structure, DTD, CDATA** | Nothing. No XML is produced or consumed anywhere | Not at all |
-| **XML parsing — SAX / DOM / XPath / XSLT** | Nothing. No `SimpleXML`, `DOMDocument`, `XPath` or `XSLT` in the codebase | Not at all |
+| **XML: encoding, structure, elements and attributes** | The analytics export, built with `DOMDocument` in `AnalyticsController::buildXml()` and served at `/analytics/export.xml` | Fully |
+| **XML parsing — DOM, XPath, XSLT** | `DOMDocument` builds the document (the DOM half of the DOM/SAX pair); `resources/xml/analytics-chart.xsl` transforms it with `for-each`, `value-of` and XPath selects. SAX is not used — it is read-only and streaming, so it cannot build a document | Fully, apart from SAX |
+| **XSD schema validation** | `resources/xml/analytics.xsd` — typed restrictions (percentage 0–100), `nonNegativeInteger` counts, `xs:date` / `xs:dateTime`, and an enumeration of A/B/C/D/F. Enforced by `DOMDocument::schemaValidate()` before every transform | Fully |
 | **Web services — SOAP / WSDL** | Nothing. No SOAP endpoint or WSDL | Not at all |
 | **Web services — REST / JSON** | No JSON API. Routes are HTML-returning web routes; `routes/api.php` is unused. One `response()->json` was added for the stale-tab case | Not at all (as a service interface) |
 | **HTTP verbs as an interface** | Routes use GET/POST/PUT/PATCH/DELETE correctly through resource routing, so the verb semantics are demonstrated even without an API | Partly |
@@ -89,15 +90,17 @@ unauthenticated lookup returning a fixed shape. `GET /api/verify/{credential_id}
 would demonstrate REST, JSON payloads and HTTP status semantics in about thirty lines, without a
 second auth model. Anything beyond that is not worth the risk.
 
-**XML and XSLT (Chapters 4A/4B).** Two full chapters with no representation. But this system has no
-XML in it, and inventing some — an XML export of certificates, transformed by XSLT into HTML —
-would be a feature nobody asked for, existing only to tick a box. The certificates already render
-through DomPDF from Blade, which is the same "structured data → presentation" idea by a different
-route.
+**XML and XSLT (Chapters 4A/4B) — since addressed.** These were the two chapters with no
+representation. They are now covered by the analytics completion-trend chart, which runs a real
+pipeline: Eloquent → `DOMDocument` → XSD validation → XSLT → SVG.
 
-If it must be covered, the least contrived option is an XML export of the activity log alongside
-the existing CSV export, since the log is already tabular and already exports. Still, this is
-box-ticking, and is not worth doing unless the marking scheme explicitly demands XML.
+The approach was chosen because SVG is itself an XML vocabulary, so producing the chart is a
+genuine XML-to-XML transformation rather than an export invented to tick a box, and the document
+doubles as a data export at `/analytics/export.xml`. A production system would use a charting
+library; that trade-off is set out in `implementation-notes.md`.
+
+Requires `ext-xsl`. Without it the document is still built and still validated, and only the chart
+is skipped.
 
 ### 3.3 Legitimately out of scope
 
@@ -120,11 +123,12 @@ object-oriented with functional touches, which is all that can meaningfully be c
 
 ## 4. Summary
 
-Of the nine chapters, **three are covered fully** (1 Scripting, 2 Software Security, 3 Integrative
-Coding), **one partly and incidentally** (6 Paradigms), **three are absent by nature of the project**
-(4A, 4B XML; 5A Web Services), and **two are out of scope** (5B Network Programming, 5C Middleware).
+Of the nine chapters, **five are covered fully** (1 Scripting, 2 Software Security, 3 Integrative
+Coding, 4A Data Encoding & XML, 4B XML Parsing & XSLT), **one partly and incidentally**
+(6 Paradigms), **one is absent** (5A Web Services — there is no JSON or SOAP service interface),
+and **two are out of scope** (5B Network Programming, 5C Middleware).
 
-The three fully covered chapters are the three that carry the most assessment weight for this
-project: Chapter 2 is named on the written quiz, and Chapter 3 is the design-pattern chapter the
-entire five-module structure is built on. Chapter 3's coverage is unusually strong — five of the
-nine patterns it teaches are implemented, each with a written justification.
+The covered chapters include the ones carrying the most assessment weight: Chapter 2 is named on
+the written quiz, and Chapter 3 is the design-pattern chapter the entire five-module structure
+rests on, where five of the nine patterns it teaches are implemented, each with a written
+justification. Chapters 4A and 4B are demonstrated by the analytics pipeline.

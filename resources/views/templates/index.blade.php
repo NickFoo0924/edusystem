@@ -34,7 +34,7 @@
                         @endif
                     </div>
                     <p class="mt-2 whitespace-pre-line text-xs text-gray-500">{{ Str::limit($template->body_text, 220) }}</p>
-                    <p class="mt-2 text-xs text-gray-400">{{ $template->certificates_count }} certificates issued from it</p>
+                    <p class="mt-2 text-xs text-gray-400">{{ $template->certificates_count }} {{ Str::plural('certificate', $template->certificates_count) }} issued from it</p>
                 </div>
 
                 <div class="flex items-center gap-3 text-sm">

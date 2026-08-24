@@ -45,9 +45,7 @@
                     </td>
                     <td class="px-6 py-4 capitalize text-gray-700">{{ $badge->tier }}</td>
                     <td class="px-6 py-4">
-                        <code class="text-xs text-gray-600">{{ $badge->criteria_type }}</code>
-                        <span class="text-gray-400">&ge;</span>
-                        <span class="font-medium text-gray-900">{{ $badge->criteria_value }}</span>
+                        <span class="text-gray-700">{{ $badge->criteriaDescription() }}</span>
                     </td>
                     <td class="px-6 py-4 text-gray-700">{{ $badge->students_count }}</td>
                     <td class="px-6 py-4">

@@ -50,6 +50,30 @@ class Badge extends Model
     /**
      * Students who have earned this badge.
      */
+    /**
+     * The unlock condition as a sentence.
+     *
+     * The admin screens were printing the raw criteria_type -- a reader saw
+     * "on_time_submissions >= 5" and had to translate it themselves. The
+     * column stays as it is, because the badge engine matches on those keys;
+     * this is only how the rule is worded for a person.
+     */
+    public function criteriaDescription(): string
+    {
+        $value = $this->criteria_value;
+        $times = $value === 1 ? 'once' : $value.' times';
+
+        return match ($this->criteria_type) {
+            'course_completion' => 'Complete '.$value.' '.($value === 1 ? 'course' : 'courses'),
+            'path_completion' => 'Complete '.$value.' learning '.($value === 1 ? 'path' : 'paths'),
+            'quiz_score' => 'Score '.$value.'% or higher on any quiz',
+            'on_time_submissions' => 'Submit '.$value.' '.($value === 1 ? 'assignment' : 'assignments').' on time',
+            'first_forum_post' => 'Post in a course forum for the first time',
+            'login_streak' => 'Log in on '.$value.' consecutive days',
+            default => ucfirst(str_replace('_', ' ', $this->criteria_type)).' — '.$times,
+        };
+    }
+
     public function students(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'badge_student', 'badge_id', 'student_id')
