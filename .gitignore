@@ -22,3 +22,8 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# The lecturer's course material. Kept locally because docs/SYLLABUS_AUDIT.md
+# is written against these chapters, but not published: they are TARUMT's
+# teaching PDFs rather than this project's work.
+/chapter_syllabus
