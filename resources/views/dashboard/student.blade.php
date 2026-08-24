@@ -93,7 +93,7 @@
 
 <div class="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
     @foreach ([
-        ['Courses', $progress->count(), 'route' => 'courses.index'],
+        ['Courses', $courseCount, 'route' => 'courses.index'],
         ['Certificates', $certificates->count(), 'route' => 'certificates.index'],
         ['Badges', $badgeCount, 'route' => 'badges.cabinet'],
         ['Unread', $unread, 'route' => 'notifications.index'],

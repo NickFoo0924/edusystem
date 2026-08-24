@@ -1,3 +1,14 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/*
+ * Edge draws its own reveal control inside password fields, which sat next to
+ * the one this project provides and showed the reader two eyes. Ours stays,
+ * because it is the one that is labelled, keyboard reachable and consistent
+ * across browsers.
+ */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+    display: none;
+}

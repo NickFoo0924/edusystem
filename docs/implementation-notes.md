@@ -1,7 +1,8 @@
-# Project documents
+# Implementation notes
 
-The source documents LearnSync was built from, versioned alongside the code so the
-specification and the implementation can never drift apart in the repository.
+How the specification maps onto the delivered system: where each section is implemented, where
+the schema departs from Section 3, and what remains outstanding. The source documents are kept
+alongside it so specification and implementation cannot drift apart.
 
 These are **reference copies**. They are not read at runtime and nothing in `app/` depends on
 them.
@@ -146,7 +147,7 @@ through `Notifier::send()`, so preferences are applied in one place rather than 
 
 ## Known gaps
 
-Honest accounting of what is not finished, as of the current commit.
+What is not finished, and why.
 
 - **Email OTP two-factor** — `OtpCode` works and is tested (hashed, single-use, expiring) but is
   **not wired into the login flow**; there is no challenge screen. Marked `[STRETCH]` in Section 3.
@@ -163,22 +164,3 @@ Honest accounting of what is not finished, as of the current commit.
 - **The multiple-answer selection count is enforced in the browser**, not the request. The server
   grades whatever arrives rather than rejecting it, so bypassing the form scores accordingly
   instead of erroring — fair, but not the same as a server-side constraint.
-
-## Corrections made during the build
-
-Two defects in the credentialing logic only became visible once fifty students with varied
-histories existed, and both are worth knowing about because the first version looked plausible:
-
-- `quizzesPassedIn()` used `certificate.pass_threshold` (80) to decide whether a **quiz** had been
-  passed, so on a four-question quiz, three correct out of four was recorded as a failure. Passing
-  a quiz is the academic pass mark; earning a certificate is 80% of overall progress. They are
-  different bars and are now separated.
-- `issueIfEligible()` certified on `completion_percentage` alone, which measures engagement rather
-  than achievement. A diligent student who understood little reached the threshold on
-  participation and was issued a certificate carrying a **39.67% average**. Completion and a
-  passing mark are now both required, so no credential can attest to a failing grade.
-
-A third was a build-configuration fault rather than logic: Tailwind was only scanning
-`resources/views`, so class names decided in PHP were purged. `GradeScale::classesFor()` returns
-`bg-orange-100` for a D, that class was absent from the compiled stylesheet, and D-grade badges had
-been rendering with no background. `./app/**/*.php` is now in the content paths.

@@ -7,8 +7,8 @@ Source: the nine chapter decks in `chapter_syllabus/`, plus the OWASP Secure Cod
 reference that Chapter 2 is built on.
 
 A coursework project is not required to demonstrate every chapter, and forcing it produces
-contrived code. Where a topic genuinely does not apply, that is recorded as such rather than
-answered with an invented feature.
+contrived code. Where a topic does not apply, that is recorded as such rather than answered with
+an invented feature.
 
 ---
 
@@ -46,7 +46,7 @@ answered with an invented feature.
 | **Error handling & logging** | `activity_logs` records actor, target, IP and user agent for security-relevant actions; admin can filter and export | Fully |
 | **Database security** | Eloquent everywhere — zero `DB::raw`, `DB::select`, `DB::statement` or `DB::table` in `app/`. Queries are parameter-bound by the ORM, which is the chapter's SQL-injection defence | Fully |
 | **File management** | Uploads constrained by extension and size; stored under `storage/app/public` and served through a symlink rather than from the web root | Fully |
-| **CSRF** | Laravel's token on every form; verified in this session by submitting a stale form and watching it refused | Fully |
+| **CSRF** | Laravel's token on every form; a form submitted after its session changed is refused | Fully |
 | **XSS** | Blade auto-escaping, as above | Fully |
 | **SQL injection** | Eloquent parameter binding, as above | Fully |
 | **XML: encoding, structure, DTD, CDATA** | Nothing. No XML is produced or consumed anywhere | Not at all |
@@ -97,7 +97,7 @@ route.
 
 If it must be covered, the least contrived option is an XML export of the activity log alongside
 the existing CSV export, since the log is already tabular and already exports. Still, this is
-box-ticking, and I would not do it unless the marking scheme explicitly demands XML.
+box-ticking, and is not worth doing unless the marking scheme explicitly demands XML.
 
 ### 3.3 Legitimately out of scope
 

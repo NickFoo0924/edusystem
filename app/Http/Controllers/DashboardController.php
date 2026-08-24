@@ -57,6 +57,13 @@ class DashboardController extends Controller
         return view('dashboard.student', [
             'progress' => $progress,
             'chart' => $chart,
+            /*
+             * Enrolments, not progress rows. The tile used to count $progress,
+             * which only gains a row once something has been graded -- so a
+             * student enrolled in five courses who had not yet been marked saw
+             * "Courses 0" while the Courses page listed all five.
+             */
+            'courseCount' => $user->courses()->count(),
             'outstanding' => $this->outstandingWork($user),
             'certificates' => Certificate::with(['course', 'learningPath'])
                 ->where('student_id', $user->id)->whereNull('revoked_at')->latest('issued_at')->get(),
