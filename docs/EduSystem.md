@@ -41,7 +41,20 @@ The system's differentiating concept is **credentialing**: like Cisco Networking
 ---
 
 ## 2. The 5 Modules & Design Patterns Breakdown
-**AI INSTRUCTION: When asked to code a specific module, you MUST incorporate the assigned Design Pattern into the Laravel architecture (e.g., create an `app/Patterns/` directory).**
+
+Five modules, one owner each, and exactly one GoF design pattern per module. Every pattern lives in
+`app/Patterns/`; no pattern logic sits inside a controller.
+
+| # | Module | Owner | Pattern | Category | Where the pattern lives |
+|---|---|---|---|---|---|
+| 1 | Identity, Access & Digital Credentialing | Serena Lim Sze Kee | **Singleton** | Creational | `app/Patterns/Singleton/CredentialAuthority.php` |
+| 2 | Academic Resources Repository | Foo Chong Xian | **Adapter** | Structural | `app/Patterns/Adapter/` |
+| 3 | Student Forum & Notifications | Ong Shun Yan | **Observer** | Behavioural | `app/Patterns/Observer/SystemNotificationObserver.php` |
+| 4 | Skill Assessment & Quiz | Wong Siew Lam | **Strategy** | Behavioural | `app/Patterns/Strategy/` |
+| 5 | Academic Progress Analytics | Ong Kwong Wei | **State** | Behavioural | `app/Patterns/State/` |
+
+Each module below follows the same shape: who owns it, which entities it writes to, what it does
+broken into numbered areas, and the pattern with the justification to use in the report.
 
 ### Module 1: Identity, Access & Digital Credentialing
 *   **Owner:** Serena Lim Sze Kee
@@ -91,33 +104,139 @@ The class exposes: `issueCertificate(Student, Course)`, `issuePathwayCertificate
 
 ---
 
-### Module 2: Academic Resources Repository Module
+### Module 2: Academic Resources Repository
 *   **Owner:** Foo Chong Xian
-*   **Entities Managed:** Course, CourseMaterial, Announcement.
-*   **Functions:** Manages the `Course` hub. Instructors upload `CourseMaterial` (Lecture Notes, Tutorials, Practicals) and broadcast `Announcements`. Students browse resources for courses they are enrolled in.
+*   **Entities Managed:** Course, CourseMaterial, Announcement, AnnouncementComment, CourseInvitation, CourseEvent.
 *   **Assigned Pattern:** **Adapter Pattern (Structural)**
-    *   *Implementation:* Instructors can upload standard internal files (PDFs) OR link to external resources (e.g., YouTube video links). Create an `ExternalResourceAdapter` that wraps external links into a standard `DisplayableMaterial` interface so the Blade view displays both uniformly.
 
-### Module 3: Student Forum & Notification System
+#### 2.1 The course hub
+*   A `Course` is identified by its code as much as its title, e.g. `BMIT3173`, and belongs to one instructor.
+*   The course page gathers everything in one place: materials, quizzes, assignments, announcements and a link to the forum.
+*   Students see a **suggested plan** — the same content ordered as a sequence to work through: read the notes, work the tutorial, complete the practical, attempt the quiz, submit the assignment. Only the assessed steps report completion, because the system cannot observe whether notes were read.
+
+#### 2.2 Enrolment is the instructor's decision
+*   There is no browsable catalogue and no self-service enrolment. A course reaches a student in exactly two ways, and if neither has happened the course does not appear to them at all.
+*   **Invitation** — the instructor names a student, who accepts it from their Courses page.
+*   **Class code** — six random characters the instructor hands out, distinct from the public course code. Holding it is itself the evidence the instructor meant you to join. The instructor can issue a new one, which revokes the old.
+
+#### 2.3 Materials
+*   Filed under four fixed headings: Lecture notes, Tutorial question, Practical question, Others. Every heading always appears with a count, so an empty section is visibly empty rather than absent.
+*   A material is either an uploaded file or a link to something outside the system.
+
+#### 2.4 Announcements and their discussion
+*   An instructor addresses a course; an administrator may broadcast to everyone.
+*   Each announcement carries a comment thread so a question about a notice stays attached to it. Collapsed by default.
+
+#### 2.5 The calendar
+*   Scheduled classes and online meetings, alongside assignment deadlines.
+*   Deadlines are **not** copied into the calendar. They already exist as `assignments.due_date`, and a copy would disagree with it the moment an instructor moved one.
+
+#### Design Pattern Implementation — Adapter
+Create `app/Patterns/Adapter/`.
+
+**Justification (use this wording in the report):** An instructor may attach an uploaded PDF or a
+link to something outside the system. The two have nothing in common — one is a file on disk with a
+size and a MIME type, the other is a URL on somebody else's server. Each is wrapped in an adapter
+exposing one `DisplayableMaterial` interface, so the Blade view iterates a single list and calls the
+same methods on every item, with no `is_external` branching in the template.
+
+The same pattern is applied a second time by the calendar. A scheduled event and an assignment
+deadline are equally mismatched — one has a duration and a room, the other is a bare date meaning
+"by" rather than "at" — and both are presented through one `CalendarEntry` interface.
+
+### Module 3: Student Forum & Notifications
 *   **Owner:** Ong Shun Yan
-*   **Entities Managed:** DiscussionForum, Post, Reply.
-*   **Functions:** A course-specific Q&A Discussion Forum. When a student posts a question or reply, the system utilizes an API-driven notification service to alert the relevant instructor or student.
-*   **Assigned Pattern:** **Observer Pattern (Behavioral)**
-    *   *Implementation:* The `Post` entity is the *Subject*. Create a `SystemNotificationObserver` as the *Observer*. When a Post is saved (`notify()`), the observer automatically triggers to write an alert to the `notifications` table for the target user.
+*   **Entities Managed:** DiscussionForum, Post, Reply. Produces rows in `notifications`, which Module 1 owns.
+*   **Assigned Pattern:** **Observer Pattern (Behavioural)**
+
+#### 3.1 The course forum
+*   Every course has exactly one Q&A forum, created with the course so it is never without somewhere to ask.
+*   Laid out as a conversation: questions, replies indented beneath them, instructor messages marked.
+*   Administrators are deliberately excluded from posting (Section 7). They run the class; they are not in it.
+
+#### 3.2 Tagging
+*   Typing `@name` in a post or reply notifies that person, student or instructor.
+*   Candidates come from the course itself, so a mention cannot reach somebody outside the conversation.
+*   A handle claimed by more than one person resolves to nobody, which is quieter than guessing and notifying the wrong one.
+
+#### 3.3 What produces a notification
+*   A new question — the course instructor is told.
+*   A reply — whoever asked is told.
+*   A mention — the person named is told, and only once, so tagging the instructor in a new question does not produce two notifications.
+*   A comment under an announcement — its author is told.
+
+#### 3.4 Reminders
+*   A class or meeting about to start, a deadline approaching, a deadline that has closed with work waiting to be marked.
+*   These are **not** the Observer, and the report should not claim they are: the Observer fires when a model is saved, and nothing is saved when a deadline approaches. They are a scheduled producer feeding the same inbox through the same sender.
+
+#### Design Pattern Implementation — Observer
+Create `app/Patterns/Observer/SystemNotificationObserver.php`.
+
+**Justification (use this wording in the report):** The `Post` is the Subject and the observer is the
+Observer; Eloquent's model-observer mechanism is the `notify()` call, since saving a Post broadcasts
+a `created` event and every registered observer runs automatically. The point is that `Post` knows
+nothing about notifications. Module 3 produces the events, Module 1 owns the inbox that displays
+them, and neither has to import the other — a second observer, an email digest say, could be added
+without touching the forum code at all.
+
+Three subjects now share the one observer: Post, Reply and AnnouncementComment.
 
 ### Module 4: Skill Assessment & Quiz
 *   **Owner:** Wong Siew Lam
-*   **Entities Managed:** Quiz, Question, Answer.
-*   **Functions:** Instructors create `Quizzes` with dynamic `Questions` (Multiple Choice or Fill-in-the-blank). The system automatically evaluates student answers using an automated grading engine.
-*   **Assigned Pattern:** **Strategy Pattern (Behavioral)**
-    *   *Implementation:* Create a `GradingStrategy` interface. Implement `MCQGradingStrategy` (checks specific correct answer choices) and `TextMatchGradingStrategy` (checks string similarity for fill-in-the-blanks). The controller swaps strategies dynamically based on the question type.
+*   **Entities Managed:** Quiz, Question, Answer, QuizAttemptAnswer.
+*   **Assigned Pattern:** **Strategy Pattern (Behavioural)**
+
+#### 4.1 Building a quiz
+*   An instructor creates a quiz on their own course and defines its questions and answer options.
+*   A quiz carries a time limit.
+
+#### 4.2 The three question types
+*   **One answer** — a single correct option.
+*   **Several answers** — more than one option must be selected, and all of them. How many is derived from the number of options flagged correct rather than stored, since a question claiming "choose 3" while holding two correct answers would be unanswerable.
+*   **Fill in the blank** — a typed response, matched on similarity rather than equality, so a near-miss spelling is still accepted.
+
+#### 4.3 Marking
+*   An attempt records what the student actually answered, question by question, so it can be graded and later reviewed.
+*   Marking happens the moment the attempt is submitted; the resulting mark becomes a `Grade`, which is Module 5's to write.
+
+#### Design Pattern Implementation — Strategy
+Create `app/Patterns/Strategy/`.
+
+**Justification (use this wording in the report):** Each question type is marked by a completely
+different algorithm — exact match against the option flagged correct, set comparison across several
+options, or string similarity for a typed answer. Each is a `GradingStrategy`, and the controller
+never asks what type a question is: it asks a resolver for the right strategy and calls `grade()`.
+Adding the multiple-answer type required no change to the controller at all, which is the claim the
+pattern makes.
 
 ### Module 5: Academic Progress Analytics & Dashboard
 *   **Owner:** Ong Kwong Wei
-*   **Entities Managed:** Assignment, Submission, QuizAttempt, Grade.
-*   **Functions:** Manages the evaluation and grading lifecycle. Handles file-based `Assignments` and student `Submissions`. It captures `QuizAttempts` and processes marks into an authoritative `Grade` record.
-*   **Assigned Pattern:** **State Pattern (Behavioral)**
-    *   *Implementation:* A `Submission` goes through states: `DraftState` (student can edit/re-upload), `SubmittedState` (locked from edits, waiting for review), and `GradedState` (grade generated). The state object dictates whether the `updateFile()` or `assignGrade()` methods are allowed.
+*   **Entities Managed:** Assignment, Submission, QuizAttempt, Grade. Sole writer of `grades`.
+*   **Assigned Pattern:** **State Pattern (Behavioural)**
+
+#### 5.1 Assignments and submissions
+*   An instructor sets an assignment with a brief and a due date, and decides whether late work is accepted.
+*   A student uploads a file, may replace it while it is still a draft, and submits it when ready.
+*   One submission per student per assignment, enforced by the schema.
+
+#### 5.2 Marking
+*   The instructor's dashboard carries a review queue of everything handed in and not yet marked.
+*   Assigning a mark writes a `Grade`, which is the event the whole credentialing chain hangs from (Section 4, Step 5).
+
+#### 5.3 Cohort analytics
+*   Per course: class average, highest, lowest, how many passed, the grade distribution, and submission turnaround.
+*   A completion-trend chart drawn through an XML pipeline — the figures are serialised with `DOMDocument`, validated against an XSD, and transformed into SVG by an XSLT stylesheet. The same document is downloadable as a data export.
+*   This is the **instructor and administrator** view. A student's own progress towards their next certificate belongs to Module 1 (Section 2A).
+
+#### Design Pattern Implementation — State
+Create `app/Patterns/State/`.
+
+**Justification (use this wording in the report):** A submission behaves differently depending on
+where it is in its life. In `DraftState` the file can be replaced; in `SubmittedState` it is locked
+and waiting; in `GradedState` a mark exists. Rather than the controller testing a status column
+before every action, the submission holds a state object and asks it — the state decides whether
+`updateFile()` or `assignGrade()` is legal, and an illegal transition is refused by the object
+itself rather than by a conditional somewhere in a controller.
 
 ---
 
