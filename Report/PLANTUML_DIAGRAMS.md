@@ -43,7 +43,7 @@ The diagrams below use the **correct** names.
 
 ## Figure 3.1, entity class diagram
 
-```plantuml
+```text
 @startuml Member1_EntityClasses
 title Module 1: Identity, Access and Digital Credentialing\nEntity Class Diagram
 
@@ -205,7 +205,7 @@ StudentProgress "0..*" -- "1" Course : course >
 Badge "0..*" -- "0..1" Course : course >
 Badge "0..*" -- "0..1" CertificateTemplate : certificateTemplate >
 
-LearningPath "0..*" -- "1..*" Course : courses >\n{ordered}
+LearningPath "0..*" -- "1..*" Course : courses (ordered) >
 LearningPath "0..*" -- "0..1" CertificateTemplate : certificateTemplate >
 
 Permission "1" -- "0..*" PermissionRole : permissionRoles >
@@ -228,7 +228,7 @@ end note
 
 ## Figure 4.1, Facade class diagram
 
-```plantuml
+```text
 @startuml Member1_FacadePattern
 title Module 1: Facade Pattern\nCredentialAuthority and its subsystem
 
@@ -329,7 +329,7 @@ end note
 
 ## Figure 3.1, entity class diagram
 
-```plantuml
+```text
 @startuml Member2_EntityClasses
 title Module 2: Academic Resources Repository\nEntity Class Diagram
 
@@ -448,7 +448,7 @@ end note
 
 ## Figure 4.1, Adapter class diagram (both uses)
 
-```plantuml
+```text
 @startuml Member2_AdapterPattern
 title Module 2: Adapter Pattern\nApplied twice, to two mismatched pairs
 
@@ -582,7 +582,7 @@ end note
 
 ## Figure 3.1, entity class diagram
 
-```plantuml
+```text
 @startuml Member3_EntityClasses
 title Module 3: Student Forum and Notifications\nEntity Class Diagram
 
@@ -666,7 +666,7 @@ end note
 
 ## Figure 4.1, Observer class diagram (seven subjects)
 
-```plantuml
+```text
 @startuml Member3_ObserverPattern
 title Module 3: Observer Pattern\nSeven subjects, one observer, none of them knows it exists
 
@@ -765,7 +765,7 @@ end note
 
 ## Figure 3.1, entity class diagram
 
-```plantuml
+```text
 @startuml Member4_EntityClasses
 title Module 4: Skill Assessment and Quiz\nEntity Class Diagram
 
@@ -856,7 +856,7 @@ end note
 
 ## Figure 4.1, Strategy class diagram
 
-```plantuml
+```text
 @startuml Member4_StrategyPattern
 title Module 4: Strategy Pattern\nThree question types, three unrelated algorithms
 
@@ -946,7 +946,7 @@ end note
 
 ## Figure 3.1, entity class diagram
 
-```plantuml
+```text
 @startuml Member5_EntityClasses
 title Module 5: Academic Progress Analytics and Evaluation\nEntity Class Diagram
 
@@ -1039,7 +1039,7 @@ end note
 
 ## Figure 4.1, State class diagram
 
-```plantuml
+```text
 @startuml Member5_StatePattern
 title Module 5: State Pattern\nA submission behaves differently depending on where it is in its life
 
