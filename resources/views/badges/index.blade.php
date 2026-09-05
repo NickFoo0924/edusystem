@@ -13,8 +13,11 @@
             engine evaluates whatever is active here, through one path for both kinds of award.
         </p>
     </div>
+    {{-- shrink-0 and whitespace-nowrap together: the description beside this
+         is long enough to squeeze the button until "New rule" wrapped onto two
+         lines. --}}
     <a href="{{ route('badges.create') }}"
-       class="rounded-lg bg-blue-700 px-4 py-2 text-sm font-medium text-white hover:bg-blue-800">
+       class="shrink-0 whitespace-nowrap rounded-lg bg-blue-700 px-4 py-2 text-sm font-medium text-white hover:bg-blue-800">
         New rule
     </a>
 </div>
