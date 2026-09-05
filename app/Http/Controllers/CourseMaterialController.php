@@ -17,6 +17,24 @@ use Illuminate\View\View;
  */
 class CourseMaterialController extends Controller
 {
+    /**
+     * File types a lecturer may upload as course material.
+     *
+     * An allow-list, never a block-list. A block-list has to anticipate every
+     * dangerous extension, and it only takes one that was forgotten (.phtml,
+     * .phar, .htaccess) for the defence to fail. An allow-list fails the other
+     * way: something new is refused until it is deliberately added.
+     */
+    private const ALLOWED_UPLOAD_TYPES = [
+        'pdf',
+        'doc', 'docx',
+        'ppt', 'pptx',
+        'xls', 'xlsx', 'csv',
+        'txt', 'md',
+        'png', 'jpg', 'jpeg', 'gif', 'webp',
+        'zip',
+    ];
+
     public function create(Request $request, Course $course): View
     {
         $this->authoriseInstructor($request, $course);
@@ -32,11 +50,42 @@ class CourseMaterialController extends Controller
             'title' => ['required', 'string', 'max:255'],
             'type' => ['required', 'in:'.implode(',', array_keys(CourseMaterial::CATEGORIES))],
             'source' => ['required', 'in:file,link'],
-            'file' => ['required_if:source,file', 'file', 'max:20480'],
-            'url' => ['required_if:source,link', 'nullable', 'url', 'max:255'],
+            /*
+             * SECURITY (Module 2): the allow-list is the whole defence here.
+             *
+             * An uploaded material is written to the `public` disk, which is
+             * symlinked into the web root so a student can open it directly.
+             * Anything landing there is reachable at a URL, and under Apache a
+             * file ending .php at a reachable URL is EXECUTED rather than
+             * downloaded. Without this rule a lecturer account could upload
+             * shell.php and run arbitrary code on the server.
+             *
+             * `mimes:` checks the extension against the file's real MIME type,
+             * so renaming shell.php to shell.pdf does not get past it either.
+             * The list is teaching formats only: documents, slides,
+             * spreadsheets, images and archives. Nothing on it is executable.
+             */
+            'file' => [
+                'required_if:source,file',
+                'file',
+                'max:20480',
+                'mimes:'.implode(',', self::ALLOWED_UPLOAD_TYPES),
+            ],
+            'url' => [
+                'required_if:source,link',
+                'nullable',
+                'url',
+                'max:255',
+                // SECURITY (Module 2): only http(s). A javascript: or data:
+                // URL saved here would become a scripted link rendered as an
+                // ordinary course material for every student on the course.
+                'starts_with:http://,https://',
+            ],
         ], [
             'file.required_if' => 'Choose a file to upload.',
+            'file.mimes' => 'That file type is not allowed. Upload a document, slide deck, spreadsheet, image or zip archive.',
             'url.required_if' => 'Enter the address of the external resource.',
+            'url.starts_with' => 'The address must begin with http:// or https://.',
         ]);
 
         $isExternal = $data['source'] === 'link';
