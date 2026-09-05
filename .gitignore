@@ -27,3 +27,6 @@ Thumbs.db
 # is written against these chapters, but not published: they are TARUMT's
 # teaching PDFs rather than this project's work.
 /chapter_syllabus
+
+# Word lock files, created while a .docx is open
+~$*
