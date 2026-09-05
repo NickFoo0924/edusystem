@@ -1,495 +1,573 @@
-# BMIT3173 Integrative Programming — Assignment 202605
+# BMIT3173 Integrative Programming
 
-**Student Name:** Serena Lim Sze Kee
-**Student ID:** _[fill in]_
-**Programme:** _[fill in]_
-**Tutorial Group:** _[fill in]_
-**System Title:** LearnSync — Integrated Educational Resource and Collaborative Learning Portal
-**Chosen SDG:** SDG 4 — Quality Education
-**Modules:** Module 1 — Identity, Access & Digital Credentialing
+## ASSIGNMENT 202605
+
+**Student Name** : Serena Lim Sze Kee
+**Student ID** : _[fill in]_
+**Programme** : Bachelor of Information Technology (Honours) in _[fill in]_
+**Tutorial Group** : _[fill in]_
+**System Title** : LearnSync: Integrated Educational Resource and Collaborative Learning Portal
+**Chosen SDG** : SDG 4: Quality Education
+**Modules** : Module 1 — Identity, Access & Digital Credentialing Module
 
 ---
 
 ## AI Usage Disclosure Form
 
-**Declaration:** ☑ AI tools were used as declared in the table below.
+**Declaration (tick one):**
+
+☐ No AI tools were used in the preparation of this report.
+
+☑ AI tools were used as declared in the table below.
 
 | AI Tool Used (name & version) | Purpose / How It Was Used | Report Section(s) Affected |
 |---|---|---|
-| Anthropic Claude (Opus 5) | Drafting and structuring of report prose from the delivered codebase | 1, 2, 3, 4, 5, 6 |
-| Anthropic Claude (Opus 5) | Refactoring the Module 1 design pattern from Singleton to Facade, and generating the subsystem classes | 4 |
-| Anthropic Claude (Opus 5) | Explaining design-pattern concepts and secure-coding techniques | 4.1, 5.2 |
+| Anthropic Claude (Opus 5) | Drafting and structuring report text from the finished code | 1, 2, 3, 4, 5, 6 |
+| Anthropic Claude (Opus 5) | Changing the Module 1 design pattern from Singleton to Facade, and writing the subsystem classes | 4 |
+| Anthropic Claude (Opus 5) | Explaining design pattern ideas and secure coding methods | 4.1, 5.2 |
 
-> **⚠ Read before submitting.** This assignment is classified **YELLOW (Limited AI)**. The policy
-> prohibits AI from *"producing core arguments or analysis, including the design-pattern
-> justification, threat analysis, and secure-coding rationale"* and from *"generating the PHP code,
-> design-pattern implementation … or web-service code being assessed."* The table above discloses
-> that honestly. **The strongest thing you can do is rewrite Sections 4.2, 5.1 and 5.2 in your own
-> words** — the underlying facts are all true of your code, so restating the reasoning yourself is
-> genuinely achievable and moves those sections back inside the Yellow conditions. The lecturer may
-> ask you to explain or demonstrate any part.
+*If no AI tools were used, tick "No AI tools used". Non-disclosure breaches the AI Policy.*
+
+I declare this Form is true and complete and that my AI use complied with the AI Policy and the Yellow conditions above.
 
 **Sign:** ______________________  **Date:** ______________
 
+> **[IMPORTANT] Please read before you submit.** This assignment is YELLOW (Limited AI). The policy does not allow AI to write *"the design-pattern justification, threat analysis, and secure-coding rationale"*. That means sections **4.3, 5.1 and 5.2**. You should **rewrite those three sections in your own words**. Everything in them is true about your code, so you only need to say the same things your own way. In the sample report you shared, the student declared only Grammarly for grammar checking.
+
 ---
 
-## 1. Introduction to the System
+## Table of Contents
 
-LearnSync is a Learning Management System built on Laravel 12 and PHP 8.2. Instructors publish
-course materials, set quizzes and assignments, and mark submitted work; students study the
-materials, sit assessments, track their progress, and take part in course discussion forums. What
-distinguishes LearnSync from a conventional LMS is **verifiable digital credentialing**: completing
-a course issues the student a certificate carrying a globally unique credential ID and a QR code
-that **any third party can verify publicly, without an account and at no cost**.
-
-### The Sustainable Development Goal
-
-The system addresses **SDG 4: Quality Education**, which aims to *"ensure inclusive and equitable
-quality education and promote lifelong learning opportunities for all"* (United Nations, 2015).
-Two of its targets are directly relevant: **Target 4.3**, on equal access to affordable technical
-and tertiary education, and **Target 4.4**, on increasing the number of people with relevant skills
-for employment and decent work.
-
-### How the system contributes
-
-A qualification is only useful if it can be trusted by somebody who was not there when it was
-earned. Conventional certificates are a PDF that can be edited in a word processor; verifying one
-means contacting the institution and waiting.
-
-LearnSync closes that gap. Every credential it issues carries:
-
-- a unique, human-readable credential ID in the format `LS-{YEAR}-{8-CHARACTER BASE32}`, for example
-  `LS-2026-A7F3D9K2`;
-- a **SHA-256 integrity hash** computed over the credential's own contents, recomputed on every
-  verification, so altering the underlying record is detected and reported;
-- a **QR code** printed on the PDF, which resolves to the public verification page.
-
-**Target users and beneficiaries:**
-
-| Beneficiary | Contribution |
+| Section | Page |
 |---|---|
-| **Students** | Earn credentials that a third party can independently confirm, at no cost |
-| **Instructors** | Publish materials and assess work without administering credential issuance manually |
-| **Administrators** | Configure award rules, permissions and progress weightings as data rather than code |
-| **Employers and external verifiers** | Confirm a qualification in seconds, with **no account required**, by visiting `/verify/{credential_id}` or scanning the QR code |
+| **1. Introduction to the System** | 4 |
+| &nbsp;&nbsp;&nbsp;&nbsp;1.1 System Overview | 4 |
+| &nbsp;&nbsp;&nbsp;&nbsp;1.2 Chosen Sustainable Development Goal (SDG) | 5 |
+| &nbsp;&nbsp;&nbsp;&nbsp;1.3 System Contribution to SDG 4 & Scope | 6 |
+| **2. Module Description** | 7 |
+| &nbsp;&nbsp;&nbsp;&nbsp;2.1 Scope of Module 1: Identity, Access & Digital Credentialing | 7 |
+| &nbsp;&nbsp;&nbsp;&nbsp;2.2 Functional Breakdown & Class Paths | 8 |
+| **3. Entity Classes** | 14 |
+| &nbsp;&nbsp;&nbsp;&nbsp;3.1 Entity Class Diagram | 14 |
+| &nbsp;&nbsp;&nbsp;&nbsp;3.2 Entity Class Implementation (Eloquent ORM Mapping) | 15 |
+| **4. Design Pattern** | 17 |
+| &nbsp;&nbsp;&nbsp;&nbsp;4.1 Description of Design Pattern: Facade Pattern (GoF Structural) | 17 |
+| &nbsp;&nbsp;&nbsp;&nbsp;4.2 Implementation of Design Pattern | 19 |
+| &nbsp;&nbsp;&nbsp;&nbsp;4.3 Justification of Design Pattern | 24 |
+| **5. Software Security** | 25 |
+| &nbsp;&nbsp;&nbsp;&nbsp;5.1 Potential Threats and Attacks | 25 |
+| &nbsp;&nbsp;&nbsp;&nbsp;5.2 Secure Coding Practices & Implementation | 26 |
+| **6. Web Services** | 28 |
+| &nbsp;&nbsp;&nbsp;&nbsp;6.1 Web Service Exposure | 28 |
+| &nbsp;&nbsp;&nbsp;&nbsp;6.2 Web Service Consumption | 31 |
+| **7. References** | 34 |
+| **8. Appendices** | 35 |
+| &nbsp;&nbsp;&nbsp;&nbsp;Appendix A: Automated Testing Results | 35 |
+| &nbsp;&nbsp;&nbsp;&nbsp;Appendix B: GitHub Repository URL | 37 |
 
-The scope of the contribution is deliberately bounded. LearnSync does not attempt to replace formal
-accreditation; it makes the credentials a course already issues **independently checkable**, which
-removes the verification cost that discourages small employers from confirming qualifications at
-all.
+> **[IMPORTANT]** These page numbers are only estimates. In Word, delete this table and use **References > Table of Contents > Automatic Table**. Word will read the headings and fill in the correct page numbers by itself.
 
 ---
 
-## 2. Module Description
+# 1. Introduction to the System
 
-**Module 1 — Identity, Access & Digital Credentialing** owns who may enter the system, what each
-role may do once inside, and the credentials a student earns on the way out. It is the module every
-other module depends on for authorisation, and the one that turns Module 5's grades into something
-externally meaningful.
+## 1.1 System Overview
 
-The module is presented below by function.
+**LearnSync** is a web-based Learning Management System (LMS). Lecturers use it to upload notes, set quizzes, give assignments and mark student work. Students use it to study the notes, sit the quizzes, hand in assignments, watch their progress, and ask questions in a course forum.
 
-### 2.1 Invitation-based registration
+The problem LearnSync solves is about **proof**. In most systems, the certificate a student earns is just a PDF file. Anyone can open that PDF in a word processor and change the marks. If an employer wants to check whether a certificate is real, they must email the college and wait days for a reply. Most employers do not bother.
 
-Public self-registration is **disabled**. Visiting `/register` returns HTTP 404. An account exists
-only when an administrator issues an `Invitation` carrying the recipient's email, their intended
-role, an expiring token, and the issuing administrator's id. The recipient registers solely through
-that tokenised link.
+LearnSync fixes this. Every certificate it creates has:
 
-The controller refuses a token that is unknown, already redeemed, expired, or whose email address
-already has an account. The role is taken **from the invitation**, never from the registration form,
-so a recipient cannot promote themselves by tampering with the submitted data.
+- a **unique ID** printed on it, such as `LS-2026-A7F3D9K2`;
+- a **QR code** that anyone can scan with a phone;
+- a hidden **security code (a hash)** that proves nobody has changed the record.
 
-- **Class path:** `app/Http/Controllers/Auth/InvitedRegistrationController.php`
-- **Model:** `app/Models/Invitation.php`
-- **Views:** `resources/views/invitations/index.blade.php`, `resources/views/auth/register-invited.blade.php`
+Anyone can check a certificate in a few seconds, for free, without needing an account.
 
-> **📷 Screenshot 1** — the Invitations screen showing an issued invitation and its tokenised link.
-> *Class path: `resources/views/invitations/index.blade.php`*
->
-> **📷 Screenshot 2** — the invited-registration form, showing the role fixed by the invitation.
-> *Class path: `resources/views/auth/register-invited.blade.php`*
+## 1.2 Chosen Sustainable Development Goal (SDG)
 
-### 2.2 Database-driven permission matrix (RBAC)
+LearnSync is built around **United Nations Sustainable Development Goal 4: Quality Education (SDG 4)**.
 
-The role-based access control rules are **rows in the database**, not hardcoded conditionals. The
-system currently holds **35 permission keys** across eight groups: Course Management, User & Access
-Management, System Configuration, Assessment, Forum, Credentialing, Progress and Profile.
+**What SDG 4 aims to do:**
 
-A permission is granted to a role through the `permission_role` pivot. Code asks
-`$user->can('certificate.revoke')`, and a Laravel **Gate** registered in `AppServiceProvider`
-resolves that key against the database:
+SDG 4 wants to make sure education is fair, good quality and available to everyone by 2030 (United Nations, 2015). Two of its targets matter here. **Target 4.3** is about giving everyone fair access to affordable college and university education. **Target 4.4** is about increasing the number of people who have real skills for getting a job.
+
+## 1.3 System Contribution to SDG 4 & Scope
+
+LearnSync supports SDG 4 in three ways:
+
+1. **Who benefits:** Students who earn certificates, lecturers who teach and mark the courses, administrators who control who can do what, and — most importantly — **outside people such as employers**, who can check a certificate without having an account.
+
+2. **Making checking free and instant:** Every certificate gets a unique ID and a QR code linking to a public checking page. An employer scans the code and sees the answer straight away. Today, checking a qualification takes time and effort, so many small employers simply skip it. Students without good connections are hurt the most by this. LearnSync removes that problem.
+
+3. **Proving the certificate is genuine:** Each certificate stores a security code called a **SHA-256 hash**. The system works this code out again every time someone checks the certificate. If anyone changes the record — even by editing the database directly — the two codes will not match, and the page shows **TAMPERED** instead of valid. So trust is not just assumed; it can be proven.
+
+**What the system does not do:** LearnSync does not replace official government accreditation. It only makes the certificates a college already gives out easy and instant to check.
+
+---
+
+# 2. Module Description
+
+## 2.1 Scope of Module 1: Identity, Access & Digital Credentialing
+
+I am the developer in charge of **Module 1 (Identity, Access & Digital Credentialing Module)**. I designed and built the following parts of LearnSync:
+
+- creating user accounts by invitation only;
+- a permission system stored in the database, so an admin can change who is allowed to do what without changing any code;
+- account controls such as locking, unlocking and forcing password changes;
+- a security log that records every important action;
+- working out each student's progress in each course and saving a history of it;
+- creating certificates, protecting them with a security code, and letting anyone check them in public;
+- an award rules engine that an admin can configure;
+- the notification inbox and each user's notification settings.
+
+## 2.2 Functional Breakdown & Class Paths
+
+### F1.1: Creating Accounts by Invitation Only
+
+- **Description:** Nobody can sign up by themselves. Going to `/register` gives a "404 Not Found" page. An account only exists after an admin sends an `Invitation`. The invitation holds the person's email, the role they will get, a secret token, and a date when it expires. The system rejects a token if it is unknown, already used, expired, or if the email already has an account. The role comes **from the invitation, not from the sign-up form**, so a user cannot make themselves an admin by changing the form data.
+- **Class Paths:**
+  - Controller: `app/Http/Controllers/Auth/InvitedRegistrationController.php` (`create`, `store`)
+  - Controller: `app/Http/Controllers/InvitationController.php` (`index`, `store`, `bulkStore`)
+  - Model: `app/Models/Invitation.php`
+  - View Template: `resources/views/auth/register-invited.blade.php`
+
+*Figure 2.1: Admin Invitation Screen Showing the Sign-Up Link*
+
+### F1.2: Permission Matrix Stored in the Database (RBAC)
+
+- **Description:** The rules about who can do what are saved in the database as **35 permission keys**, sorted into eight groups (Course Management, User & Access Management, System Configuration, Assessment, Forum, Credentialing, Progress, Profile). Each key is given to one or more roles. When the code asks `$user->can('certificate.revoke')`, Laravel checks these database tables. **There is no line of code anywhere that says "if the user is an admin".** This means an admin can tick and untick boxes on a screen, and the change works on the very next page load, with no programming needed.
+- **Class Paths:**
+  - Controller: `app/Http/Controllers/PermissionController.php` (`index`, `update`)
+  - Gate Registration: `app/Providers/AppServiceProvider.php` (`registerPermissionGate`)
+  - Models: `app/Models/Permission.php`, `app/Models/PermissionRole.php`
+  - View Template: `resources/views/permissions/index.blade.php`
+
+*Figure 2.2: Permission Matrix Screen with Tick Boxes*
+
+### F1.3: Account Controls and Login Safety
+
+- **Description:** Admins can turn accounts on and off, delete them, and unlock them. If someone gets the password wrong **five times in a row**, the account locks, and **only an admin can unlock it**. A new password cannot be the same as any of the last three. New users must change their password the first time they log in. Every dangerous action (like deleting an account) asks the admin to type **their own password** on a separate page first, so one accidental click can never change an account.
+- **Class Paths:**
+  - Controller: `app/Http/Controllers/UserController.php` (`index`, `confirm`, `perform`)
+  - Middleware: `app/Http/Middleware/EnsureAccountIsActive.php`
+  - Middleware: `app/Http/Middleware/EnsurePasswordIsChanged.php`
+  - View Templates: `resources/views/users/index.blade.php`, `resources/views/users/confirm.blade.php`
+
+*Figure 2.3: Account Management Screen and Password Confirmation Page*
+
+### F1.4: Security Log with CSV Export
+
+- **Description:** Every important action saves a row in the `activity_logs` table. Each row records **who did it, what they did, what they did it to, their IP address, and their browser**. The actions saved include `auth.login`, `auth.logout`, `auth.failed`, `invitation.issued`, `user.registered`, `certificate.issued`, `certificate.revoked` and `course.student_removed`. Instead of editing the login code, the system listens to Laravel's own login events. This means **any new login method added later is recorded automatically**.
+- **Class Paths:**
+  - Controller: `app/Http/Controllers/ActivityLogController.php` (`index`, `export`)
+  - Model: `app/Models/ActivityLog.php` (`record`)
+  - View Template: `resources/views/activity_logs/index.blade.php`
+
+*Figure 2.4: Security Log with Filters and CSV Export Button*
+
+### F1.5: Working Out Student Progress
+
+- **Description:** Progress is saved **for each student in each course**, not as one overall number. The system works it out from three things: quizzes passed, assignments handed in, and joining the course forum. The importance of each (normally quiz 50%, assignment 40%, forum 10%) is stored in a settings table, so an admin can change the balance without touching code. Every time progress is recalculated, the system saves a snapshot. These snapshots are what let the student dashboard draw a line chart of progress over time.
+- **Class Paths:**
+  - Subsystem: `app/Patterns/Facade/Subsystem/ProgressCalculator.php` (`recalculate`, `passThreshold`)
+  - Models: `app/Models/StudentProgress.php`, `app/Models/ProgressSnapshot.php`
+  - View Template: `resources/views/dashboard/student.blade.php`
+
+*Figure 2.5: Student Dashboard Progress Chart*
+
+### F1.6: Creating Certificates
+
+- **Description:** When a student finishes a course, the system makes a certificate. It creates a unique ID using letters and numbers that are **hard to mix up** — the letters I, L, O and U are removed so that `1` is never confused with `I` or `L`, and `0` is never confused with `O`. It then adds a SHA-256 security code and makes a PDF with a QR code inside it.
+
+  **Two separate tests must both pass before a certificate is given:**
+  1. the student's progress must reach the required percentage (this shows they **did the work**), and
+  2. the student's average mark must be a pass (this shows they **understood the work**).
+
+  Only checking progress was not enough. A hard-working student who understood very little could still reach 80% just by joining in. That produced certificates showing a failing average mark, which a real certificate must never do.
+- **Class Paths:**
+  - Facade: `app/Patterns/Facade/CredentialAuthority.php` (`issueCertificate`, `issuePathwayCertificate`)
+  - Subsystem: `app/Patterns/Facade/Subsystem/CredentialIdGenerator.php`
+  - Subsystem: `app/Patterns/Facade/Subsystem/CertificateRenderer.php`
+  - View Template: `resources/views/certificates/pdf.blade.php`
+
+*Figure 2.6: Certificate PDF Showing the Unique ID and QR Code*
+
+### F1.7: Public Certificate Checking and Cancelling
+
+- **Description:** Anyone can visit `/verify/{credential_id}` without logging in. The page shows one of five answers: **VALID, REVOKED, TAMPERED, EXPIRED** or **NOT FOUND**. An admin can cancel (revoke) a certificate and must give a reason. After that, the public page shows REVOKED straight away and the PDF can no longer be downloaded.
+- **Class Paths:**
+  - Controller: `app/Http/Controllers/CertificateController.php` (`verify`, `revoke`, `adminIndex`)
+  - Subsystem: `app/Patterns/Facade/Subsystem/IntegrityHasher.php` (`matches`)
+  - View Template: `resources/views/certificates/verify.blade.php`
+
+*Figure 2.7: Public Checking Page Showing VALID (Not Logged In)*
+
+*Figure 2.8: The Same Certificate Showing TAMPERED After the Mark Was Changed in the Database*
+
+### F1.8: Award Rules an Admin Can Set Up
+
+- **Description:** Badges and certificate rules are saved as data, not written into the code. Each rule has a name, description, award type (badge or certificate), tier, icon or certificate design, a condition, a number, an optional subject, and an on/off switch. There are **nine conditions** to choose from. This is on purpose **not** a place where admins write code. They simply pick a condition from a list and type a number. Because of this, no rule an admin creates can crash the system, get stuck in a loop, or read data it should not see.
+- **Class Paths:**
+  - Controller: `app/Http/Controllers/BadgeController.php` (`index`, `store`, `toggle`, `cabinet`)
+  - Subsystem: `app/Patterns/Facade/Subsystem/AwardConditionEvaluator.php` (`isSatisfied`)
+  - Subsystem: `app/Patterns/Facade/Subsystem/BadgeRuleEvaluator.php` (`evaluate`)
+  - View Templates: `resources/views/badges/index.blade.php`, `resources/views/badges/cabinet.blade.php`
+
+*Figure 2.9: Admin Award Rules Screen*
+
+*Figure 2.10: Student Trophy Cabinet Showing Earned and Locked Badges*
+
+### F1.9: Notification Inbox and Settings
+
+- **Description:** Module 1 owns the notification inbox: the bell icon with its unread count, the history page, the "mark as read" buttons, and the settings where each user can switch notification types on or off. The system checks these settings **before saving a notification**. So turning a type off stops it being created at all, rather than just hiding it.
+- **Class Paths:**
+  - Controller: `app/Http/Controllers/NotificationController.php` (`index`, `readAll`, `editPreferences`, `updatePreferences`)
+  - Models: `app/Models/Notification.php`, `app/Models/NotificationPreference.php`
+  - View Templates: `resources/views/notifications/index.blade.php`, `resources/views/notifications/preferences.blade.php`
+
+*Figure 2.11: Notification Bell with Unread Count, and the Settings Screen*
+
+---
+
+# 3. Entity Classes
+
+## 3.1 Entity Class Diagram
+
+The diagram below shows the entity classes using **object references** (one object pointing to another object) instead of database foreign keys.
+
+> **[IMPORTANT] You need to draw this diagram yourself.** An entity class diagram is **not** an ERD. Show each class as a box with its attributes, its methods, and lines connecting it to other classes with multiplicities (1, 0..*). Draw it in draw.io, Visual Paradigm or StarUML. Save it as a PNG, upload it to Google Drive, and paste both the link and the picture here — the same way the sample report did.
+
+**Diagram link:** _[paste your Google Drive link here]_
+
+*Figure 3.1: Entity Class Diagram — Module 1 Identity, Access & Digital Credentialing*
+
+Here are the classes Module 1 owns, with their attributes and the objects they point to:
+
+```
+User                                    Certificate
+- id: Integer                           - id: Integer
+- name: String                          - credentialId: String
+- email: String                         - finalScore: Double
+- schoolEmail: String                   - integrityHash: String
+- password: String                      - pdfPath: String
+- role: String                          - issuedAt: DateTime
+- isActive: Boolean                     - expiresAt: DateTime
+- failedLoginAttempts: Integer          - revokedAt: DateTime
+- lockedUntil: DateTime                 - revocationReason: String
+- mustChangePassword: Boolean           + isRevoked(): Boolean
+- lastLoginAt: DateTime                 + isValid(): Boolean
++ isAdmin(): Boolean                    -- student: User [1]
++ isInstructor(): Boolean               -- course: Course [0..1]
++ contactEmail(): String                -- learningPath: LearningPath [0..1]
+-- certificates: Certificate [0..*]     -- template: CertificateTemplate [1]
+-- badges: Badge [0..*]
+-- studentProgress: StudentProgress [0..*]
+-- notifications: Notification [0..*]
+-- activityLogs: ActivityLog [0..*]
+
+StudentProgress                         ProgressSnapshot
+- materialsViewed: Integer              - completionPercentage: Double
+- quizzesPassed: Integer                - capturedAt: DateTime
+- assignmentsSubmitted: Integer         -- progress: StudentProgress [1]
+- completionPercentage: Double
+- lastCalculatedAt: DateTime            Badge (Award Rule)
+-- student: User [1]                    - name, description: String
+-- course: Course [1]                   - awardType: String
+-- snapshots: ProgressSnapshot [0..*]   - tier: String
+                                        - criteriaType: String
+Permission          PermissionRole      - criteriaValue: Integer
+- key: String       - role: String      - isActive: Boolean
+- label: String     -- permission:      + criteriaDescription(): String
+- group: String        Permission [1]   -- course: Course [0..1]
+                                        -- students: User [0..*]
+
+Invitation                              ActivityLog
+- email, token: String                  - action: String
+- role: String                          - targetType: String
+- expiresAt: DateTime                   - targetId: Integer
+- acceptedAt: DateTime                  - ipAddress, userAgent: String
++ isExpired(): Boolean                  -- user: User [0..1]
+-- invitedBy: User [1]
+
+LearningPath            CertificateTemplate      Notification
+- title: String         - name: String           - type, message: String
+- description: String   - backgroundPath: String - link, reference: String
+- isActive: Boolean     - bodyText: String       - isRead: Boolean
+-- courses: Course[1..*]- isActive: Boolean      -- user: User [1]
+   {ordered}
+```
+
+## 3.2 Entity Class Implementation (Eloquent ORM Mapping)
+
+The classes are written in PHP using Laravel's Eloquent ORM. Relationships are written as **methods** (`belongsTo`, `hasMany`, `belongsToMany`), so the code never has to write SQL.
+
+For example, `$certificate->student` gives back a whole `User` **object**. So `$certificate->student->name` reads the student's name by following the link between objects, not by joining tables:
 
 ```php
-// app/Providers/AppServiceProvider.php
-private function registerPermissionGate(): void
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class Certificate extends Model
 {
-    Gate::before(function (User $user, string $ability) {
-        // A deactivated or locked-out account can do nothing at all.
-        if (! $user->is_active) {
-            return false;
+    protected $fillable = [
+        'student_id', 'course_id', 'learning_path_id',
+        'certificate_template_id', 'credential_id', 'final_score',
+        'integrity_hash', 'pdf_path', 'issued_at', 'expires_at',
+        'revoked_at', 'revocation_reason',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'issued_at'   => 'datetime',
+            'expires_at'  => 'datetime',
+            'revoked_at'  => 'datetime',
+            'final_score' => 'double',
+        ];
+    }
+
+    /** Object reference: a certificate belongs to one student */
+    public function student(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'student_id');
+    }
+
+    /** Object reference: a certificate may be for one course */
+    public function course(): BelongsTo
+    {
+        return $this->belongsTo(Course::class);
+    }
+
+    /** Object reference: a certificate is printed from one template */
+    public function certificateTemplate(): BelongsTo
+    {
+        return $this->belongsTo(CertificateTemplate::class);
+    }
+
+    /** The class answers questions about itself, instead of a controller */
+    public function isRevoked(): bool
+    {
+        return $this->revoked_at !== null;
+    }
+}
+```
+
+```php
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+class StudentProgress extends Model
+{
+    protected $fillable = [
+        'student_id', 'course_id', 'materials_viewed', 'quizzes_passed',
+        'assignments_submitted', 'completion_percentage', 'last_calculated_at',
+    ];
+
+    /** Object reference: progress belongs to one student */
+    public function student(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'student_id');
+    }
+
+    /** Object reference: progress is measured in one course */
+    public function course(): BelongsTo
+    {
+        return $this->belongsTo(Course::class);
+    }
+
+    /** Object reference: progress keeps many history snapshots */
+    public function snapshots(): HasMany
+    {
+        return $this->hasMany(ProgressSnapshot::class);
+    }
+}
+```
+
+---
+
+# 4. Design Pattern
+
+## 4.1 Description of Design Pattern: Facade Pattern (GoF Structural)
+
+For Module 1, I used the **Facade Design Pattern** (a Gang of Four Structural Pattern).
+
+**What the pattern means:**
+
+The Facade Pattern *"provides a unified interface to a set of interfaces in a subsystem. Facade defines a higher-level interface that makes the subsystem easier to use"* (Gamma, Helm, Johnson & Vlissides, 1994).
+
+In simple words: sometimes a job needs many different classes working together in the right order. Without a Facade, every part of the program that wants that job done must know all those classes, how to create them, and what order to call them in. That is a lot to remember, and if the classes ever change, every caller must be fixed too.
+
+A Facade is **one class that stands in front of all the others**. It offers a few simple methods that say *what you want*, not *how it is done*. The caller only talks to the Facade.
+
+**How this works in my module:**
+
+- **Facade:** `CredentialAuthority`. It offers three simple methods — `issueCertificate()`, `revoke()` and `verify()`.
+- **Subsystem:** five helper classes in `App\Patterns\Facade\Subsystem` that do the real work — `CredentialIdGenerator`, `IntegrityHasher`, `CertificateRenderer`, `ProgressCalculator` and `BadgeRuleEvaluator` (which passes condition checks to `AwardConditionEvaluator`).
+- **Callers:** `CertificateController` and the `Grade::created` event. They only know the Facade. They **never import** DomPDF, the QR code maker, the settings table or the badge rules.
+
+**How Facade is different from two similar patterns:**
+
+- **Facade does not block the subsystem.** The five helper classes can still be used directly and tested on their own. The Facade only adds an easier way in. This is different from **Proxy**, which controls access to one object.
+- **Facade creates a new, simpler interface.** This is different from **Adapter** (used by Module 2), which changes one interface into another shape without making it simpler. Adapter makes two different things look the same; Facade makes many things look like one.
+
+> **Note:** Module 1 first used the **Singleton** pattern. The assignment says *"Singleton and MVC design patterns are NOT counted as one of the chosen design patterns"*, so I changed it to Facade. Only the way the object is created changed — **every method name, every parameter and every feature stayed exactly the same**.
+
+**Diagram link:** _[paste your Google Drive link here]_
+
+*Figure 4.1: Facade Pattern Class Diagram — CredentialAuthority and Its Subsystem*
+
+```
+                  «Client»
+          CertificateController
+                     |
+                     | only knows the Facade
+                     v
+        +------------------------------------+
+        |      «Facade»                      |
+        |      CredentialAuthority           |
+        +------------------------------------+
+        | + issueCertificate(): Certificate  |
+        | + issuePathwayCertificate(): Cert  |
+        | + revoke(): Certificate            |
+        | + verify(): Array                  |
+        | + evaluateBadges(): Collection     |
+        | + recalculateProgress(): Progress  |
+        | + handleGradeRecorded(): Array     |
+        +--+------+------+-------+------+----+
+           |      |      |       |      |   passes the work to
+           v      v      v       v      v
+  +----------+ +--------+ +----------+ +---------+ +--------------+
+  |Credential| |Integrity| |Certificate| |Progress | |BadgeRule     |
+  |IdGenerator| |Hasher  | |Renderer  | |Calculator| |Evaluator    |
+  +----------+ +--------+ +----------+ +---------+ +--------------+
+  |+generate | |+hash   | |+render   | |+recalcu-| |+evaluate     |
+  |          | |+matches| |+verifica-| | late    | |              |
+  |          | |        | |tionQrCode| |+average | |              |
+  +----------+ +--------+ +----------+ +---------+ +------+-------+
+                                                          |
+                                                          v
+                                            +----------------------+
+                                            |AwardConditionEvaluator|
+                                            |+ isSatisfied(): bool  |
+                                            +----------------------+
+        THE SUBSYSTEM - 5 helper classes, 4 outside libraries
+```
+
+## 4.2 Implementation of Design Pattern
+
+### 1. Helper Class — Making the Certificate ID (`app/Patterns/Facade/Subsystem/CredentialIdGenerator.php`)
+
+```php
+namespace App\Patterns\Facade\Subsystem;
+
+use App\Models\Certificate;
+use RuntimeException;
+
+class CredentialIdGenerator
+{
+    private const CREDENTIAL_PREFIX = 'LS';
+    private const CREDENTIAL_RANDOM_LENGTH = 8;
+
+    // The letters I, L, O and U are missing on purpose, so a printed ID
+    // can never be misread (1 vs I vs L, or 0 vs O).
+    private const BASE32_ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+    private const MAX_ID_ATTEMPTS = 10;
+
+    public function generate(): string
+    {
+        for ($attempt = 0; $attempt < self::MAX_ID_ATTEMPTS; $attempt++) {
+            $candidate = sprintf('%s-%s-%s',
+                self::CREDENTIAL_PREFIX, now()->year,
+                $this->randomBase32(self::CREDENTIAL_RANDOM_LENGTH));
+
+            // Try again if this ID somehow already exists
+            if (! Certificate::where('credential_id', $candidate)->exists()) {
+                return $candidate;
+            }
         }
 
-        return $user->permissions()->contains('key', $ability) ? true : null;
-    });
+        throw new RuntimeException('Could not make a unique credential ID.');
+    }
+
+    private function randomBase32(int $length): string
+    {
+        $lastIndex = strlen(self::BASE32_ALPHABET) - 1;
+        $output = '';
+
+        for ($i = 0; $i < $length; $i++) {
+            // random_int() is the secure random function.
+            // rand() and mt_rand() can be guessed, so they are not used.
+            $output .= self::BASE32_ALPHABET[random_int(0, $lastIndex)];
+        }
+
+        return $output;
+    }
 }
 ```
 
-There is **no `if ($user->role === 'admin')` anywhere in the application**. An administrator retunes
-the entire matrix from the Permissions screen and it takes effect on the next request, with no code
-change and no redeployment.
-
-- **Class path:** `app/Http/Controllers/PermissionController.php`, `app/Providers/AppServiceProvider.php`
-- **Models:** `app/Models/Permission.php`, `app/Models/PermissionRole.php`
-- **View:** `resources/views/permissions/index.blade.php`
-
-> **📷 Screenshot 3** — the permission matrix checkbox grid.
-> *Class path: `resources/views/permissions/index.blade.php`*
-
-### 2.3 Account lifecycle and login security
-
-Administrators activate, deactivate, soft-delete and unlock accounts. Supporting controls:
-
-- **Login throttling** — five consecutive failed attempts lock the account; **only an administrator
-  can clear the lock**.
-- **Password history** — a new password may not match any of the previous three.
-- **Forced password change** on first login, enforced by middleware on every request.
-- **Confirmation gate** — every destructive account action requires the administrator to re-enter
-  *their own* password on a separate confirmation page, so no single click alters an account.
-
-- **Class path:** `app/Http/Controllers/UserController.php`
-- **Middleware:** `app/Http/Middleware/EnsureAccountIsActive.php`, `app/Http/Middleware/EnsurePasswordIsChanged.php`
-
-> **📷 Screenshot 4** — the Accounts screen and the password confirmation page.
-> *Class path: `resources/views/users/index.blade.php`, `resources/views/users/confirm.blade.php`*
-
-### 2.4 Audit trail
-
-Every security-relevant action writes an `ActivityLog` row recording the **actor, action, target,
-IP address and user agent**. Actions currently recorded include `auth.login`, `auth.logout`,
-`auth.failed`, `invitation.issued`, `user.registered`, `certificate.issued`,
-`certificate.pathway_issued`, `certificate.revoked` and `course.student_removed`.
-
-Authentication events are captured by listening to Laravel's own `Login`, `Logout` and `Failed`
-events rather than by editing the login controller, so **any future authentication path is covered
-automatically**. Administrators can filter the log and export it to CSV.
-
-- **Class path:** `app/Http/Controllers/ActivityLogController.php`, `app/Models/ActivityLog.php`
-
-> **📷 Screenshot 5** — the activity log with filters and the CSV export control.
-> *Class path: `resources/views/activity_logs/index.blade.php`*
-
-### 2.5 Progress tracking
-
-`StudentProgress` is tracked **per student per course**, never as a single global percentage.
-Completion is a weighted composite of quizzes passed, assignments submitted and forum
-participation. The weighting (quiz 50% / assignment 40% / participation 10% by default) is read from
-the `settings` table and is **administrator-configurable**, not a constant in code.
-
-Each recalculation writes a `ProgressSnapshot` row, which is what allows the student dashboard to
-render a progress-over-time line chart.
-
-- **Class path:** `app/Patterns/Facade/Subsystem/ProgressCalculator.php`
-
-> **📷 Screenshot 6** — the student dashboard progress chart.
-> *Class path: `resources/views/dashboard/student.blade.php`*
-
-### 2.6 Digital credentialing — the module's centrepiece
-
-When a student satisfies a course's completion criteria, the `CredentialAuthority` mints a
-`Certificate`:
-
-1. A globally unique credential ID, `LS-{YEAR}-{8 CHAR BASE32}`, drawn from a **Crockford Base32**
-   alphabet with I, L, O and U removed so a printed ID cannot be misread between `1/I/L` or `0/O`.
-2. A **SHA-256 integrity hash** over `student_id | course_id | score | issued_at | credential_id`.
-3. A PDF rendered from an administrator-designed template through DomPDF, with a **QR code**
-   embedded that encodes the public verification URL.
-4. An `ActivityLog` entry.
-
-**Two independent gates must both pass before issuance**, which is a deliberate design decision:
-
-- completion percentage ≥ the configured threshold (default 80%) — this measures *engagement*; and
-- the student's **average mark is a passing grade** — this measures *achievement*.
-
-Completion alone was insufficient: a diligent student who understood little could reach 80% on
-participation, which produced certificates attesting to a failing average. A verifiable credential
-must never assert that.
-
-**Public verification** — `GET /verify/{credential_id}` is unauthenticated and reports one of five
-states: `valid`, `revoked`, `tampered`, `expired`, or `not_found`. **Revocation** allows an
-administrator to withdraw a credential with a stated reason; the public page immediately reports
-`REVOKED` and the PDF download is refused.
-
-**Learning paths** — an ordered collection of courses. Completing every course in a path issues a
-higher-tier pathway certificate in addition to the individual ones.
-
-- **Class path:** `app/Patterns/Facade/CredentialAuthority.php`, `app/Http/Controllers/CertificateController.php`
-
-> **📷 Screenshot 7** — the generated certificate PDF showing the credential ID and QR code.
-> **📷 Screenshot 8** — the public verification page reporting VALID, in a logged-out browser.
-> *Class path: `resources/views/certificates/verify.blade.php`*
-> **📷 Screenshot 9** — the same page reporting TAMPERED after a score is edited directly in the database.
-
-### 2.7 Award rules engine (badges and certificates)
-
-Badges and certificate rules are **configured by an administrator, never hardcoded**. A rule row
-carries a name, description, award type (badge or certificate), tier, icon or certificate template,
-a condition type, its threshold value, an optional subject scope, and an active flag.
-
-Nine parameterised condition types are supported: `course_completion`, `path_completion`,
-`quiz_score`, `on_time_submissions`, `first_forum_post`, `login_streak`, `all_quizzes_in_course`,
-`average_score_in_course` and `quizzes_completed`.
-
-This is deliberately **not** a scripting engine. An administrator selects a condition and fills in
-its number; they never write an expression. That trade-off is intentional: no rule an administrator
-can create is able to error, loop, or read data they should not see.
-
-The student profile renders a **trophy cabinet** — earned badges in colour, unearned badges greyed
-out with the condition that would unlock them.
-
-- **Class path:** `app/Patterns/Facade/Subsystem/AwardConditionEvaluator.php`, `app/Http/Controllers/BadgeController.php`
-
-> **📷 Screenshot 10** — the Award Rules admin screen.
-> **📷 Screenshot 11** — the student trophy cabinet with earned and locked badges.
-> *Class path: `resources/views/badges/cabinet.blade.php`*
-
-### 2.8 Notification inbox
-
-Module 3 **produces** notification events; Module 1 **owns the inbox** — the navbar bell with its
-unread count, the notification history page, mark-as-read and mark-all-read, and per-user
-`NotificationPreference` rows controlling which notification types each user receives.
-
-- **Class path:** `app/Http/Controllers/NotificationController.php`
-
-> **📷 Screenshot 12** — the notification bell with an unread badge, and the preferences screen.
-
----
-
-## 3. Entity Classes
-
-### 3.1 Entity class diagram
-
-> **📷 Figure 1** — Entity class diagram for LearnSync.
->
-> **⚠ You must draw this.** An entity *class* diagram is **not** an ERD: show classes with their
-> **attributes and object references**, not tables with foreign keys. Draw it in draw.io, Visual
-> Paradigm or StarUML and export as PNG.
-
-The classes owned by Module 1, with their relationships expressed as **object references**:
-
-```
-User
-  - id: int
-  - name: string
-  - email: string
-  - schoolEmail: string
-  - password: string
-  - role: enum {admin, instructor, student}
-  - avatarPath: string
-  - bio: text
-  - isActive: bool
-  - failedLoginAttempts: int
-  - lockedUntil: DateTime
-  - mustChangePassword: bool
-  - lastLoginAt: DateTime
-  ── certificates:   Certificate[0..*]
-  ── badges:         Badge[0..*]
-  ── studentProgress: StudentProgress[0..*]
-  ── notifications:  Notification[0..*]
-  ── activityLogs:   ActivityLog[0..*]
-
-Certificate
-  - id: int
-  - credentialId: string          // LS-2026-A7F3D9K2
-  - finalScore: double
-  - integrityHash: string          // SHA-256
-  - pdfPath: string
-  - issuedAt: DateTime
-  - expiresAt: DateTime
-  - revokedAt: DateTime
-  - revocationReason: string
-  ── student:  User[1]             // object reference, not student_id
-  ── course:   Course[0..1]
-  ── learningPath: LearningPath[0..1]
-  ── template: CertificateTemplate[1]
-
-Badge                              // an award rule
-  - id, name, description
-  - awardType: enum {badge, certificate}
-  - tier: enum {bronze, silver, gold}
-  - criteriaType: string
-  - criteriaValue: int
-  - isActive: bool
-  ── course:   Course[0..1]        // subject scope
-  ── students: User[0..*]          // awarded to
-
-StudentProgress                    ProgressSnapshot
-  - materialsViewed: int             - completionPercentage: double
-  - quizzesPassed: int               - capturedAt: DateTime
-  - assignmentsSubmitted: int        ── progress: StudentProgress[1]
-  - completionPercentage: double
-  - lastCalculatedAt: DateTime
-  ── student: User[1]
-  ── course:  Course[1]
-  ── snapshots: ProgressSnapshot[0..*]
-
-Permission          PermissionRole        Invitation           ActivityLog
-  - key: string       - role: enum          - email, token       - action: string
-  - label: string     ── permission:        - expiresAt          - targetType, targetId
-  - group: string        Permission[1]      - acceptedAt         - ipAddress, userAgent
-                                            ── invitedBy: User[1] ── user: User[0..1]
-
-LearningPath        CertificateTemplate   Notification         NotificationPreference
-  - title             - name                - type, message      - type: string
-  - description       - backgroundPath      - link, reference    - enabled: bool
-  - isActive          - signaturePath       - isRead: bool       ── user: User[1]
-  ── courses:         - bodyText            ── user: User[1]
-     Course[1..*]     - isActive
-     {ordered}
-```
-
-**Note on the implementation.** In Laravel, the object reference is expressed as an Eloquent
-relationship method, and the foreign-key column is an implementation detail of the mapping. For
-example, `Certificate` does **not** expose `student_id` as its interface — it exposes `student`:
+### 2. Helper Class — The Security Code (`app/Patterns/Facade/Subsystem/IntegrityHasher.php`)
 
 ```php
-// app/Models/Certificate.php
-public function student(): BelongsTo
+namespace App\Patterns\Facade\Subsystem;
+
+use App\Models\Certificate;
+
+class IntegrityHasher
 {
-    return $this->belongsTo(User::class, 'student_id');
+    // Joins the important details together and turns them into one code
+    public function hash(int $studentId, ?int $courseId, float $score,
+                         string $issuedAt, string $credentialId): string
+    {
+        return hash('sha256', implode('|', [
+            $studentId, $courseId ?? '', $score, $issuedAt, $credentialId,
+        ]));
+    }
+
+    public function matches(Certificate $certificate): bool
+    {
+        // Work the code out again from the record as it is right now
+        $recomputed = $this->hash(
+            $certificate->student_id,
+            $certificate->course_id,
+            $certificate->final_score,
+            $certificate->issued_at->format('Y-m-d H:i:s'),
+            $certificate->credential_id
+        );
+
+        // hash_equals() always takes the same amount of time to compare,
+        // so an attacker cannot guess the code by timing the check
+        return hash_equals($certificate->integrity_hash, $recomputed);
+    }
 }
 ```
 
-Calling `$certificate->student` returns a `User` **object**, and `$certificate->student->name` reads
-the holder's name by navigating the reference. This is consistent with the diagram above.
-
----
-
-## 4. Design Pattern
-
-### 4.1 Description of Design Pattern
-
-**Pattern: Facade (Structural, Gang of Four)**
-
-The Facade pattern *"provides a unified interface to a set of interfaces in a subsystem. Facade
-defines a higher-level interface that makes the subsystem easier to use"* (Gamma, Helm, Johnson &
-Vlissides, 1994).
-
-A subsystem is often a group of classes that must be used together in a particular order, each
-handling one part of a task. Any client wanting the task done must know which classes exist, how to
-construct them, and the order to call them. That knowledge leaks the subsystem's internal structure
-into every caller, and any change to the subsystem forces a change in all of them.
-
-A Facade is a single class that sits in front of the subsystem and offers a small vocabulary
-describing **what the client wants**, rather than **how it is achieved**. The client talks only to
-the Facade.
-
-Two properties distinguish Facade from patterns it is often confused with:
-
-- **A Facade does not seal the subsystem off.** Each collaborator remains directly usable and
-  independently testable. The Facade adds a simpler entry point; it does not remove the harder one.
-  This separates it from **Proxy**, which controls access to a single object.
-- **A Facade defines a new, simpler interface.** This separates it from **Adapter**, which converts
-  an existing interface into a different *expected* one without simplifying it. (Adapter is the
-  pattern Module 2 implements, and the distinction is worth stating: Adapter makes two mismatched
-  things look alike; Facade makes many things look like one.)
-
-> **Note on Singleton.** Module 1 originally used the **Singleton** pattern. The assignment
-> specification states that *"Singleton and MVC design patterns are NOT counted as one of the chosen
-> design patterns"*, so it was refactored to Facade. The refactor changed only how the object is
-> constructed and what it delegates to — **no public method signature and no feature behaviour
-> changed**.
-
-### 4.2 Implementation of Design Pattern
-
-#### Class diagram
-
-> **📷 Figure 2** — Class diagram of the Facade implementation. **You must draw this.** Structure:
-
-```
-        ┌──────────────────────────────┐
-        │   CertificateController      │   ← CLIENT
-        │  (and Grade::created event)  │
-        └──────────────┬───────────────┘
-                       │ depends only on the Facade
-                       ▼
-   ┌───────────────────────────────────────────────┐
-   │           «Facade»  CredentialAuthority       │
-   ├───────────────────────────────────────────────┤
-   │ + issueCertificate(User, Course, ?float): Certificate
-   │ + issuePathwayCertificate(User, LearningPath): Certificate
-   │ + revoke(Certificate, string): Certificate    │
-   │ + verify(string): array                       │
-   │ + evaluateBadges(User): Collection            │
-   │ + recalculateProgress(User, Course): StudentProgress
-   │ + handleGradeRecorded(Grade): array           │
-   └───┬────────┬────────┬─────────┬─────────┬─────┘
-       │        │        │         │         │      delegates to
-       ▼        ▼        ▼         ▼         ▼
- ┌──────────┐┌────────┐┌─────────┐┌────────┐┌──────────────────┐
- │Credential││Integrity││Certificate││Progress││ BadgeRule       │
- │IdGenerator││Hasher  ││Renderer  ││Calculator││ Evaluator      │
- ├──────────┤├────────┤├─────────┤├────────┤├──────────────────┤
- │+generate ││+hash    ││+render   ││+recalculate│+evaluate      │
- │          ││+matches ││+verifica-││+averageScoreIn│           │
- │          ││         ││ tionQrCode││+passThreshold│            │
- └──────────┘└────────┘└─────────┘└────────┘└────────┬─────────┘
-                                                      │
-                                                      ▼
-                                          ┌───────────────────────┐
-                                          │ AwardConditionEvaluator│
-                                          │ + isSatisfied(User,    │
-                                          │              Badge)    │
-                                          └───────────────────────┘
-                    ↑ THE SUBSYSTEM — five collaborators,
-                      four third-party libraries
-```
-
-#### The subsystem the Facade hides
-
-Issuing one credential is not one operation. It requires:
-
-| # | Step | Collaborator |
-|---|---|---|
-| 1 | Mint a collision-free human-readable credential ID | `CredentialIdGenerator` |
-| 2 | Seal the record with a SHA-256 integrity hash | `IntegrityHasher` |
-| 3 | Substitute placeholders into the administrator's template | `CertificateRenderer` |
-| 4 | Render that template to PDF through **DomPDF** | `CertificateRenderer` |
-| 5 | Generate and embed a **QR code** encoding the verification URL | `CertificateRenderer` |
-| 6 | Write the document to a private disk | `CertificateRenderer` |
-| 7 | Recalculate weighted progress against configurable settings | `ProgressCalculator` |
-| 8 | Snapshot that progress for the student's chart | `ProgressCalculator` |
-| 9 | Evaluate every active award rule | `BadgeRuleEvaluator` → `AwardConditionEvaluator` |
-| 10 | Check whether the course completed a learning path | `CredentialAuthority` |
-| 11 | Write the audit trail | `ActivityLog` |
-
-That is **five collaborators and four third-party libraries**. The Facade reduces all of it to one
-method call:
+### 3. The Facade (`app/Patterns/Facade/CredentialAuthority.php`)
 
 ```php
-// app/Http/Controllers/CertificateController.php — the CLIENT
-public function __construct(private CredentialAuthority $authority)
-{
-}
+namespace App\Patterns\Facade;
 
-public function store(Request $request): RedirectResponse
-{
-    abort_unless($request->user()->can('certificate.issue'), 403);
-    // ... validation ...
-    $certificate = $this->authority->issueCertificate($student, $course, (float) $data['final_score']);
-    // ...
-}
-```
+use App\Models\Certificate;
+use App\Models\CertificateTemplate;
+use App\Models\Course;
+use App\Models\User;
+use App\Patterns\Facade\Subsystem\AwardConditionEvaluator;
+use App\Patterns\Facade\Subsystem\BadgeRuleEvaluator;
+use App\Patterns\Facade\Subsystem\CertificateRenderer;
+use App\Patterns\Facade\Subsystem\CredentialIdGenerator;
+use App\Patterns\Facade\Subsystem\IntegrityHasher;
+use App\Patterns\Facade\Subsystem\ProgressCalculator;
+use Illuminate\Support\Facades\DB;
 
-`CertificateController` imports **neither DomPDF, nor the QR encoder, nor the settings table, nor
-the badge rules**. It knows one object and three verbs.
-
-Inside the Facade, the orchestration is explicit but hidden from the client:
-
-```php
-// app/Patterns/Facade/CredentialAuthority.php
 class CredentialAuthority
 {
+    // Laravel gives the Facade its five helper classes automatically
     public function __construct(
         private CredentialIdGenerator $ids,
         private IntegrityHasher $hasher,
@@ -500,172 +578,156 @@ class CredentialAuthority
     ) {
     }
 
-    public function issueCertificate(User $student, Course $course, ?float $finalScore = null,
+    public function issueCertificate(User $student, Course $course,
+                                     ?float $finalScore = null,
                                      ?Badge $rule = null): Certificate
     {
-        // ... duplicate-credential and template checks ...
+        $template = $rule?->certificateTemplate
+            ?? CertificateTemplate::where('is_active', true)->first();
 
+        $score = $finalScore ?? $this->progress->recordedScoreFor($student, $course);
+
+        // Everything inside runs together. If any step fails, all steps
+        // are undone, so a half-made certificate can never exist.
         return DB::transaction(function () use ($student, $course, $template, $score) {
-            $credentialId = $this->ids->generate();                       // subsystem 1
+
+            $credentialId = $this->ids->generate();          // helper 1
             $issuedAt = now();
 
             $certificate = Certificate::create([
-                'credential_id'  => $credentialId,
-                'integrity_hash' => $this->hasher->hash(                  // subsystem 2
+                'student_id'    => $student->id,
+                'course_id'     => $course->id,
+                'certificate_template_id' => $template->id,
+                'credential_id' => $credentialId,
+                'final_score'   => $score,
+                'integrity_hash' => $this->hasher->hash(     // helper 2
                     $student->id, $course->id, $score,
                     $issuedAt->format('Y-m-d H:i:s'), $credentialId
                 ),
-                'pdf_path'       => $this->renderer->pdfPathFor($credentialId),
-                // ...
+                'pdf_path'      => $this->renderer->pdfPathFor($credentialId),
+                'issued_at'     => $issuedAt,
             ]);
 
-            $this->renderer->render($certificate);                        // subsystem 3
+            $this->renderer->render($certificate);           // helper 3
             ActivityLog::record('certificate.issued', $certificate);
             $this->issueCompletedPathways($student, $course);
-            $this->evaluateBadges($student);                              // subsystem 5
+            $this->evaluateBadges($student);                 // helper 5
 
             return $certificate;
         });
     }
+
+    public function verify(string $credentialId): array
+    {
+        $certificate = Certificate::with(['student', 'course'])
+            ->where('credential_id', $credentialId)->first();
+
+        if ($certificate === null) {
+            return ['status' => 'not_found', 'certificate' => null];
+        }
+
+        if ($certificate->revoked_at !== null) {
+            return ['status' => 'revoked', 'certificate' => $certificate];
+        }
+
+        // helper 2 checks whether anyone changed the record
+        if (! $this->hasher->matches($certificate)) {
+            return ['status' => 'tampered', 'certificate' => $certificate];
+        }
+
+        return ['status' => 'valid', 'certificate' => $certificate];
+    }
 }
 ```
 
-#### Construction: dependency injection, not a static accessor
-
-The Facade is registered in a service provider and **injected**:
+### 4. How the Controller Uses It (`app/Http/Controllers/CertificateController.php`)
 
 ```php
-// app/Providers/CredentialServiceProvider.php
-public function register(): void
+class CertificateController extends Controller
 {
-    $this->app->scoped(CredentialAuthority::class);
+    // Laravel passes in the Facade. The controller knows nothing else.
+    public function __construct(private CredentialAuthority $authority)
+    {
+    }
+
+    public function store(Request $request): RedirectResponse
+    {
+        abort_unless($request->user()->can('certificate.issue'), 403);
+
+        // Eleven separate jobs, done with one line
+        $certificate = $this->authority->issueCertificate(
+            $student, $course, (float) $data['final_score']
+        );
+
+        return redirect()->route('admin.certificates.index')
+            ->with('success', "Issued credential {$certificate->credential_id}.");
+    }
 }
 ```
 
-`scoped()` gives one instance per HTTP request, which is **container lifetime management, not the
-Singleton pattern**: the constructor is public, there is no static state, and no global accessor
-exists. A test can construct as many independent authorities as it likes.
+### 5. Registering the Facade (`app/Providers/CredentialServiceProvider.php`)
 
-#### Justification for choosing Facade
+```php
+class CredentialServiceProvider extends ServiceProvider
+{
+    public function register(): void
+    {
+        // One instance per web request. This is just Laravel managing how
+        // long an object lives. It is NOT the Singleton pattern, because
+        // the constructor is public, there is no static variable, and
+        // there is no getInstance() method anywhere.
+        $this->app->scoped(CredentialAuthority::class);
+    }
+}
+```
 
-**1. The subsystem is real, not manufactured.** The eleven steps above are all genuinely required to
-issue one credential, and they involve five distinct responsibilities and four third-party
-libraries. Facade is the pattern the GoF catalogue defines for exactly this situation. The
-alternative — letting `CertificateController` orchestrate DomPDF, the QR encoder, the hashing and
-the settings table itself — would put infrastructure knowledge into a controller, which the MVC
-architecture this project follows explicitly forbids.
+## 4.3 Justification of Design Pattern
 
-**2. It gives clients a stable interface over a volatile subsystem.** The subsystem changed
-substantially during development: PDF rendering, the badge engine and the progress calculation were
-all rewritten, and an entire sixth collaborator (`AwardConditionEvaluator`) was added when award
-rules became administrator-configurable. **Not one client changed**, because
-`issueCertificate()`, `revoke()` and `verify()` kept their signatures. That is the pattern paying
-for itself, observable in the project's own history.
+**1. The job really is complicated.** Making one certificate takes eleven steps: create a unique ID, make the security code, fill in the template wording, make the PDF, make the QR code, save the file, recalculate progress, save a progress snapshot, check every award rule, check for a finished learning path, and write the security log. That needs **five helper classes and four outside libraries**. Without the Facade, `CertificateController` would have to do all of this itself. A controller is not supposed to know about PDF libraries and QR codes, and doing so would break the **Single Responsibility Principle**.
 
-**3. It does not over-restrict.** Each collaborator remains independently usable and unit-testable.
-This matters because the previous implementation — a Singleton — did the opposite: it made a second
-instance *impossible*, which prevented isolated testing without providing anything in return.
+**2. The outside stays the same when the inside changes.** During development I rewrote the PDF part, the badge engine and the progress calculation, and I added a whole sixth helper class (`AwardConditionEvaluator`) when award rules became configurable by admins. **Not a single caller had to change**, because `issueCertificate()`, `revoke()` and `verify()` kept the same names and parameters. This follows the **Open/Closed Principle**, and the project's own commit history proves it happened.
 
-**4. The uniqueness argument that motivated the original Singleton does not survive scrutiny, and
-Facade loses nothing by dropping it.** The Singleton was justified on the grounds that two
-concurrent instances could mint duplicate credential IDs. In PHP this is **false**: each HTTP
-request is a separate process with its own memory, so two simultaneous issuances were *always* two
-separate objects. The Singleton never provided any cross-request guarantee. What actually prevents
-duplicate credential IDs is the **unique database index on `certificates.credential_id`** combined
-with the collision-retry loop in `CredentialIdGenerator` — both of which are untouched by the
-refactor.
+**3. The helper classes can still be tested on their own.** A Facade does not lock the subsystem away. Each of the five helpers can be created and tested by itself. This is important, because the old Singleton did the opposite: it made a second instance **impossible**, which stopped me testing pieces separately and gave nothing useful in return.
 
-**5. It is distinct from every other member's pattern.** Module 2 uses Adapter (structural, but
-converts rather than simplifies), Module 3 Observer, Module 4 Strategy, Module 5 State. No
-duplication, as the assignment requires.
+**4. The old reason for using Singleton was actually wrong.** The Singleton was justified by saying two copies running at once could create the same certificate ID twice. In PHP this is **not true**. Every web request runs in its own separate process with its own memory, so two requests always had two separate objects anyway. The Singleton never protected anything across requests. What really stops duplicate IDs is the **unique index on the `certificates.credential_id` column** plus the retry loop inside `CredentialIdGenerator` — and I did not change either of them. So moving to Facade lost nothing and gave the module a reason that actually holds up.
 
 ---
 
-## 5. Software Security
+# 5. Software Security
 
-### 5.1 Potential Threat/Attack
+## 5.1 Potential Threats and Attacks
 
-#### Threat 1 — Credential forgery and stored-record tampering
+### Threat 1: Fake or Edited Certificates (OWASP A08: Software and Data Integrity Failures)
 
-The verification page is the entire value of the credentialing feature: an employer trusts it
-because it is served by the issuing institution. That makes it the highest-value target in the
-system, and it can be attacked from two directions.
+- **Attack Description:** The public checking page is the whole point of the certificate feature, which makes it the biggest target in the system. It can be attacked in two ways.
 
-**Attack vector A — direct record manipulation.** The certificate's score, holder and course are
-rows in a MySQL database. An attacker with database access — a compromised phpMyAdmin session,
-stolen database credentials, SQL injection elsewhere in the application, or a **malicious insider
-such as a student assistant with database privileges** — can simply `UPDATE` a certificate row to
-raise `final_score` from 45 to 95. Nothing in the HTTP layer is involved, so no amount of
-request-side validation detects it. The verification page would then faithfully report a fraudulent
-credential as genuine, and the institution would be publicly vouching for it.
+  **First, changing the record directly.** Certificates are just rows in a MySQL database. Someone who can reach the database — through a stolen phpMyAdmin login, leaked database passwords, an SQL injection hole somewhere else in the app, or **a dishonest insider such as a student helper with database access** — can run one simple `UPDATE` command and change a mark from 45 to 95. No web request is involved at all, so checking form input cannot stop it.
 
-**Attack vector B — credential ID forgery.** If credential IDs were sequential or predictable
-(`LS-2026-00001`, `LS-2026-00002`), an attacker could enumerate the space to harvest other people's
-credentials, or fabricate a plausible-looking ID and print it on a forged paper certificate,
-gambling that a verifier reads the ID rather than scanning the QR code.
+  **Second, making up a certificate ID.** If IDs were counted in order (`LS-2026-00001`, `LS-2026-00002`), an attacker could try them one by one to view other people's certificates. They could also invent a real-looking ID, print it on a fake paper certificate, and hope the employer reads the number instead of scanning the QR code.
+- **Risk Impact:** The college would be publicly confirming a fake qualification through its own website. This destroys the trust the whole system depends on, and could help someone get a job using marks they never earned.
 
-This maps to the OWASP Secure Coding Practices categories **Cryptographic Practices** and **Data
-Protection**, and to **A02:2021 Cryptographic Failures** and **A08:2021 Software and Data Integrity
-Failures** in the OWASP Top Ten.
+### Threat 2: Password Guessing Attacks on Login (OWASP A07: Identification and Authentication Failures)
 
-#### Threat 2 — Brute-force and credential-stuffing attack on authentication
+- **Attack Description:** Module 1 owns the login page, which protects every other module, and it is open to the whole internet.
 
-Module 1 owns the login. It is the boundary protecting every other module, and it is exposed to the
-open internet.
+  In a **brute-force attack**, a program tries password after password on one account. College email addresses follow an obvious pattern, so the attacker already knows real usernames. With no limit on attempts, thousands of guesses can be tried, and a weak password will be found quite quickly.
 
-**Attack vector A — brute force.** An automated tool submits password guesses against a known
-account. Academic email addresses are highly predictable, so the attacker already knows valid
-usernames. Without a lockout, an attacker can attempt thousands of passwords; common ones fall in
-minutes.
+  In a **credential-stuffing attack** — which works far better in real life — the attacker uses email and password pairs stolen from a completely different website that was hacked before. Many people reuse the same password everywhere. Because each pair is only tried once per account, simple attempt limits often never notice.
+- **Risk Impact:** How bad this is depends on whose account is taken. A stolen **student** account lets someone hand in work and read grades. A stolen **lecturer** account lets someone change marks — and because marks automatically trigger certificates, this can create fake certificates. A stolen **admin** account lets someone change permissions and issue or cancel certificates, which means the whole system's trust is gone.
 
-**Attack vector B — credential stuffing.** Far more effective in practice. The attacker takes
-username/password pairs leaked from an unrelated breach and replays them here, exploiting password
-reuse. Because each pair is tried only once or twice per account, naive rate limiting on a single
-account may not trigger.
+## 5.2 Secure Coding Practices & Implementation
 
-The consequences are severe and role-dependent: a compromised **student** account allows submission
-of work and viewing of grades; a compromised **instructor** account allows grade alteration, which
-feeds the credentialing chain; a compromised **administrator** account allows permission
-modification, manual certificate issuance and revocation — a total compromise of the system's trust
-model.
+> Input validation is used everywhere in this module (Laravel's `validate()` on every save, plus `mimes:` and `max:` rules on uploads). As the assignment requires, it is **not** counted as one of the two practices below.
 
-This maps to OWASP **Authentication and Password Management**, and to **A07:2021 Identification and
-Authentication Failures**.
+### Secure Practice 1: A Security Code That Detects Any Change
 
-### 5.2 Secure Coding Practice
-
-> Input validation is applied throughout the module (Laravel's `validate()` on every write, with
-> `mimes:` and `max:` rules on uploads) but is **not** claimed as one of the two practices below, as
-> the assignment requires.
-
-#### Practice 1 — Cryptographic integrity hashing with timing-safe comparison *(mitigates Threat 1)*
-
-**Category: Cryptographic Practices.** Rather than trusting the database record, every credential is
-sealed with a cryptographic hash computed at issuance and **recomputed at every verification**.
-
-On issuance, a SHA-256 digest is taken over the credential's own contents:
+**OWASP Category: Cryptographic Practices.** Instead of trusting the saved record, every certificate carries a security code that is worked out again **every single time someone checks it**:
 
 ```php
 // app/Patterns/Facade/Subsystem/IntegrityHasher.php
-public function hash(int $studentId, ?int $courseId, float $score,
-                     string $issuedAt, string $credentialId): string
-{
-    return hash('sha256', implode('|', [
-        $studentId,
-        $courseId ?? '',
-        $score,
-        $issuedAt,
-        $credentialId,
-    ]));
-}
-```
-
-At verification, the digest is recomputed from the row as it currently stands and compared with the
-stored value:
-
-```php
 public function matches(Certificate $certificate): bool
 {
+    // SECURITY (Module 1): work the code out again from the record AS IT IS NOW
     $recomputed = $this->hash(
         $certificate->student_id,
         $certificate->course_id,
@@ -674,202 +736,140 @@ public function matches(Certificate $certificate): bool
         $certificate->credential_id
     );
 
+    // SECURITY (Module 1): use hash_equals(), never ===
     return hash_equals($certificate->integrity_hash, $recomputed);
 }
 ```
 
-**Why this defeats Attack A.** The attacker who edits `final_score` in the database changes the
-input to the hash. The recomputed digest no longer matches the stored one, and the verification page
-reports **TAMPERED** rather than VALID. To forge successfully the attacker would have to compute a
-matching SHA-256 digest — a preimage attack that is computationally infeasible.
+*How this stops the attack: if someone changes the mark in the database, the ingredients that make the code have changed too. The newly worked-out code no longer matches the saved one, so the page shows **TAMPERED** instead of VALID. To fake it successfully, the attacker would need to find different data that produces the exact same SHA-256 code, which is not possible with today's computers.*
 
-`hash_equals()` is used deliberately in place of `===`. It performs a **constant-time** comparison,
-so an attacker cannot infer the correct digest byte-by-byte by measuring how long the comparison
-takes — a timing side-channel that a naive string comparison would expose.
+*I used `hash_equals()` instead of `===` on purpose. `hash_equals()` always takes the same amount of time, no matter how much of the code matches. A normal `===` comparison stops early at the first wrong letter, and an attacker could measure those tiny time differences to work out the correct code one letter at a time.*
 
-**Why this defeats Attack B.** Credential IDs are generated from a **cryptographically secure**
-pseudo-random source, not a sequence:
+Fake IDs are stopped in a different way — by making IDs random instead of counted:
 
 ```php
 // app/Patterns/Facade/Subsystem/CredentialIdGenerator.php
-private const BASE32_ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
-
 private function randomBase32(int $length): string
 {
-    $alphabetLastIndex = strlen(self::BASE32_ALPHABET) - 1;
+    $lastIndex = strlen(self::BASE32_ALPHABET) - 1;
     $output = '';
 
     for ($i = 0; $i < $length; $i++) {
-        $output .= self::BASE32_ALPHABET[random_int(0, $alphabetLastIndex)];
+        // SECURITY (Module 1): random_int() uses the operating system's
+        // secure random source. rand() and mt_rand() can be predicted
+        // after watching enough output, so they must not be used here.
+        $output .= self::BASE32_ALPHABET[random_int(0, $lastIndex)];
     }
 
     return $output;
 }
 ```
 
-`random_int()` draws from the operating system's CSPRNG, unlike `rand()` or `mt_rand()` which are
-predictable from observed output. With a 32-character alphabet over 8 positions the space is
-32⁸ ≈ **1.1 × 10¹²**, making enumeration impractical, and issued IDs are a vanishingly small
-fraction of it.
+*With 32 possible characters in 8 positions, there are about 1.1 trillion possible IDs. Trying them one by one is not realistic, and the IDs actually issued are only a tiny fraction of that.*
 
-The design also **deliberately excludes `revoked_at` from the hash**, so that revocation remains
-possible after issuance without invalidating the seal — revocation is checked separately and takes
-precedence over the hash check.
+*Figure 5.1: Checking Page Showing VALID for a Real Certificate*
 
-> **📷 Screenshot 13** — the verification page reporting VALID.
-> **📷 Screenshot 14** — the same credential reporting TAMPERED after editing `final_score` directly
-> in phpMyAdmin. *This pair is the strongest single demonstration in the report — capture both.*
+*Figure 5.2: The Same Certificate Showing TAMPERED After the Mark Was Edited in phpMyAdmin*
 
-#### Practice 2 — Authentication hardening: attempt lockout, password history and audit *(mitigates Threat 2)*
+### Secure Practice 2: Locking Accounts, Blocking Old Passwords and Logging Every Attempt
 
-**Category: Authentication and Password Management.** Four layers, none of which relies on the user
-choosing a good password.
-
-**(a) Failed-attempt counter and administrator-only lockout.** Every failed attempt against a *real*
-account increments a counter, captured by listening to Laravel's own `Failed` event:
+**OWASP Category: Authentication and Password Management.** There are four layers here, and none of them depends on the user choosing a good password:
 
 ```php
 // app/Providers/AppServiceProvider.php
-Event::listen(Failed::class, function (Failed $event) {
-    if ($event->user === null) {
-        return;
-    }
+private function registerAuditListeners(): void
+{
+    // SECURITY (Module 1): count every failed login on a real account.
+    // This listens to Laravel's own event, so any new login method
+    // added later is protected automatically.
+    Event::listen(Failed::class, function (Failed $event) {
+        if ($event->user === null) {
+            return;   // do not reveal which email addresses exist
+        }
 
-    ActivityLog::record('auth.failed', null, $event->user);
-    $event->user->increment('failed_login_attempts');
-});
+        ActivityLog::record('auth.failed', null, $event->user);
+        $event->user->increment('failed_login_attempts');
+    });
+
+    // SECURITY (Module 1): a good login resets the counter, so a real
+    // user who mistypes twice is never punished for it.
+    Event::listen(Login::class, function (Login $event) {
+        ActivityLog::record('auth.login', null, $event->user);
+
+        $event->user->forceFill([
+            'last_login_at' => now(),
+            'failed_login_attempts' => 0,
+        ])->save();
+    });
+}
 ```
 
-After five consecutive failures the account locks, and **only an administrator can clear it** —
-there is no self-service unlock and no automatic timed expiry. This is a deliberate choice: a timed
-unlock merely slows an automated attacker, whereas a hard lock stops the attack and forces human
-review of an event that is, by definition, suspicious.
+***(a) Locking the account.** After five wrong passwords in a row the account locks, and **only an admin can unlock it**. There is no "try again in 15 minutes". This is deliberate. A timed unlock only slows an automatic attack down, but a real lock stops it completely and makes a human look at what happened.*
 
-A successful login resets the counter, so a legitimate user who mistypes twice is unaffected:
+***(b) Blocking old passwords.** A new password is compared against the last three saved passwords and refused if it matches. This stops a user going back to an old password that might already be in a leaked password list — which is exactly what a credential-stuffing attack uses.*
 
-```php
-Event::listen(Login::class, function (Login $event) {
-    ActivityLog::record('auth.login', null, $event->user);
+***(c) Bcrypt password storage.** Passwords are saved using bcrypt, never as plain text. Bcrypt is slow on purpose and adds a different random salt to every password. So even if someone steals the whole database, cracking the passwords is very slow, and pre-made lookup tables are useless.*
 
-    $event->user->forceFill([
-        'last_login_at' => now(),
-        'failed_login_attempts' => 0,
-    ])->save();
-});
-```
+***(d) Logging every login attempt.** Every login, logout and failed attempt is saved with the IP address and browser. This is the layer that lets you **notice** an attack. A credential-stuffing attack looks like lots of `auth.failed` rows from just a few IP addresses across many different accounts. Without logging, that pattern is completely invisible. An admin can filter and export these records to look at them.*
 
-**(b) Password history.** A new password is compared against the previous three hashes and rejected
-if it matches any of them, which prevents a user cycling back to a password that may already appear
-in a breach corpus — the exact material a credential-stuffing attack uses.
+*Figure 5.3: Account Locked After Five Failed Logins, with the Admin Unlock Button*
 
-**(c) Bcrypt with a work factor.** Passwords are stored using bcrypt via Laravel's `hashed` cast,
-never plaintext or an unsalted digest. Bcrypt is deliberately slow and salted per password, so even
-if the database is exfiltrated an offline attack is expensive and rainbow tables are useless.
-
-**(d) Complete authentication audit trail.** Every login, logout and failed attempt is written to
-`activity_logs` with actor, IP address and user agent. This is the **detection** layer: a
-credential-stuffing campaign appears as many `auth.failed` rows from a small set of IP addresses
-across many accounts — a pattern invisible without logging. An administrator can filter and export
-these for analysis.
-
-Failed attempts are recorded **only when the email matches a real account**, which is intentional:
-the schema attributes a log row to a user, and it also avoids building an oracle that confirms which
-email addresses exist.
-
-> **📷 Screenshot 15** — an account locked after five failed attempts, and the administrator unlock
-> control. **📷 Screenshot 16** — the activity log showing `auth.failed` entries with IP addresses.
+*Figure 5.4: Security Log Showing `auth.failed` Rows with IP Addresses*
 
 ---
 
-## 6. Web Services
+# 6. Web Services
 
-> ### ⚠ BUILD REQUIRED — read this first
->
-> **This section documents a web service that does not exist in the codebase yet.** The current
-> system has no `routes/api.php`, no REST or SOAP endpoint, and makes no outbound HTTP calls. The
-> Interface Agreement below is a **specification to build against**, not a description of delivered
-> code.
->
-> Before submitting you must: create `routes/api.php`, register it in `bootstrap/app.php`, implement
-> the controller below, implement the consumption client, and **replace the placeholder screenshots
-> with real ones** (Postman for the exposed service, the rendered page for the consumed one).
+> **[IMPORTANT] YOU STILL NEED TO BUILD THIS.** The web service described below **is not in the code yet**. Right now there is no `routes/api.php` file, no REST or SOAP endpoint, and the system never calls another service. Everything below is a **plan to build from**. Before you submit, you must create `routes/api.php`, register it in `bootstrap/app.php`, write the controller and the client class, and replace the placeholder figures with real Postman screenshots.
 
-### 6.1 Overview of how web service technology is used in this module
+Module 1 works with web services in both directions.
 
-Module 1 participates in the service layer in both directions.
+**As a provider**, it offers the certificate checking service. This was the obvious choice, because checking a certificate is already a public, read-only lookup that returns a fixed set of fields, and it is the one thing other modules and outside people actually need from Module 1.
 
-**As a provider**, it exposes the **credential verification** service. This is the natural choice:
-verification is already an unauthenticated, read-only lookup returning a fixed shape, and it is the
-one piece of Module 1 that other modules — and external parties — genuinely need. Module 5
-(Analytics) consumes it to report how many students in a cohort hold a live credential.
+**As a consumer**, it calls Module 2's course information service. When a certificate is printed, the course code and title come from Module 2, because Module 2 owns all course data. Module 1 never reads Module 2's tables directly.
 
-**As a consumer**, it calls Module 2's **course information** service. When a certificate is
-rendered, the course code and title printed on it are obtained from Module 2, which is the sole
-owner of course data. This respects the module boundary: Module 1 never queries Module 2's tables
-directly, it asks Module 2's service.
+I chose REST with JSON instead of SOAP because it is lighter, needs no WSDL contract file or XML wrapper, and can be used straight away by a browser, by Postman, and by PHP.
 
-REST with JSON was chosen over SOAP: it is lightweight, needs no WSDL contract or XML envelope, and
-is directly consumable by a browser, by Postman, and by the other modules' PHP clients.
+## 6.1 Web Service Exposure
 
-### 6.2 Service Exposure — Interface Agreement (IFA)
+### Interface Agreement (IFA) — Service Exposure Specification
 
-#### Webservice Mechanism
-
-| Protocol | Description |
+| IFA Field | Specification Details |
 |---|---|
-| **Function** | RESTFUL |
-| **Description** | Retrieves the verification status and public details of a digital credential by its credential ID |
-| **Source Module** | Module 1 — Identity, Access & Digital Credentialing |
-| **Target Module** | Module 5 — Academic Progress Analytics; Module 2 — Academic Resources Repository; any external verifier |
-| **URL** | `http://localhost:8000/api/credentials/verify` |
+| **Protocol** | RESTful Web Service (JSON over HTTP) |
+| **Function Description** | Returns the status and public details of a certificate, looked up by its credential ID |
+| **Source Module** | Module 1: Identity, Access & Digital Credentialing Module |
+| **Target Module** | Module 5 (Academic Progress Analytics), Module 2 (Academic Resources Repository), outside verifiers |
+| **HTTP Method & URL** | `GET /api/credentials/verify` |
+| **Controller Action** | `App\Http\Controllers\Api\CredentialApiController@verify` |
 | **Function Name** | `getCredentialStatus` |
 
-#### Web Services Request Parameter (provide)
+### Request Parameters (IFA Requirement)
 
-| Field Name | Field Type | Mandatory/Optional | Description | Format |
+| Field Name | Field Type | Mandatory / Optional | Description | Validation / Format |
 |---|---|---|---|---|
-| `credentialId` | String | Mandatory | Unique ID of the credential to verify | `LS-YYYY-XXXXXXXX`; alphanumeric only |
-| `detailFlag` | Integer | Mandatory | Level of detail required | `1`: status only<br>`2`: status + holder<br>`3`: full record |
-| `requestId` | String | Mandatory | Unique ID for request tracking | UUID v4 |
-| `timeStamp` | String | Mandatory | Time when the request was made | `YYYY-MM-DD HH:MM:SS` |
+| `credentialId` | String | **Mandatory** | The ID of the certificate to check. | `LS-YYYY-XXXXXXXX`<br>Letters and numbers only |
+| `detailFlag` | Integer | **Mandatory** | How much detail to send back. | `1`: status only<br>`2`: status + holder<br>`3`: everything |
+| `requestID` | String | **Mandatory** | A unique ID so the request can be tracked. | Letters and numbers (e.g. `REQ-CRED-84920`) |
+| `timeStamp` | String | **Mandatory** | The time the request was made. | `YYYY-MM-DDTHH:MM:SSZ` |
 
-#### Web Services Response Parameter (consume)
+### Response Parameters (IFA Requirement)
 
-| Field Name | Field Type | Mandatory/Optional | Description | Format |
+| Field Name | Field Type | Mandatory / Optional | Description | Format / Values |
 |---|---|---|---|---|
-| `status` | String | Mandatory | Status of the request | `S`: Success<br>`F`: Fail<br>`E`: Error |
-| `credentialStatus` | String | Mandatory | Verification outcome | `VALID`, `REVOKED`, `TAMPERED`, `EXPIRED`, `NOT_FOUND` |
-| `holderName` | String | Optional | Name of the credential holder | Alphabets and spaces; omitted when `detailFlag` = 1 |
-| `courseTitle` | String | Optional | Course or learning path the credential is for | Alphanumeric |
-| `finalScore` | Double | Optional | Mark attested by the credential | 0.00 – 100.00 |
-| `issuedDate` | String | Optional | Date of issuance | `YYYY-MM-DD` |
-| `credentialDetails` | Object | Optional | Full record, returned when `detailFlag` = 3 | Contains `issuer`, `expiresAt`, `revocationReason` |
-| `requestId` | String | Mandatory | Echo of the request ID, for correlation | UUID v4 |
-| `timeStamp` | String | Mandatory | Time when the response was generated | `YYYY-MM-DD HH:MM:SS` |
+| `status` | String | **Mandatory** | Whether the request worked. | `S` (Success), `F` (Fail), `E` (Error) |
+| `timeStamp` | String | **Mandatory** | The time the answer was created. | `YYYY-MM-DDTHH:MM:SSZ` |
+| `data.requestID` | String | **Mandatory** | The same request ID sent back, so both sides can match them up. | Letters and numbers |
+| `data.credentialStatus` | String | **Mandatory** | The result of the check. | `VALID`, `REVOKED`, `TAMPERED`, `EXPIRED`, `NOT_FOUND` |
+| `data.holderName` | String | Optional | The name on the certificate. | Letters only; not sent when `detailFlag` = 1 |
+| `data.courseTitle` | String | Optional | The course the certificate is for. | Letters and numbers |
+| `data.finalScore` | Double | Optional | The mark shown on the certificate. | 0.00 – 100.00 |
+| `data.issuedDate` | String | Optional | The date the certificate was given. | `YYYY-MM-DD` |
+| `data.credentialDetails` | Object | Optional | Full details, only sent when `detailFlag` = 3. | Holds issuer, expiry date and cancel reason |
 
-#### Implementation — code to write
-
-```php
-// routes/api.php  (create this file)
-use App\Http\Controllers\Api\CredentialApiController;
-use Illuminate\Support\Facades\Route;
-
-// Public by design: verification must work with no account (EduSystem.md Section 7, Role 0).
-Route::get('/credentials/verify', [CredentialApiController::class, 'verify']);
-```
+### Code Implementation (`app/Http/Controllers/Api/CredentialApiController.php`)
 
 ```php
-// bootstrap/app.php  — register the API routes
-->withRouting(
-    web:      __DIR__.'/../routes/web.php',
-    api:      __DIR__.'/../routes/api.php',      // ← add this line
-    commands: __DIR__.'/../routes/console.php',
-    health:   '/up',
-)
-```
-
-```php
-// app/Http/Controllers/Api/CredentialApiController.php
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
@@ -877,197 +877,334 @@ use App\Patterns\Facade\CredentialAuthority;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-/**
- * Module 1's exposed REST service.
- *
- * The controller does no credentialing work itself: it validates the request,
- * asks the Facade, and shapes the answer to the Interface Agreement. That is
- * the Facade paying off again -- the service layer needed no knowledge of
- * hashing, PDFs or badge rules to be added.
- */
 class CredentialApiController extends Controller
 {
+    // The Facade again: adding a web service needed no knowledge of
+    // hashing, PDFs or badge rules.
     public function __construct(private CredentialAuthority $authority)
     {
     }
 
     public function verify(Request $request): JsonResponse
     {
-        $validator = validator($request->all(), [
-            'credentialId' => ['required', 'string', 'regex:/^LS-\d{4}-[0-9A-Z]{8}$/'],
-            'detailFlag'   => ['required', 'integer', 'in:1,2,3'],
-            'requestId'    => ['required', 'uuid'],
-            'timeStamp'    => ['required', 'date_format:Y-m-d H:i:s'],
-        ]);
+        try {
+            // Check the four required IFA fields are present and correct
+            $validator = validator($request->all(), [
+                'credentialId' => ['required', 'regex:/^LS-\d{4}-[0-9A-Z]{8}$/'],
+                'detailFlag'   => ['required', 'integer', 'in:1,2,3'],
+                'requestID'    => ['required', 'string', 'max:64'],
+                'timeStamp'    => ['required', 'date'],
+            ]);
 
-        if ($validator->fails()) {
-            return $this->respond('F', [
-                'credentialStatus' => 'NOT_FOUND',
-                'errors'           => $validator->errors(),
-            ], $request->input('requestId'));
-        }
+            if ($validator->fails()) {
+                return $this->ifaResponse('F', [
+                    'requestID' => $request->input('requestID'),
+                    'credentialStatus' => 'NOT_FOUND',
+                ], 400);
+            }
 
-        $result = $this->authority->verify($request->input('credentialId'));
-        $certificate = $result['certificate'];
-        $flag = (int) $request->input('detailFlag');
+            $result = $this->authority->verify($request->input('credentialId'));
+            $certificate = $result['certificate'];
+            $flag = (int) $request->input('detailFlag');
 
-        $payload = ['credentialStatus' => strtoupper($result['status'])];
-
-        if ($certificate !== null && $flag >= 2) {
-            $payload['holderName']  = $certificate->student->name;
-            $payload['courseTitle'] = $certificate->course?->title
-                ?? $certificate->learningPath?->title;
-            $payload['finalScore']  = round($certificate->final_score, 2);
-            $payload['issuedDate']  = $certificate->issued_at->format('Y-m-d');
-        }
-
-        if ($certificate !== null && $flag === 3) {
-            $payload['credentialDetails'] = [
-                'issuer'           => config('app.name'),
-                'expiresAt'        => $certificate->expires_at?->format('Y-m-d'),
-                'revocationReason' => $certificate->revocation_reason,
+            $data = [
+                'requestID' => $request->input('requestID'),
+                'credentialStatus' => strtoupper($result['status']),
             ];
-        }
 
-        return $this->respond('S', $payload, $request->input('requestId'));
+            // Only send the holder's details if the caller asked for them
+            if ($certificate !== null && $flag >= 2) {
+                $data['holderName']  = $certificate->student->name;
+                $data['courseTitle'] = $certificate->course?->title;
+                $data['finalScore']  = round($certificate->final_score, 2);
+                $data['issuedDate']  = $certificate->issued_at->format('Y-m-d');
+            }
+
+            if ($certificate !== null && $flag === 3) {
+                $data['credentialDetails'] = [
+                    'issuer'           => config('app.name'),
+                    'expiresAt'        => $certificate->expires_at?->format('Y-m-d'),
+                    'revocationReason' => $certificate->revocation_reason,
+                ];
+            }
+
+            return $this->ifaResponse('S', $data, 200);
+
+        } catch (\Exception $e) {
+            return $this->ifaResponse('E', [
+                'message' => 'Internal server error: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
-    /**
-     * Every response carries status, requestId and timeStamp, per the IFA.
-     */
-    private function respond(string $status, array $payload, ?string $requestId): JsonResponse
+    // Every answer carries status and timeStamp, as the IFA requires
+    private function ifaResponse(string $status, array $data, int $code): JsonResponse
     {
-        return response()->json(array_merge(
-            ['status' => $status],
-            $payload,
-            ['requestId' => $requestId, 'timeStamp' => now()->format('Y-m-d H:i:s')]
-        ));
+        return response()->json([
+            'status'    => $status,
+            'timeStamp' => now()->toIso8601String(),
+            'data'      => $data,
+        ], $code);
     }
 }
 ```
 
-**Sample request**
+```php
+// routes/api.php  (you need to create this file)
+use App\Http\Controllers\Api\CredentialApiController;
+use Illuminate\Support\Facades\Route;
 
-```
-GET /api/credentials/verify?credentialId=LS-2026-XTEG2CDW&detailFlag=2
-    &requestId=8f14e45f-ceea-4d3b-9b1a-2c7f9d0e4a11
-    &timeStamp=2026-08-28%2014:30:00
+// Public on purpose: checking a certificate must work with no account.
+Route::get('/credentials/verify', [CredentialApiController::class, 'verify']);
 ```
 
-**Sample response**
+**Example answer:**
 
 ```json
 {
     "status": "S",
-    "credentialStatus": "VALID",
-    "holderName": "Foo Chong Xian",
-    "courseTitle": "Integrative Programming",
-    "finalScore": 88.00,
-    "issuedDate": "2026-08-28",
-    "requestId": "8f14e45f-ceea-4d3b-9b1a-2c7f9d0e4a11",
-    "timeStamp": "2026-08-28 14:30:02"
-}
-```
-
-> **📷 Screenshot 17** — Postman showing the request and the JSON response.
-> **📷 Screenshot 18** — the response for a revoked credential, showing `"credentialStatus": "REVOKED"`.
-
-### 6.3 Service Consumption
-
-Module 1 consumes **Module 2's `getCourseInfo`** service to obtain the course code and title printed
-on a certificate, rather than reading Module 2's tables directly.
-
-| Protocol | Description |
-|---|---|
-| **Function** | RESTFUL |
-| **Description** | Retrieves course code, title and instructor by course ID |
-| **Source Module** | Module 2 — Academic Resources Repository (provider) |
-| **Target Module** | Module 1 — Identity, Access & Digital Credentialing (consumer) |
-| **URL** | `http://localhost:8000/api/courses/info` |
-| **Function Name** | `getCourseInfo` |
-
-```php
-// app/Support/CourseInfoClient.php  (create this file)
-namespace App\Support;
-
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
-
-/**
- * Module 1's client for Module 2's course information service.
- *
- * Module 1 never reads Module 2's tables directly: it asks Module 2's service,
- * which keeps the ownership boundary in the specification intact.
- */
-class CourseInfoClient
-{
-    public function fetch(int $courseId): ?array
-    {
-        $response = Http::timeout(5)->acceptJson()->get(
-            config('services.modules.course_info_url'),
-            [
-                'courseId'  => $courseId,
-                'queryFlag' => 1,
-                'requestId' => (string) Str::uuid(),
-                'timeStamp' => now()->format('Y-m-d H:i:s'),
-            ]
-        );
-
-        // A failed lookup must never prevent a credential being issued, so the
-        // caller falls back to its own copy of the title.
-        if ($response->failed() || $response->json('status') !== 'S') {
-            Log::warning('Course info service unavailable', ['courseId' => $courseId]);
-
-            return null;
-        }
-
-        return [
-            'code'  => $response->json('courseCode'),
-            'title' => $response->json('courseTitle'),
-        ];
+    "timeStamp": "2026-08-28T14:30:02Z",
+    "data": {
+        "requestID": "REQ-CRED-84920",
+        "credentialStatus": "VALID",
+        "holderName": "Foo Chong Xian",
+        "courseTitle": "Integrative Programming",
+        "finalScore": 88.00,
+        "issuedDate": "2026-08-28"
     }
 }
 ```
 
-> **📷 Screenshot 19** — the certificate rendering with the course title retrieved from Module 2's
-> service. Include the Laravel log line confirming the outbound call.
+*Figure 6.1: Postman Showing the Request and JSON Answer for a Valid Certificate*
+
+*Figure 6.2: The Answer for a Cancelled Certificate, Showing `"credentialStatus": "REVOKED"`*
+
+## 6.2 Web Service Consumption
+
+So that a certificate always shows the correct course name, Module 1 calls **Module 2's web service (`GET /api/courses/info`)** before printing the document.
+
+### Interface Agreement (IFA) — Service Consumption Specification
+
+| IFA Field | Specification Details |
+|---|---|
+| **Protocol** | RESTful Web Service (JSON over HTTP) |
+| **Function Description** | Returns the course code, title and lecturer for a given course ID |
+| **Source Module** | Module 2: Academic Resources Repository Module |
+| **Consuming Module** | Module 1: Identity, Access & Digital Credentialing Module |
+| **HTTP Method & URL** | `GET /api/courses/info` |
+| **Client Class** | `App\Support\CourseInfoClient@fetch` |
+| **Function Name** | `getCourseInfo` |
+
+### Request Parameters (IFA Requirement — Consumption)
+
+| Field Name | Field Type | Mandatory / Optional | Description | Validation / Format |
+|---|---|---|---|---|
+| `courseId` | Integer | **Mandatory** | The ID of the course to look up. | Whole number above 0 |
+| `queryFlag` | Integer | **Mandatory** | How much detail is needed. | `1`: code + title<br>`2`: also the lecturer |
+| `requestID` | String | **Mandatory** | A unique tracking ID made by Module 1. | Letters and numbers (e.g. `CRS-REQ-64e9a`) |
+| `timeStamp` | String | **Mandatory** | The time the request was sent. | `YYYY-MM-DDTHH:MM:SSZ` |
+
+### Response Parameters (IFA Requirement — Consumption)
+
+| Field Name | Field Type | Mandatory / Optional | Description | Format / Values |
+|---|---|---|---|---|
+| `status` | String | **Mandatory** | Whether the request worked. | `S` (Success), `F` (Fail), `E` (Error) |
+| `timeStamp` | String | **Mandatory** | The time the answer was created. | `YYYY-MM-DDTHH:MM:SSZ` |
+| `data.courseCode` | String | **Mandatory** | The public course code. | Letters and numbers (e.g. `BMIT3173`) |
+| `data.courseTitle` | String | **Mandatory** | The full course name. | Letters and numbers |
+| `data.instructorName` | String | Optional | The lecturer's name. | Only sent when `queryFlag` = 2 |
+
+### Consumption Code Implementation (`app/Support/CourseInfoClient.php`)
+
+```php
+namespace App\Support;
+
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+
+class CourseInfoClient
+{
+    public function fetch(int $courseId): ?array
+    {
+        try {
+            // Call Module 2's course information web service
+            $response = Http::timeout(10)->acceptJson()->get(
+                config('app.url') . '/api/courses/info',
+                [
+                    'courseId'  => $courseId,
+                    'queryFlag' => 1,
+                    'requestID' => uniqid('CRS-REQ-'),
+                    'timeStamp' => now()->toIso8601String(),
+                ]
+            );
+
+            if ($response->successful()) {
+                $payload = $response->json();
+
+                // Always check the IFA status field before trusting the data
+                if (($payload['status'] ?? null) === 'S') {
+                    return [
+                        'code'  => $payload['data']['courseCode'],
+                        'title' => $payload['data']['courseTitle'],
+                    ];
+                }
+            }
+
+            return null;
+
+        } catch (\Exception $e) {
+            Log::error('Module 1 could not get course info from Module 2',
+                       ['error' => $e->getMessage()]);
+
+            // If Module 2 is down, we still issue the certificate using
+            // our own copy of the title. A failed lookup must never stop
+            // a student getting the certificate they earned.
+            return null;
+        }
+    }
+}
+```
+
+*Figure 6.3: Certificate Printed with the Course Title Fetched from Module 2's Web Service*
 
 ---
 
-## 7. References
-
-Gamma, E., Helm, R., Johnson, R., & Vlissides, J. (1994). *Design patterns: Elements of reusable
-object-oriented software*. Addison-Wesley.
-
-Laravel. (2026). *Laravel 12.x documentation*. https://laravel.com/docs/12.x
-
-OpenAI. (2026). *ChatGPT* [Large language model]. https://chat.openai.com
-_[Remove this entry if you did not use ChatGPT.]_
+# 7. References
 
 Anthropic. (2026). *Claude (Opus 5)* [Large language model]. https://claude.ai
 
-OWASP Foundation. (2022). *OWASP secure coding practices quick reference guide* (Version 2.1).
-https://owasp.org/www-project-secure-coding-practices-quick-reference-guide/
+Gamma, E., Helm, R., Johnson, R., & Vlissides, J. (1994). *Design patterns: Elements of reusable object-oriented software*. Addison-Wesley Professional.
 
-OWASP Foundation. (2021). *OWASP Top 10:2021 — The ten most critical web application security
-risks*. https://owasp.org/Top10/
+Laravel LLC. (2026). *Laravel 12.x documentation: Service container, Eloquent ORM and authentication*. https://laravel.com/docs/12.x
 
-PHP Group. (2026). *PHP manual: hash_equals*. https://www.php.net/manual/en/function.hash-equals.php
+OWASP Foundation. (2021). *OWASP Top 10:2021 — The ten most critical web application security risks*. Open Web Application Security Project. https://owasp.org/Top10/
 
-United Nations. (2015). *Transforming our world: The 2030 agenda for sustainable development*
-(A/RES/70/1). https://sdgs.un.org/2030agenda
+OWASP Foundation. (2022). *OWASP secure coding practices quick reference guide* (Version 2.1). https://owasp.org/www-project-secure-coding-practices-quick-reference-guide/
+
+PHP Group. (2026). *PHP manual: hash_equals and random_int*. https://www.php.net/manual/en/function.hash-equals.php
+
+United Nations. (2015). *Transforming our world: The 2030 agenda for sustainable development (Goal 4: Quality Education)*. United Nations Department of Economic and Social Affairs. https://sdgs.un.org/goals/goal4
 
 ---
 
-## Checklist before submitting
+# 8. Appendices
+
+## Appendix A: Automated Testing Results
+
+Running `php artisan test` gives a 100% pass rate across 62 tests, checking 135 assertions:
+
+```
+PASS  Tests\Unit\ExampleTest
+  ✓ that true is true                                                        0.01s
+
+PASS  Tests\Feature\Auth\AuthenticationTest
+  ✓ login screen can be rendered                                             0.68s
+  ✓ users can authenticate using the login screen                            0.10s
+  ✓ users can not authenticate with invalid password                         0.25s
+  ✓ users can logout                                                         0.03s
+
+PASS  Tests\Feature\Auth\EmailVerificationTest
+  ✓ email verification screen can be rendered                                0.03s
+  ✓ email can be verified                                                    0.04s
+  ✓ email is not verified with invalid hash                                  0.04s
+
+PASS  Tests\Feature\Auth\PasswordConfirmationTest
+  ✓ confirm password screen can be rendered                                  0.04s
+  ✓ password can be confirmed                                                0.03s
+  ✓ password is not confirmed with invalid password                          0.25s
+
+PASS  Tests\Feature\Auth\PasswordResetTest
+  ✓ reset password link screen can be rendered                               0.03s
+  ✓ reset password link can be requested                                     0.24s
+  ✓ reset password screen can be rendered                                    0.24s
+  ✓ password can be reset with valid token                                   0.26s
+
+PASS  Tests\Feature\Auth\PasswordUpdateTest
+  ✓ password can be updated                                                  0.04s
+  ✓ correct password must be provided to update password                     0.03s
+
+PASS  Tests\Feature\Auth\RegistrationTest
+  ✓ open registration route does not exist                                   0.04s
+  ✓ an unknown token is rejected                                             0.03s
+  ✓ an expired invitation is refused                                         1.73s
+  ✓ an already accepted invitation is refused                                0.61s
+  ✓ a valid invitation creates the account with its fixed role               0.04s
+  ✓ a token cannot be redeemed twice                                         0.64s
+
+PASS  Tests\Feature\AwardAndActivityNotificationTest
+  ✓ earning a certificate notifies the holder                                0.55s
+  ✓ earning a badge notifies the student                                     0.06s
+  ✓ marking submitted work notifies the student                              0.04s
+  ✓ a marked quiz does not notify because the result is already on screen    0.04s
+  ✓ posting an announcement notifies the course                              0.04s
+  ✓ inviting a student to a course notifies them                             0.04s
+  ✓ a switched off preference still suppresses the new types                 0.04s
+
+PASS  Tests\Feature\AwardRuleTest
+  ✓ an admin defined average score rule awards a badge                       0.08s
+  ✓ an admin defined quizzes completed rule counts distinct quizzes          0.06s
+  ✓ an admin defined certificate rule mints a real credential                0.41s
+  ✓ a certificate rule does not mint twice                                   0.41s
+  ✓ a certificate rule is never handed out as a badge                        0.41s
+  ✓ deactivating a rule stops it without removing awards already made        0.07s
+
+PASS  Tests\Feature\CalendarEventDetailTest
+  ✓ an enrolled student can open an events detail page                       0.07s
+  ✓ a student cannot open an event for a course they are not in              0.05s
+  ✓ a lecturer cannot open an event for another lecturers course             0.05s
+  ✓ an institution wide event is visible to everyone                         0.05s
+  ✓ a meeting shows a join button                                            0.05s
+  ✓ an event with no link shows no join button                               0.05s
+  ✓ a malformed meeting link does not crash or render a button               0.06s
+  ✓ a javascript url is never rendered as a join button                      0.05s
+  ✓ a student does not see the names of their classmates                     0.06s
+
+PASS  Tests\Feature\CourseEnrolmentTest
+  ✓ a student cannot leave a course themselves                               0.05s
+  ✓ the owning lecturer can remove a student                                 0.04s
+  ✓ a lecturer cannot remove a student from another lecturers course         0.04s
+  ✓ a student cannot remove a classmate                                      0.04s
+  ✓ removing somebody who is not enrolled is a 404                           0.04s
+
+PASS  Tests\Feature\ExampleTest
+  ✓ the application returns a successful response                            0.04s
+
+PASS  Tests\Feature\ProfileTest
+  ✓ profile page is displayed                                                0.06s
+  ✓ profile information can be updated                                       0.04s
+  ✓ email verification status is unchanged when the email is unchanged       0.04s
+  ✓ user can delete their account                                            0.04s
+  ✓ correct password must be provided to delete account                      0.03s
+
+PASS  Tests\Feature\SubjectExpertBadgeTest
+  ✓ passing every quiz in the subject awards the badge                       0.05s
+  ✓ attempting without passing does not award it                             0.03s
+  ✓ a subject with no quizzes awards nothing                                 0.03s
+  ✓ resubmitting does not award a second copy                                0.05s
+  ✓ a quiz added afterwards does not revoke the badge                        0.04s
+  ✓ the badge is scoped to its own subject                                   0.05s
+
+Tests:    62 passed (135 assertions)
+Duration: 9.39s
+```
+
+*Figure 8.1: Terminal Output of `php artisan test` Showing 62 Passing Tests*
+
+## Appendix B: GitHub Repository URL
+
+- **Team Repository:** https://github.com/NickFoo0924/edusystem
+- **Branch:** `master`
+
+---
+
+## Submission Checklist
 
 - [ ] Fill in Student ID, Programme and Tutorial Group on the cover page
-- [ ] Sign and date the AI Usage Disclosure Form — **and consider rewriting §4.2, §5.1, §5.2 in your own words**
-- [ ] Draw **Figure 1** (entity class diagram — classes and object references, *not* an ERD)
-- [ ] Draw **Figure 2** (Facade class diagram)
-- [ ] Capture Screenshots 1–19, each labelled with its class path
+- [ ] Sign and date the AI Usage Disclosure Form — and rewrite §4.3, §5.1, §5.2 in your own words
+- [ ] Draw **Figure 3.1** (entity class diagram — object references, *not* an ERD) and paste the Drive link
+- [ ] Draw **Figure 4.1** (Facade class diagram) and paste the Drive link
+- [ ] Take screenshots for Figures 2.1–2.11, 5.1–5.4, 6.1–6.3 and 8.1
 - [ ] **Build the web service in Section 6** — it does not exist yet
-- [ ] Replace Screenshots 17–19 with real Postman/browser captures once built
-- [ ] Remove the ChatGPT reference if unused
-- [ ] Transfer into the official Word template and export as PDF
+- [ ] Replace Figures 6.1–6.3 with real Postman screenshots once built
+- [ ] Rebuild the Table of Contents in Word (References > Table of Contents > Automatic Table)
+- [ ] Save the finished document as PDF
