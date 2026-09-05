@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Course;
 use App\Models\Quiz;
 use App\Patterns\Strategy\GradingStrategyResolver;
+use App\Support\Api\CourseInfoClient;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -18,8 +19,10 @@ use App\Models\Question;
  */
 class QuizController extends Controller
 {
-    public function __construct(private GradingStrategyResolver $resolver)
-    {
+    public function __construct(
+        private GradingStrategyResolver $resolver,
+        private CourseInfoClient $courses,
+    ) {
     }
 
     public function create(Request $request, Course $course): View
@@ -63,6 +66,19 @@ class QuizController extends Controller
             'quiz' => $quiz,
             'isOwner' => $isOwner,
             'questionTypes' => GradingStrategyResolver::availableTypes(),
+            /*
+             * MODULE 4 CONSUMES MODULE 2's WEB SERVICE.
+             *
+             * The course a quiz belongs to is labelled from Module 2's
+             * getCourseInfo service rather than by reading Module 2's tables.
+             * Module 2 is the sole owner of course data (EduSystem.md Section
+             * 2A), so the boundary holds even for a read as small as a title.
+             *
+             * Null when Module 2 is unreachable, and the view falls back to
+             * the course already loaded locally. A quiz must stay usable when
+             * another module is down.
+             */
+            'courseInfo' => $this->courses->fetchWithInstructor($quiz->course_id),
             // Each question can explain how it will be marked, straight from
             // the strategy that will mark it.
             'strategyNotes' => $quiz->questions->mapWithKeys(

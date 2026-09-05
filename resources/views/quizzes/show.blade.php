@@ -15,6 +15,31 @@
         <p class="mt-1 text-sm text-gray-500">
             {{ $quiz->questions->count() }} questions &middot; {{ $quiz->time_limit }} minute limit
         </p>
+
+        {{-- MODULE 4 CONSUMING MODULE 2's WEB SERVICE.
+
+             The course label below was fetched over HTTP from Module 2's
+             getCourseInfo service. Module 2 owns course data, so this page
+             asks rather than reading its tables.
+
+             Absent when Module 2 cannot be reached, which is why the quiz
+             itself still loads without it. --}}
+        @if ($courseInfo)
+            <p class="mt-2 inline-flex flex-wrap items-center gap-2 rounded-lg bg-blue-50 px-3 py-1.5 text-xs text-blue-900">
+                <span class="font-semibold uppercase tracking-wide text-blue-700">
+                    From Module 2 web service
+                </span>
+                <span>
+                    {{ $courseInfo['courseCode'] }} {{ $courseInfo['courseTitle'] }}
+                    @if (! empty($courseInfo['instructorName']))
+                        &middot; {{ $courseInfo['instructorName'] }}
+                    @endif
+                    @if (! empty($courseInfo['studentCount']))
+                        &middot; {{ $courseInfo['studentCount'] }} enrolled
+                    @endif
+                </span>
+            </p>
+        @endif
     </div>
 
     @if (! $isOwner && $quiz->questions->isNotEmpty())
