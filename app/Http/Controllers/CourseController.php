@@ -7,6 +7,7 @@ use App\Models\Course;
 use App\Models\CourseMaterial;
 use App\Models\DiscussionForum;
 use App\Patterns\Adapter\MaterialAdapterFactory;
+use App\Support\Api\CourseAnalyticsClient;
 use App\Support\StudyPlan;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -22,6 +23,14 @@ use Illuminate\View\View;
  */
 class CourseController extends Controller
 {
+    /**
+     * Module 2's client for Module 5's analytics service, injected so the
+     * course page can show class performance without computing marks itself.
+     */
+    public function __construct(private CourseAnalyticsClient $analytics)
+    {
+    }
+
     /**
      * What a user sees depends on who they are: instructors get their own
      * courses, students get the ones they are enrolled in plus everything they
@@ -165,6 +174,23 @@ class CourseController extends Controller
                 ->orderBy('name')
                 ->get(),
             'earnedBadgeIds' => $request->user()->badges()->pluck('badges.id')->all(),
+            /*
+             * MODULE 2 CONSUMES MODULE 5's WEB SERVICE.
+             *
+             * Class performance figures come from Module 5's
+             * getCourseAnalytics service rather than being recomputed here.
+             * Module 5 owns marks and the grade scale (EduSystem.md Section
+             * 2A), so duplicating its arithmetic would mean two versions to
+             * keep in step every time the scale changed.
+             *
+             * Only the lecturer who owns the course and administrators see
+             * it, because cohort marks are not a student's business. Null
+             * when Module 5 is unreachable, and the panel is simply omitted.
+             */
+            'classPerformance' => ($course->instructor_id === $request->user()->id
+                || $request->user()->can('analytics.view_system'))
+                    ? $this->analytics->fetch($course->id)
+                    : null,
         ]);
     }
 

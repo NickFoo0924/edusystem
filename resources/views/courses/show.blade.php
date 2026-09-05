@@ -199,6 +199,67 @@
          rather than under the panel above it on the right. --}}
     <div class="space-y-6">
 
+    {{-- MODULE 2 CONSUMING MODULE 5's WEB SERVICE.
+
+         These figures were fetched over HTTP from Module 5's
+         getCourseAnalytics service. Module 5 owns marks and the grade scale,
+         so this page displays what it is told rather than recomputing it.
+
+         The panel is absent when Module 5 cannot be reached, which is why
+         the rest of the course page still loads without it. --}}
+    @if ($classPerformance && ($classPerformance['gradedCount'] ?? 0) > 0)
+        <section class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+            <div class="border-b border-gray-200 bg-emerald-50 px-5 py-3">
+                <h2 class="text-sm font-semibold uppercase tracking-wide text-emerald-800">
+                    Class performance
+                </h2>
+                <p class="mt-0.5 text-[11px] text-emerald-700">
+                    Retrieved from Module 5 web service
+                </p>
+            </div>
+            <dl class="divide-y divide-gray-100 px-5 text-sm">
+                <div class="flex justify-between py-2.5">
+                    <dt class="text-gray-500">Marks recorded</dt>
+                    <dd class="font-medium text-gray-900">{{ $classPerformance['gradedCount'] }}</dd>
+                </div>
+                <div class="flex justify-between py-2.5">
+                    <dt class="text-gray-500">Class average</dt>
+                    <dd class="font-medium text-gray-900">
+                        {{ $classPerformance['averageScore'] }}%
+                        <span class="ml-1 text-gray-500">({{ $classPerformance['averageGrade'] }})</span>
+                    </dd>
+                </div>
+                <div class="flex justify-between py-2.5">
+                    <dt class="text-gray-500">Highest</dt>
+                    <dd class="font-medium text-gray-900">{{ $classPerformance['highestScore'] }}%</dd>
+                </div>
+                <div class="flex justify-between py-2.5">
+                    <dt class="text-gray-500">Lowest</dt>
+                    <dd class="font-medium text-gray-900">{{ $classPerformance['lowestScore'] }}%</dd>
+                </div>
+                <div class="flex justify-between py-2.5">
+                    <dt class="text-gray-500">Passed</dt>
+                    <dd class="font-medium text-gray-900">
+                        {{ $classPerformance['passCount'] }} of {{ $classPerformance['gradedCount'] }}
+                    </dd>
+                </div>
+            </dl>
+            @if (! empty($classPerformance['distribution']))
+                <div class="border-t border-gray-100 px-5 py-3">
+                    <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Grade spread</p>
+                    <div class="mt-2 flex gap-1.5">
+                        @foreach ($classPerformance['distribution'] as $letter => $count)
+                            <div class="flex-1 text-center">
+                                <div class="text-sm font-semibold text-gray-900">{{ $count }}</div>
+                                <div class="text-[11px] text-gray-500">{{ $letter }}</div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+        </section>
+    @endif
+
     {{-- BADGES FOR THIS SUBJECT.
 
          What this course in particular can earn you, shown to whoever is
