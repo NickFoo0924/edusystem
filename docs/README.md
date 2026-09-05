@@ -333,23 +333,6 @@ Every pattern lives in `app/Patterns/`. **No pattern logic sits inside a control
 | 4 | Skill Assessment & Quiz | Wong Siew Lam | **Strategy** (Behavioural) | `app/Patterns/Strategy/` |
 | 5 | Academic Progress Analytics | Ong Kwong Wei | **State** (Behavioural) | `app/Patterns/State/` |
 
-**Why a Facade for the credential authority.** Issuing a credential is not one operation. It
-means minting a collision-free credential ID, sealing the row with a SHA-256 integrity hash,
-substituting template placeholders, rendering a PDF through DomPDF, generating and embedding a
-verification QR code, writing to a private disk, recalculating weighted progress, snapshotting it
-for the chart, evaluating every badge rule, checking for a completed learning path, and writing
-the audit trail — five collaborators and four third-party libraries. The Facade gives the rest of
-the system one object with three verbs, `issueCertificate` / `revoke` / `verify`, and hides all of
-it: `CertificateController` issues a credential in one line and imports neither DomPDF nor the QR
-encoder. The five collaborators live in `app/Patterns/Facade/Subsystem/` and each stays usable on
-its own.
-
-> **This was a Singleton until the tutor ruled Singleton out.** Behaviour and method signatures
-> are unchanged. Worth knowing for the report: the old "two instances could mint duplicate IDs"
-> argument was never true in PHP — each request is a separate process, so concurrent issuances
-> were always separate objects. Uniqueness actually comes from the unique index on
-> `certificates.credential_id` plus the retry loop, both untouched.
-
 ---
 
 ## Where everything lives
