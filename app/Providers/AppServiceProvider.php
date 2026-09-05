@@ -3,13 +3,16 @@
 namespace App\Providers;
 
 use App\Models\ActivityLog;
+use App\Models\Announcement;
 use App\Models\AnnouncementComment;
+use App\Models\Certificate;
+use App\Models\CourseInvitation;
 use App\Models\Grade;
 use App\Models\Post;
 use App\Models\Reply;
 use App\Models\User;
 use App\Patterns\Observer\SystemNotificationObserver;
-use App\Patterns\Singleton\CredentialAuthority;
+use App\Patterns\Facade\CredentialAuthority;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
@@ -46,9 +49,26 @@ class AppServiceProvider extends ServiceProvider
      */
     private function registerModelObservers(): void
     {
+        // Conversation.
         Post::observe(SystemNotificationObserver::class);
         Reply::observe(SystemNotificationObserver::class);
         AnnouncementComment::observe(SystemNotificationObserver::class);
+
+        /*
+         * Everything else worth being told about.
+         *
+         * These four were the gaps in docs/module-integration-audit.md: a
+         * notice posted, work marked, a credential minted and a course
+         * invitation issued all happened in silence. Adding them took four
+         * lines here and no change whatsoever to the announcement screen, the
+         * grading flow, the credential authority or the enrolment controller --
+         * which is the claim the Observer pattern makes, demonstrated rather
+         * than asserted.
+         */
+        Announcement::observe(SystemNotificationObserver::class);
+        Grade::observe(SystemNotificationObserver::class);
+        Certificate::observe(SystemNotificationObserver::class);
+        CourseInvitation::observe(SystemNotificationObserver::class);
 
         $this->registerGradeTrigger();
     }
@@ -61,7 +81,13 @@ class AppServiceProvider extends ServiceProvider
      * Module 5's code is what keeps Section 2A's boundary intact -- Module 5
      * writes `grades` and knows nothing about credentialing, and Module 1
      * reacts. This is framework plumbing, not a second design pattern: Module
-     * 1's one GoF pattern remains the CredentialAuthority Singleton.
+     * 1's one GoF pattern is the CredentialAuthority Facade.
+     *
+     * The authority is resolved inside the closure rather than injected into
+     * this provider, because the listener is registered at boot and must not
+     * build the credentialing subsystem on every request that never grades
+     * anything. Resolving lazily is dependency injection deferred to the point
+     * of use, not a static accessor -- the class exposes none.
      */
     private function registerGradeTrigger(): void
     {

@@ -39,16 +39,16 @@
                 Edit
             </a>
         @endif
-        @if ($isEnrolled)
-            <form method="post" action="{{ route('courses.unenrol', $course) }}"
-                  onsubmit="return confirm('Leave this course?');">
-                @csrf
-                @method('DELETE')
-                <button type="submit" class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
-                    Leave
-                </button>
-            </form>
-        @endif
+        {{--
+            There is deliberately no "Leave" button.
+
+            Enrolment is the lecturer's decision in both directions: a student
+            joins by invitation or class code, and only the lecturer who owns
+            the course can remove them again (see the roster panel). The server
+            refuses courses.unenrol with a 403 regardless, so this is a matter
+            of not offering something that would fail -- the rule is enforced
+            in EnrolmentController::destroy(), not here.
+        --}}
     </div>
 </div>
 
@@ -199,6 +199,50 @@
          rather than under the panel above it on the right. --}}
     <div class="space-y-6">
 
+    {{-- BADGES FOR THIS SUBJECT.
+
+         What this course in particular can earn you, shown to whoever is
+         looking -- a student sees their own progress towards it, a lecturer
+         sees what their class is working towards. Deliberately outside the
+         owner block below: the badge is the student's to earn, so showing it
+         only to the lecturer would be exactly backwards.
+
+         The trophy cabinet still lists every badge in the system; this panel
+         is only the ones this page can move. --}}
+    @if ($subjectBadges->isNotEmpty())
+        <section class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+            <div class="border-b border-gray-200 bg-gray-50 px-5 py-3">
+                <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-600">
+                    Badges for this subject
+                </h2>
+            </div>
+            <ul class="divide-y divide-gray-100">
+                @foreach ($subjectBadges as $badge)
+                    @php
+                        $isEarned = in_array($badge->id, $earnedBadgeIds, true);
+                        $fill = ['bronze' => '#b45309', 'silver' => '#64748b', 'gold' => '#ca8a04'][$badge->tier];
+                    @endphp
+                    <li class="flex items-start gap-3 px-5 py-3">
+                        <svg viewBox="0 0 48 48"
+                             class="mt-0.5 h-8 w-8 shrink-0 {{ $isEarned ? '' : 'opacity-30 grayscale' }}"
+                             aria-hidden="true">
+                            <circle cx="24" cy="19" r="13" fill="{{ $fill }}" />
+                            <path d="M16 30 L12 44 L24 38 L36 44 L32 30 Z" fill="{{ $fill }}" opacity="0.85" />
+                        </svg>
+                        <div class="min-w-0">
+                            <p class="truncate text-sm font-medium {{ $isEarned ? 'text-gray-900' : 'text-gray-400' }}">
+                                {{ $badge->name }}
+                            </p>
+                            <p class="text-xs {{ $isEarned ? 'text-gray-600' : 'text-gray-400' }}">
+                                {{ $isEarned ? 'Earned' : $badge->criteriaDescription() }}
+                            </p>
+                        </div>
+                    </li>
+                @endforeach
+            </ul>
+        </section>
+    @endif
+
     {{-- CLASS CODE AND ROSTER -- the owner's panel.
 
          Both ways into this course are driven from here: hand out the code, or
@@ -240,10 +284,24 @@
                     @forelse ($roster as $student)
                         <li class="flex items-center gap-3 px-5 py-3">
                             <x-avatar :user="$student" size="sm" />
-                            <div class="min-w-0">
+                            <div class="min-w-0 flex-1">
                                 <p class="truncate text-sm font-medium text-gray-900">{{ $student->name }}</p>
                                 <p class="truncate text-xs text-gray-500">{{ $student->email }}</p>
                             </div>
+                            {{--
+                                Removing a student is the owning lecturer's to do,
+                                and nobody else's -- the student has no equivalent
+                                control anywhere on this page.
+                            --}}
+                            <form method="post"
+                                  action="{{ route('courses.students.destroy', [$course, $student]) }}"
+                                  onsubmit="return confirm('Remove {{ $student->name }} from this course?');">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="text-xs font-medium text-gray-500 hover:text-red-700">
+                                    Remove
+                                </button>
+                            </form>
                         </li>
                     @empty
                         <li class="px-5 py-8 text-center text-sm text-gray-500">Nobody has joined yet.</li>

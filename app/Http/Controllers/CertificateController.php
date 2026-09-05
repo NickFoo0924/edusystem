@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Certificate;
 use App\Models\Course;
 use App\Models\User;
-use App\Patterns\Singleton\CredentialAuthority;
+use App\Patterns\Facade\CredentialAuthority;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -152,7 +152,7 @@ class CertificateController extends Controller
     /**
      * Mint a credential manually.
      *
-     * Reaching for the Singleton rather than writing a row means a manual
+     * Reaching for the Facade rather than writing a row means a manual
      * issuance is identical to an automatic one: same credential ID format,
      * same integrity hash, same PDF, same badge evaluation, same audit entry.
      */

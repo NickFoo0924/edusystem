@@ -7,7 +7,7 @@
 
 @php
     // Presentation only. The status itself was decided by the
-    // CredentialAuthority Singleton, not here.
+    // CredentialAuthority Facade, not here.
     $badge = [
         'valid'     => ['label' => 'VALID',      'ring' => 'bg-emerald-50 border-emerald-200', 'pill' => 'bg-emerald-600'],
         'revoked'   => ['label' => 'REVOKED',    'ring' => 'bg-red-50 border-red-200',         'pill' => 'bg-red-600'],

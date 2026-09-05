@@ -18,7 +18,7 @@ them.
 
 | Specification | Implementation |
 |---|---|
-| Section 2 — five modules, one pattern each | `app/Patterns/{Singleton,Adapter,Observer,Strategy,State}` |
+| Section 2 — five modules, one pattern each | `app/Patterns/{Facade,Adapter,Observer,Strategy,State}` |
 | Section 3 — schema | `database/migrations/` and `app/Models/` |
 | Section 4 — workflow Step 5 | `CredentialAuthority::handleGradeRecorded()`, triggered by a `Grade::created` event |
 | Section 5 — no raw SQL | every query is Eloquent; no `DB::raw()` or `DB::select()` anywhere |

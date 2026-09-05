@@ -44,7 +44,7 @@ class ActivityLog extends Model
      * This is the single entry point for the whole audit trail, so every call
      * site records the same fields the same way. It is deliberately a plain
      * helper and not a design pattern: Module 1's one GoF pattern is the
-     * CredentialAuthority Singleton (EduSystem.md Section 2).
+     * CredentialAuthority Facade (EduSystem.md Section 2).
      *
      * @param  string  $action  dotted action key, e.g. "certificate.revoked"
      * @param  Model|null  $target  the record acted upon, if any

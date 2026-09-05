@@ -35,18 +35,22 @@ class ScheduledEventAdapter implements CalendarEntry
     }
 
     /**
-     * A meeting link is the useful destination when there is one -- that is the
-     * whole point of clicking an online class. Otherwise the course page.
+     * The event's own page, always -- never the meeting link directly.
+     *
+     * This used to return meeting_url when there was one, which meant a single
+     * click on the grid dropped you into a live video call with no warning, and
+     * a misclick put you in front of a class. It also could not describe an
+     * event that has no link at all: a room-based class had to fall back to the
+     * course page, so the same control did two different things depending on
+     * data the person clicking could not see.
+     *
+     * Now every entry goes to its detail page, which shows the times, the room,
+     * the description and who it concerns -- and offers "Join meeting" as a
+     * deliberate second click when there is something to join.
      */
     public function url(): ?string
     {
-        if ($this->event->meeting_url) {
-            return $this->event->meeting_url;
-        }
-
-        return $this->event->course_id
-            ? route('courses.show', $this->event->course_id)
-            : null;
+        return route('events.show', $this->event->id);
     }
 
     public function courseLabel(): ?string

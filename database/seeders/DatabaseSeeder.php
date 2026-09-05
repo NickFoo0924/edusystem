@@ -583,8 +583,13 @@ class DatabaseSeeder extends Seeder
     }
 
     /**
-     * Five badge rules spanning the criteria types in EduSystem.md 1D, so the
+     * Badge rules spanning the criteria types in EduSystem.md 1D, so the
      * trophy cabinet has both earned and locked badges to render.
+     *
+     * The last one is subject-scoped: "Subject Expert" is awarded per course,
+     * so it names the course it belongs to. It is seeded against BMIT3173
+     * because that is the course carrying the demo quizzes -- see
+     * seedSubjectExpertBadges() below.
      */
     private function seedBadges(): void
     {
@@ -633,6 +638,37 @@ class DatabaseSeeder extends Seeder
 
         foreach ($badges as $badge) {
             Badge::create($badge + ['is_active' => true]);
+        }
+
+        $this->seedSubjectExpertBadges();
+    }
+
+    /**
+     * One "Subject Expert" badge per course that actually has quizzes.
+     *
+     * Per-subject rather than one global rule, because badge_student is unique
+     * on (badge_id, student_id): a single row could only ever be awarded once,
+     * and clearing two different subjects should earn two different badges.
+     *
+     * Courses with no quizzes are skipped -- a badge whose condition is "pass
+     * every quiz" would otherwise be unearnable and sit greyed out for ever in
+     * every cabinet.
+     */
+    private function seedSubjectExpertBadges(): void
+    {
+        $courses = Course::has('quizzes')->orderBy('code')->get();
+
+        foreach ($courses as $course) {
+            Badge::create([
+                'name' => 'Subject Expert — '.$course->title,
+                'description' => 'Pass every quiz in '.$course->code.' '.$course->title.'.',
+                'icon_path' => null,
+                'tier' => 'gold',
+                'criteria_type' => 'all_quizzes_in_course',
+                'criteria_value' => 1,
+                'course_id' => $course->id,
+                'is_active' => true,
+            ]);
         }
     }
 }

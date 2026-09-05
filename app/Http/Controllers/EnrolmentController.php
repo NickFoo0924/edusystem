@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use App\Models\Course;
 use App\Models\CourseInvitation;
 use Illuminate\Http\RedirectResponse;
@@ -11,7 +12,7 @@ use App\Models\User;
 use Illuminate\Validation\Rule;
 
 /**
- * MODULE 2 -- students joining and leaving courses.
+ * MODULE 2 -- students joining courses, and lecturers removing them.
  *
  * Section 7 gives enrolment to students only: an instructor "cannot enroll in a
  * course as a student", which the course.enroll permission key expresses.
@@ -20,6 +21,17 @@ use Illuminate\Validation\Rule;
  *
  *   1. the instructor invites the student, who then accepts (store)
  *   2. the student types the course's class code (join)
+ *
+ * There is exactly one way out, and it is not the student's to take:
+ *
+ *   3. the lecturer who owns the course removes them (removeStudent)
+ *
+ * The asymmetry is deliberate. Joining is something a student may be trusted
+ * with because both routes in already required the lecturer's consent -- an
+ * invitation they issued, or a class code they handed out. Leaving is not the
+ * same act in reverse: it would let a student drop a class to escape an
+ * assessment, and take their submissions and grades out of the lecturer's view
+ * with them. So destroy() refuses, and removal is the owning lecturer's alone.
  *
  * There is deliberately no browsable catalogue of courses to enrol in. A
  * student who has neither an invitation nor a code sees nothing to click,
@@ -111,26 +123,70 @@ class EnrolmentController extends Controller
             ->with('success', "Enrolled in \"{$course->title}\".");
     }
 
+    /**
+     * Refused, always: a student may not remove themselves from a course.
+     *
+     * Enrolment is the instructor's decision in both directions. A student who
+     * has joined is in the class until the lecturer who owns it says otherwise
+     * -- leaving unaided would let somebody walk away from an assessment, and
+     * take the submissions, attempts and grades attached to their enrolment
+     * out of the lecturer's view with them.
+     *
+     * The route is deliberately kept rather than deleted so that a direct call
+     * is answered with an explicit 403 explaining the rule, instead of a 404
+     * that reads like the feature is merely missing. Hiding the button is not
+     * the control; this is.
+     *
+     * Removal now lives in removeStudent(), which only the owning lecturer can
+     * reach.
+     */
     public function destroy(Request $request, Course $course): RedirectResponse
     {
-        abort_unless($request->user()->can('course.enroll'), 403);
+        abort(403, 'Students cannot leave a course themselves. Ask the lecturer who teaches it to remove you.');
+    }
 
-        // Leaving would orphan the work behind an issued credential, so it is
-        // refused once anything has been earned here.
-        if ($course->certificates()->where('student_id', $request->user()->id)->exists()) {
-            return back()->with('error', 'You hold a certificate for this course and cannot unenrol.');
-        }
+    /**
+     * The lecturer removes a student from their own course.
+     *
+     * Guarded exactly as every other roster write in this controller is
+     * (authoriseOwner): the course.create permission key, which only the
+     * instructor role holds, and then ownership of this particular course --
+     * so one lecturer cannot empty another lecturer's class.
+     */
+    public function removeStudent(Request $request, Course $course, User $student): RedirectResponse
+    {
+        $this->authoriseOwner($request, $course);
 
-        $course->students()->detach($request->user()->id);
+        // Not enrolled is a 404 rather than a silent success: the caller asked
+        // to undo something that was never true.
+        abort_unless($course->hasStudent($student), 404, 'That student is not enrolled in this course.');
 
         /*
-         * The spent invitation goes with them. Leaving it accepted would let a
-         * student who changed their mind rejoin with no instructor involved,
-         * which is the loophole this whole flow exists to close.
+         * The same safeguard the old self-service leave carried, now applied to
+         * the target rather than the actor. Removing the enrolment behind an
+         * issued credential would orphan the work the certificate attests to,
+         * and the public verification page would still be serving it.
          */
-        $course->invitations()->where('student_id', $request->user()->id)->delete();
+        if ($course->certificates()->where('student_id', $student->id)->whereNull('revoked_at')->exists()) {
+            return back()->with(
+                'error',
+                "{$student->name} holds a certificate for this course, so the enrolment cannot be removed. Revoke the credential first."
+            );
+        }
 
-        return redirect()->route('courses.index')->with('success', "Left \"{$course->title}\".");
+        $course->students()->detach($student->id);
+
+        /*
+         * The spent invitation goes with them, so a removed student does not
+         * still have a standing invitation to accept.
+         */
+        $course->invitations()->where('student_id', $student->id)->delete();
+
+        // Removing somebody from a class is a decision worth being able to
+        // point at later, so it joins the audit trail.
+        ActivityLog::record('course.student_removed', $student);
+
+        return back()->with('success', "Removed {$student->name} from \"{$course->title}\".");
     }
 
     /*

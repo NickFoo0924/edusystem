@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Badge;
 use App\Models\Course;
 use App\Models\CourseMaterial;
 use App\Models\DiscussionForum;
@@ -152,6 +153,18 @@ class CourseController extends Controller
             'pendingInvitations' => $course->instructor_id === $request->user()->id
                 ? $course->invitations()->whereNull('accepted_at')->with('student')->latest()->get()
                 : collect(),
+            /*
+             * Badges scoped to this subject, so a student sees what this course
+             * in particular can earn them without leaving for the cabinet. The
+             * cabinet remains the place that shows every badge in the system;
+             * this shows only the ones this page can move.
+             */
+            'subjectBadges' => Badge::where('is_active', true)
+                ->where('award_type', 'badge')
+                ->where('course_id', $course->id)
+                ->orderBy('name')
+                ->get(),
+            'earnedBadgeIds' => $request->user()->badges()->pluck('badges.id')->all(),
         ]);
     }
 

@@ -3,7 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Badge;
+use App\Models\CertificateTemplate;
+use App\Models\Course;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -28,6 +31,16 @@ class BadgeController extends Controller
      * The criteria the rules engine understands, and what criteria_value means
      * for each. Kept here so the form and the validator cannot drift apart.
      */
+    /**
+     * The conditions the rules engine understands, and what criteria_value
+     * means for each. Kept here so the form and the validator cannot drift
+     * apart, and deliberately a FIXED LIST rather than an expression language:
+     * an administrator picks one and fills in its number, so no rule they can
+     * write is able to error, loop, or read data they should not see.
+     *
+     * Adding one means an arm in AwardConditionEvaluator and a line in the
+     * criteria_type enum. That is the price of not shipping an interpreter.
+     */
     public const CRITERIA_TYPES = [
         'course_completion' => 'Courses completed (value = how many)',
         'path_completion' => 'Learning paths completed (value = how many)',
@@ -35,15 +48,57 @@ class BadgeController extends Controller
         'on_time_submissions' => 'Assignments submitted on time (value = how many)',
         'first_forum_post' => 'First forum post (value = 1)',
         'login_streak' => 'Consecutive days logged in (value = how many)',
+        'all_quizzes_in_course' => 'Every quiz in a subject passed (pick a subject, or leave as any and set value = how many subjects)',
+        'average_score_in_course' => 'Average quiz score in a subject (value = percentage; pick a subject, or leave as any for all quizzes)',
+        'quizzes_completed' => 'Quizzes passed in total, across every subject (value = how many)',
+    ];
+
+    /**
+     * Conditions that can be narrowed to a single subject. The rest ignore
+     * course_id entirely and the controller clears it for them.
+     */
+    public const SUBJECT_SCOPED_CRITERIA = [
+        'all_quizzes_in_course',
+        'average_score_in_course',
+    ];
+
+    /**
+     * What satisfying a rule produces.
+     */
+    public const AWARD_TYPES = [
+        'badge' => 'Badge — appears in the trophy cabinet',
+        'certificate' => 'Certificate — mints a verifiable credential with a PDF and QR code',
     ];
 
     public const TIERS = ['bronze', 'silver', 'gold'];
 
     public function index(): View
     {
-        $badges = Badge::withCount('students')->orderBy('name')->get();
+        $badges = Badge::with(['course', 'certificateTemplate'])
+            ->withCount('students')
+            ->orderBy('award_type')
+            ->orderBy('name')
+            ->get();
 
         return view('badges.index', compact('badges'));
+    }
+
+    /**
+     * Turn a rule on or off without deleting it.
+     *
+     * Deactivating is the safe way to stop a rule: the engine skips inactive
+     * rules, but every award already made from it stays exactly where it is
+     * (see docs/award-rules.md). Deleting is the destructive option, and for
+     * badges it cascades the awards away with the rule.
+     */
+    public function toggle(Badge $badge): RedirectResponse
+    {
+        $badge->update(['is_active' => ! $badge->is_active]);
+
+        return back()->with(
+            'success',
+            "\"{$badge->name}\" is now ".($badge->is_active ? 'active' : 'inactive').'.'
+        );
     }
 
     public function create(): View
@@ -51,6 +106,10 @@ class BadgeController extends Controller
         return view('badges.create', [
             'criteriaTypes' => self::CRITERIA_TYPES,
             'tiers' => self::TIERS,
+            'courses' => $this->selectableCourses(),
+            'subjectScopedCriteria' => self::SUBJECT_SCOPED_CRITERIA,
+            'awardTypes' => self::AWARD_TYPES,
+            'templates' => CertificateTemplate::orderBy('name')->get(['id', 'name']),
         ]);
     }
 
@@ -74,6 +133,10 @@ class BadgeController extends Controller
             'badge' => $badge,
             'criteriaTypes' => self::CRITERIA_TYPES,
             'tiers' => self::TIERS,
+            'courses' => $this->selectableCourses(),
+            'subjectScopedCriteria' => self::SUBJECT_SCOPED_CRITERIA,
+            'awardTypes' => self::AWARD_TYPES,
+            'templates' => CertificateTemplate::orderBy('name')->get(['id', 'name']),
         ]);
     }
 
@@ -116,14 +179,57 @@ class BadgeController extends Controller
             'tier' => ['required', 'in:'.implode(',', self::TIERS)],
             'criteria_type' => ['required', 'in:'.implode(',', array_keys(self::CRITERIA_TYPES))],
             'criteria_value' => ['required', 'integer', 'min:1'],
+            'award_type' => ['required', 'in:'.implode(',', array_keys(self::AWARD_TYPES))],
+            'course_id' => ['nullable', 'exists:courses,id'],
+            'certificate_template_id' => ['nullable', 'exists:certificate_templates,id'],
             'icon' => ['nullable', 'image', 'max:2048'],
         ]);
+
+        /*
+         * A certificate attests to something in particular, so a certificate
+         * rule must name the subject it is issued for. Validated here rather
+         * than silently skipped at evaluation time, so an administrator finds
+         * out when they save the rule rather than wondering later why it never
+         * fires.
+         */
+        if ($data['award_type'] === 'certificate' && blank($data['course_id'] ?? null)) {
+            throw ValidationException::withMessages([
+                'course_id' => 'A certificate rule must name the subject its credential is issued for.',
+            ]);
+        }
 
         // An unchecked checkbox is simply absent from the request.
         $data['is_active'] = $request->boolean('is_active');
         unset($data['icon']);
 
+        /*
+         * Only some criteria are scoped to a subject. Clearing the column for
+         * the rest means the form cannot leave a stale course behind when an
+         * admin switches an existing rule from "every quiz in Integrative
+         * Programming" to, say, a login streak -- which would otherwise sit in
+         * the row meaning nothing.
+         */
+        if (! in_array($data['criteria_type'], self::SUBJECT_SCOPED_CRITERIA, true)
+            && $data['award_type'] !== 'certificate') {
+            $data['course_id'] = null;
+        }
+
+        // Likewise: a template is meaningless on a badge rule.
+        if ($data['award_type'] !== 'certificate') {
+            $data['certificate_template_id'] = null;
+        }
+
         return $data;
+    }
+
+    /**
+     * Courses an admin can scope a badge to, newest naming first.
+     *
+     * @return \Illuminate\Support\Collection<int, Course>
+     */
+    private function selectableCourses()
+    {
+        return Course::orderBy('code')->get(['id', 'code', 'title']);
     }
 
     /**
@@ -169,7 +275,11 @@ class BadgeController extends Controller
         // Keyed by badge id so the view can look up the awarded_at pivot.
         $earned = $student->badges()->get()->keyBy('id');
 
+        // Badge rules only. A certificate rule lives in the same registry but
+        // produces a credential, and belongs on My Certificates rather than in
+        // a cabinet of medals.
         $badges = Badge::where('is_active', true)
+            ->where('award_type', 'badge')
             ->get()
             ->sortBy([
                 // Earned first, then bronze -> silver -> gold.

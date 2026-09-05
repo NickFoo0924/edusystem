@@ -47,7 +47,7 @@ Five modules, one owner each, and exactly one GoF design pattern per module. Eve
 
 | # | Module | Owner | Pattern | Category | Where the pattern lives |
 |---|---|---|---|---|---|
-| 1 | Identity, Access & Digital Credentialing | Serena Lim Sze Kee | **Singleton** | Creational | `app/Patterns/Singleton/CredentialAuthority.php` |
+| 1 | Identity, Access & Digital Credentialing | Serena Lim Sze Kee | **Facade** | Structural | `app/Patterns/Facade/CredentialAuthority.php` |
 | 2 | Academic Resources Repository | Foo Chong Xian | **Adapter** | Structural | `app/Patterns/Adapter/` |
 | 3 | Student Forum & Notifications | Ong Shun Yan | **Observer** | Behavioural | `app/Patterns/Observer/SystemNotificationObserver.php` |
 | 4 | Skill Assessment & Quiz | Wong Siew Lam | **Strategy** | Behavioural | `app/Patterns/Strategy/` |
@@ -59,7 +59,7 @@ broken into numbered areas, and the pattern with the justification to use in the
 ### Module 1: Identity, Access & Digital Credentialing
 *   **Owner:** Serena Lim Sze Kee
 *   **Entities Managed:** User, Instructor, Student, Administrator, Permission, Invitation, ActivityLog, StudentProgress, Badge, Certificate, CertificateTemplate, LearningPath, NotificationPreference.
-*   **Assigned Pattern:** **Singleton Pattern (Creational)**
+*   **Assigned Pattern:** **Facade Pattern (Structural)** — *revised; see the note at the head of the Module 1 pattern section below*
 
 #### 1A. Extended Authentication & Access Control
 Laravel Breeze supplies the login/logout/reset scaffolding. This module extends it into a managed identity system:
@@ -79,7 +79,7 @@ Laravel Breeze supplies the login/logout/reset scaffolding. This module extends 
 
 #### 1C. Digital Credentialing (the module's centrepiece)
 *   **Certificate templates** — an Administrator creates reusable templates: background image, signature image, and body text containing placeholders `{{student_name}}`, `{{course_title}}`, `{{score}}`, `{{issued_date}}`, `{{credential_id}}`.
-*   **Issuance** — when a student satisfies a course's completion criteria, the Singleton mints a `Certificate` bearing a globally unique human-readable **credential ID** (format: `LS-{YEAR}-{8 CHAR BASE32}`, e.g. `LS-2026-A7F3D9K2`), renders the template to PDF via DomPDF, and stores the file path.
+*   **Issuance** — when a student satisfies a course's completion criteria, the authority mints a `Certificate` bearing a globally unique human-readable **credential ID** (format: `LS-{YEAR}-{8 CHAR BASE32}`, e.g. `LS-2026-A7F3D9K2`), renders the template to PDF via DomPDF, and stores the file path.
 *   **Public verification** — `GET /verify/{credential_id}` is an unauthenticated route. It displays the holder's name, course, score, issue date and status (**Valid / Expired / Revoked**). A QR code encoding this URL is embedded in every generated PDF, so the certificate can be verified by scanning it with a phone.
 *   **Integrity hash** — on issuance the system stores `SHA-256(student_id | course_id | score | issued_at | credential_id)`. The verification page recomputes and compares this hash, proving the record has not been tampered with in the database.
 *   **Revocation** — an Administrator may revoke a certificate with a stated reason; the verification page immediately reports `REVOKED` and the PDF download is disabled.
@@ -87,20 +87,73 @@ Laravel Breeze supplies the login/logout/reset scaffolding. This module extends 
 
 #### 1D. Badge Rules Engine
 *   `Badge` records are **rules configured by an Administrator**, never hardcoded: `criteria_type` (`quiz_score`, `course_completion`, `path_completion`, `on_time_submissions`, `first_forum_post`, `login_streak`), `criteria_value`, `tier` (bronze / silver / gold) and an icon.
-*   After any grade event, the Singleton evaluates all active badge rules for that student and awards any newly satisfied badges.
+*   After any grade event, the authority evaluates all active badge rules for that student and awards any newly satisfied badges.
 *   The student profile renders a **trophy cabinet**: earned badges in colour, unearned badges greyed out with their unlock condition displayed ("Score 90% or higher on any quiz").
 
 #### 1E. Notification Inbox
 *   Module 3 **produces** notification events. Module 1 **owns the inbox**: the navbar bell with unread count, the notification history page, mark-as-read / mark-all-read, and per-user `NotificationPreference` rows controlling which notification types the user receives.
 
-#### Design Pattern Implementation — Singleton
-Create `app/Patterns/Singleton/CredentialAuthority.php`, bound in a service provider via `$this->app->singleton(CredentialAuthority::class, ...)`.
+#### Design Pattern Implementation — Facade
 
-**Justification (use this wording in the report):** The `CredentialAuthority` models a real-world *certificate authority*. Only one authority may exist in the system, because it is the sole issuer of credential IDs and the sole arbiter of whether a student has already been credentialed for a given course. If two instances existed concurrently — for example when a grade event and a manual admin issuance fire at the same time — they could mint duplicate credential IDs or issue two certificates for the same achievement, destroying the uniqueness guarantee that public verification depends upon. The Singleton also loads the badge rule registry once and holds it in memory for the lifetime of the request, so the rule set is evaluated from one consistent source.
+> ### Revision Note (v4) — pattern changed from Singleton to Facade
+> Module 1 was originally assigned the **Singleton**. The tutor has since ruled that Singleton
+> may not be used, so it has been replaced by the **Facade** (Structural). The module's
+> behaviour, public method signatures and feature set are unchanged — only the way the object
+> is constructed and what it delegates to. Facade is one of the nine patterns Chapter 3 of the
+> syllabus teaches in depth, and it duplicates no other member's pattern (Adapter, Observer,
+> Strategy, State).
+>
+> **The honest finding behind the change:** the original Singleton justification — "two
+> concurrent instances could mint duplicate credential IDs" — does not survive scrutiny in
+> PHP. Each HTTP request is a separate process with its own memory, so two simultaneous
+> issuances were *always* two separate objects; the Singleton never provided any cross-request
+> guarantee. What actually prevents duplicate credential IDs is the unique index on
+> `certificates.credential_id` together with the collision-retry loop in
+> `CredentialIdGenerator`. Both are untouched, so nothing was lost by removing the Singleton.
 
-The class exposes: `issueCertificate(Student, Course)`, `issuePathwayCertificate(Student, LearningPath)`, `revoke(Certificate, string $reason)`, `verify(string $credentialId)`, `evaluateBadges(Student)` and `recalculateProgress(Student, Course)`.
+Create `app/Patterns/Facade/CredentialAuthority.php`, fronting five subsystem collaborators in
+`app/Patterns/Facade/Subsystem/`. It is registered in `CredentialServiceProvider` with
+`$this->app->scoped(...)`, which is request-scoped **dependency injection** — container lifetime
+management, not a Singleton: the constructor is public, there is no static state, and no static
+accessor exists.
 
-> **Do NOT** justify this Singleton as "preventing memory bloat" — Laravel's service container already manages object lifetimes, and a marker will challenge that reasoning. The uniqueness-of-issuing-authority argument above is the defensible one.
+**Justification (use this wording in the report):** Issuing a verifiable credential is not one
+operation but nine. It requires minting a collision-free human-readable credential ID, sealing
+the record with a SHA-256 integrity hash, substituting placeholders into an administrator's
+template, rendering that template to PDF through DomPDF, generating and embedding a QR code that
+encodes the public verification URL, writing the document to a private disk, recalculating the
+student's weighted progress against admin-configurable settings, snapshotting that progress for
+their chart, evaluating every active badge rule, checking whether the course just completed a
+learning path, and writing the audit trail. That is five distinct collaborators and four
+third-party libraries. The **Facade** pattern gives the rest of the system a single object with a
+small, stable vocabulary — `issueCertificate`, `revoke`, `verify` — and hides all of it behind
+that vocabulary. `CertificateController` issues a credential in one line and imports neither
+DomPDF, nor the QR encoder, nor the settings table, nor the badge rules. Critically, the Facade
+does not seal the subsystem off: each collaborator remains independently usable and independently
+testable, which is precisely the pattern's stated intent — *provide a unified interface to a set
+of interfaces in a subsystem, making the subsystem easier to use* — rather than a restriction on
+how many may exist.
+
+The subsystem it fronts, all in `App\Patterns\Facade\Subsystem`:
+
+| Collaborator | Responsibility |
+|---|---|
+| `CredentialIdGenerator` | Mints `LS-{YEAR}-{8 CHAR BASE32}`, retrying on collision |
+| `IntegrityHasher` | Computes the tamper seal and re-verifies it at verification time |
+| `CertificateRenderer` | Placeholder substitution, DomPDF rendering, QR encoding, storage |
+| `ProgressCalculator` | The weighted completion arithmetic, thresholds and course marks |
+| `BadgeRuleEvaluator` | The badge rule registry and its six criteria types |
+
+The Facade exposes, with signatures unchanged from the previous implementation:
+`issueCertificate(Student, Course, ?float)`, `issuePathwayCertificate(Student, LearningPath)`,
+`revoke(Certificate, string $reason)`, `verify(string $credentialId)`, `evaluateBadges(Student)`,
+`recalculateProgress(Student, Course)`, `handleGradeRecorded(Grade)`, `verificationUrl(string)`
+and `verificationQrCode(string)`.
+
+> **Do NOT** justify this Facade as "it keeps the class tidy" — a marker will read that as
+> cosmetic. The defensible argument is the one above: it is a genuine subsystem of five
+> collaborators and four libraries, and the Facade is what stops that complexity leaking into
+> every controller that needs a credential.
 
 ---
 
@@ -309,7 +362,7 @@ Tables marked **[CORE]** must be built. Tables marked **[STRETCH]** are implemen
 - **Step 2:** Student studies materials. If confused, Student posts in `DiscussionForum` (Mod 3). The **Observer Pattern** writes to `notifications`; Module 1's inbox surfaces it in the bell dropdown, respecting the user's `notification_preferences`.
 - **Step 3:** Instructor creates a `Quiz` (graded via **Strategy Pattern**, Mod 4) and an `Assignment`. Student attempts the quiz (`QuizAttempt`) and uploads an assignment (`Submission` managed by **State Pattern**, Mod 5).
 - **Step 4:** The `QuizAttempt` and `Submission` records pass their data to generate a `Grade` (Mod 5).
-- **Step 5:** The `Grade` write triggers the **Singleton** `CredentialAuthority` (Mod 1), which:
+- **Step 5:** The `Grade` write triggers the **Facade** `CredentialAuthority` (Mod 1), which:
     1. Recalculates `StudentProgress` for that course using the admin-configured weighting and writes a `progress_snapshot`.
     2. Evaluates every active `Badge` rule and awards any newly earned badges.
     3. If the course completion threshold is met, mints a `Certificate` — unique credential ID, integrity hash, DomPDF render with an embedded verification QR code.
@@ -333,7 +386,7 @@ Tables marked **[CORE]** must be built. Tables marked **[STRETCH]** are implemen
 ## 6. Prompting Instructions for AI Code Generation
 When the human asks you to code a module, output the following in order:
 1. **Migrations & Models:** Provide the schema and Eloquent models with all `hasMany`/`belongsTo`/`hasOne`/`belongsToMany` relationships clearly defined according to Section 3.
-2. **Design Pattern Implementation:** Provide the exact PHP classes and interfaces for the assigned Design Pattern (Singleton, Adapter, Strategy, Observer, or State) located in an `app/Patterns/` namespace. DO NOT cram pattern logic inside Controllers.
+2. **Design Pattern Implementation:** Provide the exact PHP classes and interfaces for the assigned Design Pattern (Facade, Adapter, Strategy, Observer, or State) located in an `app/Patterns/` namespace. DO NOT cram pattern logic inside Controllers.
 3. **Controllers:** Provide the MVC Controller that binds the Models and the Design Pattern together.
 4. **Blade Views:** Provide a clean Tailwind/Bootstrap UI structure for the feature.
 5. **Seeders:** For Module 1, seed the `permissions` table from the matrix in Section 7, plus at least one `certificate_template` and five sample `badges`, so the system is demonstrable immediately after `migrate:fresh --seed`.

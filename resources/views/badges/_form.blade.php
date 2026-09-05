@@ -32,6 +32,26 @@
         </p>
     </div>
 
+    {{-- What satisfying this rule produces. Badge rules and certificate rules
+         live in the same registry and run through the same condition
+         evaluator; this is the only thing that differs between them. --}}
+    <div>
+        <label for="award_type" class="block text-sm font-medium text-gray-700">Award</label>
+        <select id="award_type" name="award_type"
+                class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+            @foreach ($awardTypes as $value => $label)
+                <option value="{{ $value }}"
+                        @selected(old('award_type', $badge->award_type ?? 'badge') === $value)>
+                    {{ $label }}
+                </option>
+            @endforeach
+        </select>
+        <p class="mt-1 text-xs text-gray-500">
+            A certificate rule must name a subject below, and mints a real credential &mdash; unique ID,
+            integrity hash, QR-coded PDF &mdash; through the same authority as an automatic issuance.
+        </p>
+    </div>
+
     <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <div>
             <label for="tier" class="block text-sm font-medium text-gray-700">Tier</label>
@@ -60,6 +80,50 @@
             @foreach ($criteriaTypes as $value => $label)
                 <option value="{{ $value }}" @selected(old('criteria_type', $badge->criteria_type ?? '') === $value)>
                     {{ $label }}
+                </option>
+            @endforeach
+        </select>
+    </div>
+
+    {{--
+        Only meaningful for the one subject-scoped criterion. Left visible for
+        every type rather than hidden by JavaScript, because the controller
+        clears it server-side anyway -- so a stale value cannot survive a switch
+        of criteria, with or without scripting.
+    --}}
+    <div>
+        <label for="course_id" class="block text-sm font-medium text-gray-700">
+            Subject <span class="font-normal text-gray-500">(only used by "every quiz in a subject")</span>
+        </label>
+        <select id="course_id" name="course_id"
+                class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+            <option value="">Any subject — use the threshold value as "how many subjects"</option>
+            @foreach ($courses as $course)
+                <option value="{{ $course->id }}"
+                        @selected((int) old('course_id', $badge->course_id ?? 0) === $course->id)>
+                    {{ $course->code }} {{ $course->title }}
+                </option>
+            @endforeach
+        </select>
+        <p class="mt-1 text-xs text-gray-500">
+            Pick a subject for a badge like "Subject Expert &mdash; Integrative Programming". One badge
+            per subject, so a student can hold several.
+        </p>
+    </div>
+
+    {{-- Certificate rules only. A badge rule renders its tier medal instead,
+         and the controller clears this column for them. --}}
+    <div>
+        <label for="certificate_template_id" class="block text-sm font-medium text-gray-700">
+            Certificate design <span class="font-normal text-gray-500">(certificate rules only)</span>
+        </label>
+        <select id="certificate_template_id" name="certificate_template_id"
+                class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+            <option value="">Use the active default template</option>
+            @foreach ($templates as $template)
+                <option value="{{ $template->id }}"
+                        @selected((int) old('certificate_template_id', $badge->certificate_template_id ?? 0) === $template->id)>
+                    {{ $template->name }}
                 </option>
             @endforeach
         </select>

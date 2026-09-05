@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\View\View;
 use App\Console\Commands\SendScheduledReminders;
 use App\Models\NotificationPreference;
+use App\Patterns\Facade\Subsystem\BadgeRuleEvaluator;
 use App\Patterns\Observer\SystemNotificationObserver;
 
 /**
@@ -77,8 +78,17 @@ class NotificationController extends Controller
         SendScheduledReminders::TYPE_EVENT_SOON => 'A class or meeting on my calendar is about to start',
         SendScheduledReminders::TYPE_ASSIGNMENT_DUE => 'An assignment I have not submitted is due soon',
         SendScheduledReminders::TYPE_ASSIGNMENT_CLOSED => 'An assignment I set has closed and has work to review',
-        'certificate.issued' => 'I earn a new certificate',
-        'badge.awarded' => 'I earn a new badge',
+        SystemNotificationObserver::TYPE_ANNOUNCEMENT_POSTED => 'An announcement is posted to a course I am in',
+        SystemNotificationObserver::TYPE_GRADE_RECORDED => 'My submitted work has been marked',
+        SystemNotificationObserver::TYPE_COURSE_INVITATION => 'A lecturer invites me to join a course',
+        /*
+         * These two were listed here long before anything produced them --
+         * the switches existed for notifications that never arrived. Both now
+         * have a producer, and the string literals have been replaced with the
+         * constants their senders declare, so the two cannot drift apart.
+         */
+        SystemNotificationObserver::TYPE_CERTIFICATE_ISSUED => 'I earn a new certificate',
+        BadgeRuleEvaluator::TYPE_BADGE_AWARDED => 'I earn a new badge',
     ];
 
     public function editPreferences(Request $request): View

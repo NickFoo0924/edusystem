@@ -173,6 +173,108 @@ class CalendarController extends Controller
             ->with('success', "Scheduled \"{$event->title}\".");
     }
 
+    /**
+     * One scheduled event, in full.
+     *
+     * Clicking an entry on the grid comes here rather than jumping straight to
+     * the meeting link. Two reasons, and the second is the one that matters:
+     * being thrown into a live video call by a misclick is unpleasant, and not
+     * every calendar entry HAS a link -- a room-based class and an assignment
+     * deadline both have nowhere to jump to, so a direct-redirect design would
+     * have to special-case them anyway.
+     */
+    public function showEvent(Request $request, CourseEvent $event): View
+    {
+        /*
+         * ACCESS CONTROL.
+         *
+         * Guessing an id must reveal nothing the calendar would not already
+         * have shown you, so this asks exactly the same question the grid does
+         * -- the visibleTo scope -- rather than a second, looser rule that
+         * could drift away from it. A student who is not enrolled in the
+         * course, and any instructor who does not teach it, gets a 403.
+         */
+        abort_unless(
+            CourseEvent::visibleTo($request->user())->whereKey($event->getKey())->exists(),
+            403,
+            'That event belongs to a course you are not part of.'
+        );
+
+        $event->load(['course.instructor', 'creator']);
+
+        return view('calendar.show', [
+            'event' => $event,
+            // Null unless there is a genuinely usable link -- see safeMeetingUrl.
+            'joinUrl' => $this->safeMeetingUrl($event->meeting_url),
+            // A broken link is worth saying out loud rather than silently
+            // dropping, so whoever scheduled it can fix it.
+            'meetingUrlIsBroken' => filled($event->meeting_url) && $this->safeMeetingUrl($event->meeting_url) === null,
+            'audience' => $this->audienceFor($request, $event),
+            'canDelete' => $request->user()->can('event.manage')
+                && ($event->created_by === $request->user()->id || $request->user()->can('analytics.view_system')),
+        ]);
+    }
+
+    /**
+     * A meeting link only if it is genuinely usable, otherwise null.
+     *
+     * storeEvent() validates `url` on the way in, but a row can also arrive
+     * from a seeder, a migration or somebody editing the database by hand, and
+     * this page must not crash or -- worse -- render whatever it finds as a
+     * clickable button.
+     *
+     * The scheme check is the security half: `javascript:` and `data:` URLs
+     * satisfy FILTER_VALIDATE_URL, and turning one into a "Join meeting" button
+     * would hand every viewer a scripted link dressed as a video call.
+     */
+    private function safeMeetingUrl(?string $url): ?string
+    {
+        if (blank($url) || ! filter_var($url, FILTER_VALIDATE_URL)) {
+            return null;
+        }
+
+        $scheme = strtolower((string) parse_url($url, PHP_URL_SCHEME));
+
+        return in_array($scheme, ['http', 'https'], true) ? $url : null;
+    }
+
+    /**
+     * Who the event concerns, described at the level the viewer is entitled to.
+     *
+     * Names are shown to whoever runs the class -- the course's instructor and
+     * an administrator -- and a count to everybody else. That is the same line
+     * the course roster already draws: a student cannot browse the people they
+     * study alongside, so a calendar page must not become the way around it.
+     *
+     * @return array{label: string, names: \Illuminate\Support\Collection<int, string>, count: int}
+     */
+    private function audienceFor(Request $request, CourseEvent $event): array
+    {
+        if ($event->isGlobal()) {
+            return [
+                'label' => 'Everyone at the institution',
+                'names' => collect(),
+                'count' => 0,
+            ];
+        }
+
+        $course = $event->course;
+
+        if ($course === null) {
+            return ['label' => 'Nobody — the course has been removed', 'names' => collect(), 'count' => 0];
+        }
+
+        $students = $course->students()->orderBy('name')->get();
+        $maySeeNames = $request->user()->can('analytics.view_system')
+            || $course->instructor_id === $request->user()->id;
+
+        return [
+            'label' => $course->label(),
+            'names' => $maySeeNames ? $students->pluck('name') : collect(),
+            'count' => $students->count(),
+        ];
+    }
+
     public function destroyEvent(Request $request, CourseEvent $event): RedirectResponse
     {
         abort_unless($request->user()->can('event.manage'), 403);
@@ -182,9 +284,17 @@ class CalendarController extends Controller
 
         abort_unless($allowed, 403);
 
+        $month = $event->starts_at->format('Y-m');
         $event->delete();
 
-        return back()->with('success', 'Event removed from the calendar.');
+        /*
+         * Explicitly to the calendar rather than back(): deletion is now also
+         * reachable from the event's own page, and going "back" to a record
+         * that no longer exists would 404 on the model binding.
+         */
+        return redirect()
+            ->route('calendar.index', ['month' => $month])
+            ->with('success', 'Event removed from the calendar.');
     }
 
     /**

@@ -108,9 +108,21 @@ Route::middleware('auth')->group(function () {
 
     // The two ways into a course: accepting an invitation, or the code above.
     Route::post('courses/{course}/enrol', [EnrolmentController::class, 'store'])->name('courses.enrol');
+
+    /*
+     * Kept, and it always answers 403.
+     *
+     * A student may not leave a course of their own accord -- enrolment is the
+     * lecturer's decision in both directions. The route survives its own
+     * removal so that a request forged against it is refused explicitly rather
+     * than 404ing, which would read as a missing feature rather than a rule.
+     * Removing a student is courses.students.destroy, below.
+     */
     Route::delete('courses/{course}/enrol', [EnrolmentController::class, 'destroy'])->name('courses.unenrol');
 
     // The instructor's side of enrolment.
+    Route::delete('courses/{course}/students/{student}', [EnrolmentController::class, 'removeStudent'])
+        ->name('courses.students.destroy');
     Route::post('courses/{course}/invitations', [EnrolmentController::class, 'invite'])
         ->name('courses.invitations.store');
     Route::delete('courses/{course}/invitations/{invitation}', [EnrolmentController::class, 'withdrawInvitation'])
@@ -134,6 +146,14 @@ Route::middleware('auth')->group(function () {
     Route::get('calendar', [CalendarController::class, 'index'])->name('calendar.index');
     Route::get('calendar/events/create', [CalendarController::class, 'createEvent'])->name('events.create');
     Route::post('calendar/events', [CalendarController::class, 'storeEvent'])->name('events.store');
+
+    /*
+     * One event in full. Declared after `create` so "create" is never matched
+     * as an event id, and guarded inside the controller by the same visibleTo
+     * scope the grid uses -- guessing an id reveals nothing the calendar would
+     * not already have shown you.
+     */
+    Route::get('calendar/events/{event}', [CalendarController::class, 'showEvent'])->name('events.show');
     Route::delete('calendar/events/{event}', [CalendarController::class, 'destroyEvent'])->name('events.destroy');
 
     Route::get('announcements', [AnnouncementController::class, 'index'])->name('announcements.index');
@@ -221,6 +241,15 @@ Route::middleware('auth')->group(function () {
      * resolves through the database-backed Gate registered in
      * AppServiceProvider, so these guards are permission keys, never roles.
      */
+    /*
+     * The award-rule registry: badge rules and certificate rules alike
+     * (docs/award-rules.md). Declared before the resource so "toggle" is never
+     * matched as a badge id.
+     */
+    Route::patch('badges/{badge}/toggle', [BadgeController::class, 'toggle'])
+        ->middleware('can:badge.manage')
+        ->name('badges.toggle');
+
     Route::resource('badges', BadgeController::class)
         ->middleware('can:badge.manage');
 

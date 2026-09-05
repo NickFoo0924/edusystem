@@ -2,8 +2,12 @@
 
 namespace App\Patterns\Observer;
 
+use App\Models\Announcement;
 use App\Models\AnnouncementComment;
+use App\Models\Certificate;
 use App\Models\Course;
+use App\Models\CourseInvitation;
+use App\Models\Grade;
 use App\Models\Post;
 use App\Models\Reply;
 use App\Models\User;
@@ -40,11 +44,28 @@ class SystemNotificationObserver
 
     public const TYPE_MENTION = 'forum.mention';
 
+    public const TYPE_ANNOUNCEMENT_POSTED = 'announcement.posted';
+
+    public const TYPE_GRADE_RECORDED = 'grade.recorded';
+
+    public const TYPE_CERTIFICATE_ISSUED = 'certificate.issued';
+
+    public const TYPE_COURSE_INVITATION = 'course.invitation';
+
     /**
-     * Fired by Eloquent when a Post or a Reply is created.
+     * Fired by Eloquent when any observed model is created.
      *
-     * One observer serves both subjects because the responsibility is the
-     * same -- turn forum activity into inbox entries.
+     * SEVEN SUBJECTS, ONE OBSERVER, and none of them knows it exists. That is
+     * the whole claim the pattern makes, and it is why the list below could
+     * grow from three to seven without a single line changing in the forum, the
+     * announcement screen, the grading flow or the credential authority: each
+     * simply saves its model, and Eloquent does the notifying.
+     *
+     * Post, Reply and AnnouncementComment turn conversation into inbox
+     * entries. Announcement, Grade, Certificate and CourseInvitation close the
+     * gaps found in the integration audit (docs/module-integration-audit.md),
+     * where the most significant events in the system -- earning a credential,
+     * having work marked, being invited to a course -- happened silently.
      */
     public function created(Model $model): void
     {
@@ -52,6 +73,10 @@ class SystemNotificationObserver
             $model instanceof Post => $this->onPostCreated($model),
             $model instanceof Reply => $this->onReplyCreated($model),
             $model instanceof AnnouncementComment => $this->onAnnouncementCommentCreated($model),
+            $model instanceof Announcement => $this->onAnnouncementCreated($model),
+            $model instanceof Grade => $this->onGradeRecorded($model),
+            $model instanceof Certificate => $this->onCertificateIssued($model),
+            $model instanceof CourseInvitation => $this->onCourseInvitationCreated($model),
             default => null,
         };
     }
@@ -167,15 +192,147 @@ class SystemNotificationObserver
     }
 
     /**
+     * A notice was posted: tell the people it was addressed to.
+     *
+     * A course announcement reaches that course's students; an administrator's
+     * institution-wide one reaches everybody. The author is never told about
+     * their own notice.
+     *
+     * Note the asymmetry with onAnnouncementCommentCreated below, which is
+     * deliberate: a comment tells one person, a notice tells a class.
+     */
+    private function onAnnouncementCreated(Announcement $announcement): void
+    {
+        $announcement->loadMissing(['course', 'author']);
+
+        $link = route('announcements.index').'#announcement-'.$announcement->id;
+        $author = $announcement->author?->name ?? 'An administrator';
+
+        if ($announcement->course === null) {
+            $recipients = User::query()->whereKeyNot($announcement->author_id)->pluck('id');
+            $message = "{$author} posted an announcement for everyone";
+        } else {
+            $recipients = $announcement->course->students()->pluck('users.id');
+            $message = "{$author} posted an announcement in {$announcement->course->code}";
+        }
+
+        foreach ($recipients as $userId) {
+            if ($userId === $announcement->author_id) {
+                continue;
+            }
+
+            $this->notify(
+                userId: $userId,
+                type: self::TYPE_ANNOUNCEMENT_POSTED,
+                message: $message,
+                link: $link,
+                // One notice, one telling -- even if this somehow runs twice.
+                reference: 'announcement:'.$announcement->id,
+            );
+        }
+    }
+
+    /**
+     * Work was marked: tell the student.
+     *
+     * Only coursework. A quiz is marked the instant it is submitted and the
+     * student is looking at the result already, so telling them is noise --
+     * and this system's own rule elsewhere is that reminding somebody of a
+     * thing they just did is how people learn to ignore notifications.
+     * A submission is different: it is marked by a person, later, out of sight.
+     */
+    private function onGradeRecorded(Grade $grade): void
+    {
+        if ($grade->submission_id === null) {
+            return;
+        }
+
+        $grade->loadMissing('submission.assignment.course');
+
+        $submission = $grade->submission;
+        $assignment = $submission?->assignment;
+
+        if ($submission === null || $assignment === null) {
+            return;
+        }
+
+        $this->notify(
+            userId: $submission->student_id,
+            type: self::TYPE_GRADE_RECORDED,
+            message: "Your work on \"{$assignment->title}\" has been marked: ".$grade->display(),
+            link: route('assignments.show', $assignment->id),
+            reference: 'grade:'.$grade->id,
+        );
+    }
+
+    /**
+     * A credential was minted: tell the holder.
+     *
+     * The single most significant thing that happens to a student in this
+     * system, and until now it happened in silence -- they found out only by
+     * visiting My Certificates on the off-chance.
+     *
+     * The CredentialAuthority does not know this observer exists. It mints the
+     * row; Eloquent does the rest.
+     */
+    private function onCertificateIssued(Certificate $certificate): void
+    {
+        $certificate->loadMissing(['course', 'learningPath']);
+
+        $subject = $certificate->course?->title
+            ?? $certificate->learningPath?->title
+            ?? 'your studies';
+
+        $this->notify(
+            userId: $certificate->student_id,
+            type: self::TYPE_CERTIFICATE_ISSUED,
+            message: "You have earned a certificate for {$subject} — credential {$certificate->credential_id}",
+            link: route('certificates.show', $certificate->id),
+            reference: 'certificate:'.$certificate->id,
+        );
+    }
+
+    /**
+     * A lecturer invited a student to a course: tell them it is waiting.
+     *
+     * An invitation the student never notices is an invitation that never
+     * happened -- it sat on their Courses page for whenever they thought to
+     * look.
+     */
+    private function onCourseInvitationCreated(CourseInvitation $invitation): void
+    {
+        $invitation->loadMissing('course');
+
+        $course = $invitation->course;
+
+        if ($course === null) {
+            return;
+        }
+
+        $this->notify(
+            userId: $invitation->student_id,
+            type: self::TYPE_COURSE_INVITATION,
+            message: "You have been invited to join {$course->label()}",
+            link: route('courses.index'),
+            reference: 'course_invitation:'.$invitation->id,
+        );
+    }
+
+    /**
      * Hand the row to Module 3's shared sender, which applies the recipient's
      * notification preferences.
      *
-     * No reference is passed: an observed event happens once, so there is
-     * nothing to deduplicate. Reminders repeat on a schedule and do supply one
-     * -- see the Notifier.
+     * A reference is optional. Most observed events happen once, so there is
+     * nothing to deduplicate; the ones that address a whole class pass one
+     * anyway, so that a re-run can never tell the same person twice.
      */
-    private function notify(int $userId, string $type, string $message, string $link): void
-    {
-        Notifier::send($userId, $type, $message, $link);
+    private function notify(
+        int $userId,
+        string $type,
+        string $message,
+        string $link,
+        ?string $reference = null
+    ): void {
+        Notifier::send($userId, $type, $message, $link, $reference);
     }
 }

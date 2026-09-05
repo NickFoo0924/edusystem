@@ -198,7 +198,7 @@ the forum code mentions notifications — the Observer wrote that row when the p
 
 ### Step 2b — The conversation under an announcement
 
-Open **News**. Each announcement carries its own comment thread, **collapsed** behind
+Open **Announcements**. Each announcement carries its own comment thread, **collapsed** behind
 *View 3 comments* so a busy notice board stays readable — expand only the one you care about.
 
 Students and lecturers both take part; the lecturer's own replies are tagged **author**, so an
@@ -280,7 +280,7 @@ The controller never asks which type a question is; it asks the resolver for a s
 Notice the file can still be replaced. Now press **Submit for marking** — the upload control
 disappears. The submission's state object, not the controller, decided that.
 
-### Step 5 — Lecturer marks it, and a certificate mints itself (Module 1, Singleton)
+### Step 5 — Lecturer marks it, and a certificate mints itself (Module 1, Facade)
 
 Back as the lecturer: open the assignment, enter a score, press **Grade**.
 
@@ -327,19 +327,28 @@ Every pattern lives in `app/Patterns/`. **No pattern logic sits inside a control
 
 | # | Module | Owner | Pattern | Where |
 |---|---|---|---|---|
-| 1 | Identity, Access & Digital Credentialing | Serena Lim Sze Kee | **Singleton** (Creational) | `app/Patterns/Singleton/CredentialAuthority.php` |
+| 1 | Identity, Access & Digital Credentialing | Serena Lim Sze Kee | **Facade** (Structural) | `app/Patterns/Facade/CredentialAuthority.php` |
 | 2 | Academic Resources Repository, and the calendar | Foo Chong Xian | **Adapter** (Structural) | `app/Patterns/Adapter/` |
 | 3 | Student Forum & Notifications | Ong Shun Yan | **Observer** (Behavioural) | `app/Patterns/Observer/SystemNotificationObserver.php` |
 | 4 | Skill Assessment & Quiz | Wong Siew Lam | **Strategy** (Behavioural) | `app/Patterns/Strategy/` |
 | 5 | Academic Progress Analytics | Ong Kwong Wei | **State** (Behavioural) | `app/Patterns/State/` |
 
-**Why a Singleton for the credential authority.** It models a real certificate authority. Only one
-may exist, because it is the sole issuer of credential IDs and the sole arbiter of whether a
-student has already been credentialed for a course. Two concurrent instances — a grade event and a
-manual admin issuance firing together — could mint duplicate IDs or issue two certificates for one
-achievement, destroying the uniqueness that public verification depends on. It is enforced twice:
-a private constructor with a static accessor, and `$this->app->singleton()` in
-`CredentialServiceProvider`.
+**Why a Facade for the credential authority.** Issuing a credential is not one operation. It
+means minting a collision-free credential ID, sealing the row with a SHA-256 integrity hash,
+substituting template placeholders, rendering a PDF through DomPDF, generating and embedding a
+verification QR code, writing to a private disk, recalculating weighted progress, snapshotting it
+for the chart, evaluating every badge rule, checking for a completed learning path, and writing
+the audit trail — five collaborators and four third-party libraries. The Facade gives the rest of
+the system one object with three verbs, `issueCertificate` / `revoke` / `verify`, and hides all of
+it: `CertificateController` issues a credential in one line and imports neither DomPDF nor the QR
+encoder. The five collaborators live in `app/Patterns/Facade/Subsystem/` and each stays usable on
+its own.
+
+> **This was a Singleton until the tutor ruled Singleton out.** Behaviour and method signatures
+> are unchanged. Worth knowing for the report: the old "two instances could mint duplicate IDs"
+> argument was never true in PHP — each request is a separate process, so concurrent issuances
+> were always separate objects. Uniqueness actually comes from the unique index on
+> `certificates.credential_id` plus the retry loop, both untouched.
 
 ---
 

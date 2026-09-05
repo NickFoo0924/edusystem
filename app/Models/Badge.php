@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Facades\Storage;
 
@@ -20,10 +21,13 @@ class Badge extends Model
     protected $fillable = [
         'name',
         'description',
+        'award_type',
         'icon_path',
         'tier',
         'criteria_type',
         'criteria_value',
+        'course_id',
+        'certificate_template_id',
         'is_active',
     ];
 
@@ -70,8 +74,43 @@ class Badge extends Model
             'on_time_submissions' => 'Submit '.$value.' '.($value === 1 ? 'assignment' : 'assignments').' on time',
             'first_forum_post' => 'Post in a course forum for the first time',
             'login_streak' => 'Log in on '.$value.' consecutive days',
+            'all_quizzes_in_course' => $this->course
+                ? 'Pass every quiz in '.$this->course->label()
+                : 'Pass every quiz in '.$value.' '.($value === 1 ? 'subject' : 'different subjects'),
+            'average_score_in_course' => $this->course
+                ? 'Average '.$value.'% or higher across the quizzes in '.$this->course->label()
+                : 'Average '.$value.'% or higher across every quiz taken',
+            'quizzes_completed' => 'Pass '.$value.' '.($value === 1 ? 'quiz' : 'different quizzes').' in total',
             default => ucfirst(str_replace('_', ' ', $this->criteria_type)).' — '.$times,
         };
+    }
+
+    /**
+     * The subject this rule is scoped to, for a per-subject badge.
+     *
+     * Null on every other criteria type, and null on this one means "any
+     * subject" rather than "no subject" -- see the migration that added it.
+     */
+    public function course(): BelongsTo
+    {
+        return $this->belongsTo(Course::class);
+    }
+
+    /**
+     * The design a certificate rule renders. Null for badge rules, which use
+     * their tier and icon instead.
+     */
+    public function certificateTemplate(): BelongsTo
+    {
+        return $this->belongsTo(CertificateTemplate::class);
+    }
+
+    /**
+     * Does satisfying this rule mint a credential rather than award a badge?
+     */
+    public function isCertificateRule(): bool
+    {
+        return $this->award_type === 'certificate';
     }
 
     public function students(): BelongsToMany

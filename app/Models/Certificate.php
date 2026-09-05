@@ -10,8 +10,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * A verifiable digital credential (EduSystem.md 1C).
  *
- * Only the CredentialAuthority Singleton may create, revoke or verify one --
- * see app/Patterns/Singleton/CredentialAuthority.php. Nothing else in the
+ * Only the CredentialAuthority Facade may create, revoke or verify one --
+ * see app/Patterns/Facade/CredentialAuthority.php. Nothing else in the
  * system mints a credential_id.
  */
 class Certificate extends Model

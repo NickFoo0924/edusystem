@@ -36,7 +36,7 @@ an invented feature.
 | **Forms, request handling, superglobals** | Every controller; Laravel's `Request` object wraps the superglobals rather than using them raw, which is the framework-idiomatic form of the same topic | Fully |
 | **Sessions and cookies** | `config/session.php`, database session driver; the stale-tab handling in `bootstrap/app.php` | Fully |
 | **OOP pillars** | Interfaces and concrete implementations throughout `app/Patterns/`; Eloquent models inheriting `Model` | Fully |
-| **Design patterns** | Five of the nine taught patterns, one per module: Singleton (`CredentialAuthority`), Adapter (`DisplayableMaterial`, `CalendarEntry`), Observer (`SystemNotificationObserver`), Strategy (`GradingStrategy`), State (`SubmissionState`) | Fully |
+| **Design patterns** | Five of the nine taught patterns, one per module: Facade (`CredentialAuthority`), Adapter (`DisplayableMaterial`, `CalendarEntry`), Observer (`SystemNotificationObserver`), Strategy (`GradingStrategy`), State (`SubmissionState`) | Fully |
 | **Input validation** | 32 `validate()` call sites across 19 controllers, with `mimes:` and `max:` rules on every upload | Partly — see 3.1 |
 | **Output encoding** | Blade `{{ }}` escapes by default. The single `{!! !!}` in `certificates/pdf.blade.php` is `nl2br(e($text))` — escaped first, then line breaks added | Fully |
 | **Authentication & password management** | Breeze scaffolding extended: invitation-only registration, password history (no reuse of the last 3), forced change on first login, five-failure lockout that only an administrator can clear | Fully |
