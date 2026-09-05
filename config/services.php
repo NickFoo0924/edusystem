@@ -35,4 +35,19 @@ return [
         ],
     ],
 
+    /*
+     * The module-to-module web services (routes/api.php).
+     *
+     * `key` is the shared secret the four internal services require in an
+     * X-API-Key header. `base_url` is where a module sends its outgoing
+     * calls, which is this same application in the marked build, but is a
+     * setting rather than a hardcoded host so the services could be split
+     * onto separate machines without touching any client code.
+     */
+    'internal_api' => [
+        'key' => env('INTERNAL_API_KEY', 'learnsync-local-development-key'),
+        'base_url' => env('INTERNAL_API_BASE_URL', env('APP_URL', 'http://localhost:8000').'/api'),
+        'timeout' => (int) env('INTERNAL_API_TIMEOUT', 10),
+    ],
+
 ];

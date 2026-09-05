@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\EnsureAccountIsActive;
 use App\Http\Middleware\EnsurePasswordIsChanged;
+use App\Http\Middleware\VerifyApiKey;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -11,10 +12,19 @@ use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
+        // The module-to-module web services. Prefixed /api and stateless, so
+        // they carry no session and no CSRF token.
+        api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Guards the four internal services. The public credential
+        // verification route deliberately does not use it.
+        $middleware->alias([
+            'api.key' => VerifyApiKey::class,
+        ]);
+
         /*
          * Runs on every web request. A deactivated or locked account is signed
          * out rather than merely being shown empty pages (EduSystem.md 1A).
