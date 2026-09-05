@@ -88,7 +88,7 @@ class BadgeController extends Controller
      *
      * Deactivating is the safe way to stop a rule: the engine skips inactive
      * rules, but every award already made from it stays exactly where it is
-     * (see docs/award-rules.md). Deleting is the destructive option, and for
+     * Deleting is the destructive option instead, and for
      * badges it cascades the awards away with the rule.
      */
     public function toggle(Badge $badge): RedirectResponse

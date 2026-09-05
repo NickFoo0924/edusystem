@@ -57,7 +57,7 @@ class AppServiceProvider extends ServiceProvider
         /*
          * Everything else worth being told about.
          *
-         * These four were the gaps in docs/module-integration-audit.md: a
+         * These four were the gaps the integration audit turned up: a
          * notice posted, work marked, a credential minted and a course
          * invitation issued all happened in silence. Adding them took four
          * lines here and no change whatsoever to the announcement screen, the

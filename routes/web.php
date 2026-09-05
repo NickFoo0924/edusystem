@@ -243,7 +243,7 @@ Route::middleware('auth')->group(function () {
      */
     /*
      * The award-rule registry: badge rules and certificate rules alike
-     * (docs/award-rules.md). Declared before the resource so "toggle" is never
+     * Declared before the resource so "toggle" is never
      * matched as a badge id.
      */
     Route::patch('badges/{badge}/toggle', [BadgeController::class, 'toggle'])

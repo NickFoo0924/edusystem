@@ -354,9 +354,6 @@ routes/web.php         every route, grouped and commented by module
 tests/                 29 automated tests
 ```
 
-See **[`implementation-notes.md`](implementation-notes.md)** for how each section of the specification maps onto the
-code, the schema deviations to carry into the ERD, and an honest list of known gaps.
-
 All database access uses **Eloquent ORM**. There is no raw SQL anywhere — no `DB::raw()`,
 no `DB::select()`.
 

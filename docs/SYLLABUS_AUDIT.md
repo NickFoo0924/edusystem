@@ -96,8 +96,10 @@ pipeline: Eloquent → `DOMDocument` → XSD validation → XSLT → SVG.
 
 The approach was chosen because SVG is itself an XML vocabulary, so producing the chart is a
 genuine XML-to-XML transformation rather than an export invented to tick a box, and the document
-doubles as a data export at `/analytics/export.xml`. A production system would use a charting
-library; that trade-off is set out in `implementation-notes.md`.
+doubles as a data export at `/analytics/export.xml`. A production system would reach for a
+charting library, and that is the honest comparison: this approach is more work for the same
+picture. It is used here because nothing else in the system exercises XML, schema validation or
+XSLT, and the syllabus covers all three.
 
 Requires `ext-xsl`. Without it the document is still built and still validated, and only the chart
 is skipped.

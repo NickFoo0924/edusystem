@@ -162,7 +162,7 @@ class AwardRuleTest extends TestCase
 
         $rule->update(['is_active' => false]);
 
-        // The award already made is retained -- see docs/award-rules.md.
+        // The award already made is retained, by design.
         $this->assertTrue($this->holds($student, $rule));
 
         /*

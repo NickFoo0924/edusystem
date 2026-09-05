@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 /**
  * Turns the badge registry into a general AWARD RULE registry.
  *
- * The investigation behind this (see docs/award-rules.md): badge rules were
+ * The investigation behind this: badge rules were
  * already data an administrator edits, but certificate issuance was not. The
  * only way a certificate could ever be minted was one hardcoded condition in
  * CredentialAuthority::issueIfEligible() -- completion percentage past a
@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\Schema;
  * The table keeps the name `badges` rather than being renamed to `award_rules`.
  * Renaming would have to carry badge_student.badge_id and every existing award
  * with it, and this project's convention for schema changes is to add columns
- * and document them (see implementation-notes.md, "Added columns") rather than
+ * and document them rather than
  * to restructure tables that already hold assessed data.
  *
  *   award_type              -- 'badge' (attach to badge_student, the existing

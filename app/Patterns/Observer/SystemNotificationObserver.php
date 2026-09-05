@@ -63,7 +63,7 @@ class SystemNotificationObserver
      *
      * Post, Reply and AnnouncementComment turn conversation into inbox
      * entries. Announcement, Grade, Certificate and CourseInvitation close the
-     * gaps found in the integration audit (docs/module-integration-audit.md),
+     * gaps found when the module integrations were audited,
      * where the most significant events in the system -- earning a credential,
      * having work marked, being invited to a course -- happened silently.
      */

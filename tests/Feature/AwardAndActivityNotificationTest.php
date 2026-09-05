@@ -24,7 +24,7 @@ use Tests\TestCase;
 /**
  * The five silences found by the integration audit, closed.
  *
- * docs/module-integration-audit.md recorded that the most significant events in
+ * An audit of the module integrations recorded that the most significant events in
  * the system happened without telling anybody: a certificate minted, a badge
  * awarded, work marked, a notice posted, a course invitation issued. The
  * delivery path existed and was simply never called.
