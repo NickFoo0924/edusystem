@@ -114,6 +114,34 @@
                                 {{ $stats['turnaround'] !== null ? $stats['turnaround'].' h' : 'nothing marked yet' }}
                             </dd>
                         </div>
+
+                        {{-- MODULE 5 CONSUMING MODULE 1's WEB SERVICE.
+
+                             Each credential issued for this course was checked
+                             through Module 1's getCredentialStatus service.
+                             Module 5 does not decide for itself whether a
+                             credential is live, because that depends on
+                             revocation and an integrity hash Module 1 owns.
+
+                             Absent when Module 1 answered nothing, so the
+                             report never prints a count it could not confirm. --}}
+                        @if ($stats['credentials'])
+                            <div class="flex justify-between border-t border-gray-100 pt-2">
+                                <dt class="text-gray-500">
+                                    Credentials confirmed
+                                    <span class="block text-[10px] uppercase tracking-wide text-indigo-600">
+                                        via Module 1 web service
+                                    </span>
+                                </dt>
+                                <dd class="text-right font-medium text-gray-900">
+                                    {{ $stats['credentials']['confirmed'] }}
+                                    of {{ $stats['credentials']['checked'] }} checked valid
+                                    <span class="block text-[10px] font-normal text-gray-500">
+                                        {{ $stats['credentials']['issued'] }} issued in total
+                                    </span>
+                                </dd>
+                            </div>
+                        @endif
                     </dl>
                 </div>
 

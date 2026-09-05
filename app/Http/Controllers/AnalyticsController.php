@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Certificate;
 use App\Models\Course;
 use App\Models\ProgressSnapshot;
 use App\Models\StudentProgress;
 use App\Models\Grade;
 use App\Models\Submission;
+use App\Support\Api\CredentialStatusClient;
 use App\Support\GradeScale;
 use DOMDocument;
 use Illuminate\Http\Request;
@@ -24,6 +26,15 @@ use Illuminate\View\View;
  */
 class AnalyticsController extends Controller
 {
+    /**
+     * Module 5's client for Module 1's credential service, injected so the
+     * report can confirm credentials without re-implementing Module 1's
+     * revocation and integrity checks.
+     */
+    public function __construct(private CredentialStatusClient $credentials)
+    {
+    }
+
     // The distribution is grouped by letter grade (GradeScale), not by
     // arbitrary mark ranges, so it reads the way a results sheet does.
 
@@ -75,7 +86,73 @@ class AnalyticsController extends Controller
             'awaiting' => $submissions->where('state', 'submitted')->count(),
             'onTime' => $submissions->filter(fn (Submission $s) => $s->wasOnTime())->count(),
             'turnaround' => $this->averageTurnaroundHours($submissions),
+            'credentials' => $this->credentialsConfirmedFor($course),
         ];
+    }
+
+    /**
+     * MODULE 5 CONSUMES MODULE 1's WEB SERVICE.
+     *
+     * How many credentials issued for this course are still genuinely valid.
+     *
+     * Module 5 does not read `certificates` and decide for itself. Whether a
+     * credential is live depends on revocation and on an integrity hash that
+     * Module 1 owns, so re-implementing that check here would mean two
+     * versions of a security rule, and the second one would be wrong the
+     * first time the first one changed. Module 5 asks and counts the answers.
+     *
+     * detailFlag 1 is used, so Module 1 returns a status and nothing about
+     * the holder. A report that counts credentials has no business receiving
+     * names and marks.
+     *
+     * Each check is a separate HTTP call, so the number of them is bounded.
+     * A report that takes twenty seconds to load is a report nobody opens,
+     * and confirming a sample is enough to show the credentials in a course
+     * are live. `issued` is still the true total, counted locally, so the
+     * figure never overstates what was actually checked.
+     *
+     * @return array{issued: int, checked: int, confirmed: int}|null
+     */
+    private const CREDENTIALS_TO_CONFIRM = 5;
+
+    private function credentialsConfirmedFor(Course $course): ?array
+    {
+        $credentialIds = Certificate::where('course_id', $course->id)
+            ->pluck('credential_id');
+
+        if ($credentialIds->isEmpty()) {
+            return null;
+        }
+
+        $toCheck = $credentialIds->take(self::CREDENTIALS_TO_CONFIRM);
+        $confirmed = 0;
+        $answered = 0;
+
+        foreach ($toCheck as $credentialId) {
+            $data = $this->credentials->status($credentialId);
+
+            if ($data === null) {
+                // Module 1 is unreachable. Skip rather than counting a
+                // credential the authority did not actually confirm.
+                continue;
+            }
+
+            $answered++;
+
+            if (($data['credentialStatus'] ?? null) === 'VALID') {
+                $confirmed++;
+            }
+        }
+
+        // Null when Module 1 answered nothing at all, so the view omits the
+        // figure instead of printing a misleading zero.
+        return $answered > 0
+            ? [
+                'issued' => $credentialIds->count(),
+                'checked' => $answered,
+                'confirmed' => $confirmed,
+            ]
+            : null;
     }
 
     /**

@@ -22,7 +22,19 @@ You need **20 figures**. Two of them are drawings, the other 18 are screenshots.
 
    Leave this window open the whole time. The site is at **http://127.0.0.1:8000**
 
-3. Open a **second** terminal in the same folder for commands.
+3. **Open a THIRD terminal** and run a **second** server:
+
+   ```
+   php artisan serve --port=8001
+   ```
+
+   > **You need both.** `php artisan serve` handles one request at a time, so a page that calls
+   > the system's own web service cannot answer itself and would hang for ten seconds and then
+   > show nothing. The site runs on 8000 and the web services answer on 8001, which is what
+   > `INTERNAL_API_BASE_URL` in your `.env` points at. **Without the second server your service
+   > panel will not appear.**
+
+4. Open a **fourth** terminal for commands.
 
 **Logins.** The password for every account is `password`
 
@@ -43,7 +55,7 @@ You need **20 figures**. Two of them are drawings, the other 18 are screenshots.
 
 ## STEP 1. Figure 8.1, the test results (2 minutes)
 
-In your **second terminal**:
+In your **command terminal**:
 
 ```
 php artisan test
@@ -184,7 +196,7 @@ box and the **Remove** control beside each student
 
 ## STEP 6. Figures 6.1 and 6.2, your own web service (5 minutes)
 
-Your service needs a key in a header, so a browser cannot call it. Use your **second terminal**.
+Your service needs a key in a header, so a browser cannot call it. Use your **command terminal**.
 
 ### Figure 6.1, the service working
 
