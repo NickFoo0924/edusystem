@@ -6,6 +6,7 @@ use App\Models\Certificate;
 use App\Models\Course;
 use App\Models\User;
 use App\Patterns\Facade\CredentialAuthority;
+use App\Support\Api\CourseInfoClient;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -27,8 +28,10 @@ class CertificateController extends Controller
 {
     private const PER_PAGE = 20;
 
-    public function __construct(private CredentialAuthority $authority)
-    {
+    public function __construct(
+        private CredentialAuthority $authority,
+        private CourseInfoClient $courses,
+    ) {
     }
 
     /**
@@ -55,10 +58,27 @@ class CertificateController extends Controller
 
         $certificate->load(['course', 'learningPath', 'student']);
 
+        /*
+         * MODULE 1 CONSUMES MODULE 2's WEB SERVICE.
+         *
+         * The course code and lecturer shown beneath the credential come from
+         * Module 2's getCourseInfo service, not from reading Module 2's
+         * tables. Module 2 owns course data (EduSystem.md Section 2A), so the
+         * boundary is respected even for a read.
+         *
+         * Null when Module 2 is unreachable, and the view falls back to the
+         * title already stored on the certificate. A credential must remain
+         * viewable when another module is down.
+         */
+        $courseInfo = $certificate->course_id !== null
+            ? $this->courses->fetchWithInstructor($certificate->course_id)
+            : null;
+
         return view('certificates.show', [
             'certificate' => $certificate,
             'status' => $this->authority->verify($certificate->credential_id)['status'],
             'verificationUrl' => $this->authority->verificationUrl($certificate->credential_id),
+            'courseInfo' => $courseInfo,
         ]);
     }
 

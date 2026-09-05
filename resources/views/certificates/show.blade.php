@@ -20,6 +20,42 @@
         </p>
     </div>
 
+    {{-- MODULE 1 CONSUMING MODULE 2's WEB SERVICE.
+
+         The course code and lecturer below were fetched over HTTP from
+         Module 2's getCourseInfo service, not read from Module 2's tables.
+         The panel is absent when that service cannot be reached, which is
+         why the credential itself still displays above without it. --}}
+    @if ($courseInfo)
+        <div class="border-b border-gray-200 bg-blue-50 px-8 py-4">
+            <p class="text-[11px] font-semibold uppercase tracking-wide text-blue-800">
+                Course details, retrieved from Module 2 web service
+            </p>
+            <dl class="mt-2 grid grid-cols-1 gap-x-6 gap-y-1 text-sm sm:grid-cols-2">
+                <div class="flex justify-between sm:block">
+                    <dt class="text-gray-500">Course code</dt>
+                    <dd class="font-medium text-gray-900">{{ $courseInfo['courseCode'] }}</dd>
+                </div>
+                <div class="flex justify-between sm:block">
+                    <dt class="text-gray-500">Course title</dt>
+                    <dd class="font-medium text-gray-900">{{ $courseInfo['courseTitle'] }}</dd>
+                </div>
+                @if (! empty($courseInfo['instructorName']))
+                    <div class="flex justify-between sm:block">
+                        <dt class="text-gray-500">Lecturer</dt>
+                        <dd class="font-medium text-gray-900">{{ $courseInfo['instructorName'] }}</dd>
+                    </div>
+                @endif
+                @if (! empty($courseInfo['studentCount']))
+                    <div class="flex justify-between sm:block">
+                        <dt class="text-gray-500">Students enrolled</dt>
+                        <dd class="font-medium text-gray-900">{{ $courseInfo['studentCount'] }}</dd>
+                    </div>
+                @endif
+            </dl>
+        </div>
+    @endif
+
     <dl class="divide-y divide-gray-100 px-8 text-sm">
         <div class="flex justify-between py-4">
             <dt class="text-gray-500">Status</dt>
