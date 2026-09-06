@@ -6,27 +6,6 @@
 **Tools Used:** Composer, MySQL, Chart.js, Tailwind/Bootstrap
 **Required Packages:** `barryvdh/laravel-dompdf` (PDF certificates), `simplesoftwareio/simple-qrcode` (verification QR codes), `intervention/image` (avatar / badge image handling)
 
-> ### Revision Note (v3) — written after implementation
-> The system described below has been built in full: all five modules, all five design patterns, and every item in the Section 8 build priority. This note records where the **implementation** differs from Section 3 as originally written, so the **ERD can be corrected before submission**. Nothing in Sections 1, 2, 2A, 4, 5 or 7 changed — the module boundaries, the pattern assignments and the RBAC matrix were all implementable as specified.
->
-> **One new table.** `quiz_attempt_answers` (`quiz_attempt_id`, `question_id`, `response`, `is_correct`, `awarded_score`). Section 3 gives `quiz_attempts` only a duration, leaving nowhere to record what the student actually answered — grading and reviewing an attempt are both impossible without it.
->
-> **New columns.** `courses.code` (e.g. `BMIT3173`, unique); `course_materials.title`; `assignments.description`; `assignments.allow_late_submission` (per-assignment late policy, default accept-and-label); `submissions.submitted_at` (needed to tell on-time from late, which the `on_time_submissions` badge depends on) plus a composite unique key on (`assignment_id`, `student_id`); `users.school_email` (the address published on a lecturer's public contact card, kept apart from the login `email`); `users.phone` and `users.show_phone` (optional, withheld by default).
->
-> **Widened enum.** `course_materials.type` gains `other`, giving the four fixed sections the course page renders: Lecture notes, Tutorial question, Practical question, Others.
->
-> **New question type.** `questions.type` accepts `multi` alongside `mcq` and `text` — several correct answers, all of which must be selected. The required count is derived from the number of options flagged correct rather than stored.
->
-> **Relaxed constraint.** `badges.icon_path` is nullable, so a badge rule can be defined before its artwork exists.
->
-> **Extra model, no schema change.** `permission_role` is given an Eloquent model (`PermissionRole`) because it pivots a permission against a *role enum* rather than a roles table, leaving `belongsToMany` nothing to point at. The alternative was `DB::table()`, which Section 5 forbids.
->
-> **Seeder.** Two certificate templates rather than one: a pathway certificate has to read "the learning path", not "the course".
-
-> ### Revision Note (v2)
-> Module 1 was previously scoped as "auth + one progress number + a PDF", most of which Laravel's built-in scaffolding provides for free. It has been expanded into a full **Identity, Access & Digital Credentialing** module inspired by Cisco NetAcad's verifiable certificate model.
-> **ERD changes introduced in this revision:** the old `achievements` table is split into `certificates` (formal, verifiable PDF credentials) and `badges` + `badge_student` (gamified micro-achievements). New tables have been added for permissions, invitations, activity logs, certificate templates, learning paths and notification preferences. `announcements.admin_id` is renamed `author_id`. Update the ERD diagram before submission.
-
 ## 1. Project Overview & Objectives
 LearnSync is a professional-grade Learning Management System (LMS). It provides a platform where **Instructors** upload study materials, deploy dynamic quizzes, and manage assignments. **Students** consume these materials, take assessments, track their progress through a visual dashboard, earn **verifiable digital credentials**, and engage in collaborative Q&A forums.
 
@@ -94,22 +73,6 @@ Laravel Breeze supplies the login/logout/reset scaffolding. This module extends 
 *   Module 3 **produces** notification events. Module 1 **owns the inbox**: the navbar bell with unread count, the notification history page, mark-as-read / mark-all-read, and per-user `NotificationPreference` rows controlling which notification types the user receives.
 
 #### Design Pattern Implementation — Facade
-
-> ### Revision Note (v4) — pattern changed from Singleton to Facade
-> Module 1 was originally assigned the **Singleton**. The tutor has since ruled that Singleton
-> may not be used, so it has been replaced by the **Facade** (Structural). The module's
-> behaviour, public method signatures and feature set are unchanged — only the way the object
-> is constructed and what it delegates to. Facade is one of the nine patterns Chapter 3 of the
-> syllabus teaches in depth, and it duplicates no other member's pattern (Adapter, Observer,
-> Strategy, State).
->
-> **The honest finding behind the change:** the original Singleton justification — "two
-> concurrent instances could mint duplicate credential IDs" — does not survive scrutiny in
-> PHP. Each HTTP request is a separate process with its own memory, so two simultaneous
-> issuances were *always* two separate objects; the Singleton never provided any cross-request
-> guarantee. What actually prevents duplicate credential IDs is the unique index on
-> `certificates.credential_id` together with the collision-retry loop in
-> `CredentialIdGenerator`. Both are untouched, so nothing was lost by removing the Singleton.
 
 Create `app/Patterns/Facade/CredentialAuthority.php`, fronting five subsystem collaborators in
 `app/Patterns/Facade/Subsystem/`. It is registered in `CredentialServiceProvider` with
@@ -337,7 +300,7 @@ Tables marked **[CORE]** must be built. Tables marked **[STRETCH]** are implemen
 19. **courses**: `id` (PK), `instructor_id` (FK to users), `code` (string, unique — e.g. `BMIT3173`), `title` (string), `description` (text).
 20. **course_student** (Enrollment Pivot - Many to Many): `student_id` (FK), `course_id` (FK).
 21. **course_materials**: `id` (PK), `course_id` (FK), `title` (string), `type` (enum: 'lecture', 'tutorial', 'practical', 'other'), `file_path` (string), `is_external` (boolean).
-22. **announcements**: `id` (PK), `course_id` (FK, nullable — null means a global announcement), `author_id` (FK to users), `content` (text). *Renamed from `admin_id`: instructors post course announcements, admins post global ones.*
+22. **announcements**: `id` (PK), `course_id` (FK, nullable — null means a global announcement), `author_id` (FK to users), `content` (text). *Instructors post course announcements, admins post global ones, so the column is `author_id`.*
 
 ### Module 3 — Forum
 23. **discussion_forums**: `id` (PK), `course_id` (FK, unique - 1 to 1), `title` (string).
@@ -353,7 +316,7 @@ Tables marked **[CORE]** must be built. Tables marked **[STRETCH]** are implemen
 29. **assignments**: `id` (PK), `course_id` (FK), `title` (string), `description` (text, nullable), `due_date` (datetime), `allow_late_submission` (boolean, default true).
 30. **submissions**: `id` (PK), `assignment_id` (FK), `student_id` (FK), `file_path` (string, nullable), `state` (string: 'draft', 'submitted' or 'graded'), `submitted_at` (datetime, nullable). *Unique composite key on (`assignment_id`, `student_id`).*
 31. **quiz_attempts**: `id` (PK), `quiz_id` (FK), `student_id` (FK), `duration_seconds` (integer).
-31a. **quiz_attempt_answers** *(added during implementation)*: `id` (PK), `quiz_attempt_id` (FK), `question_id` (FK), `response` (text, nullable), `is_correct` (boolean), `awarded_score` (double). *Unique composite key on (`quiz_attempt_id`, `question_id`).* Without this there is nowhere to record what a student answered, so a quiz cannot be graded or reviewed.
+31a. **quiz_attempt_answers**: `id` (PK), `quiz_attempt_id` (FK), `question_id` (FK), `response` (text, nullable), `is_correct` (boolean), `awarded_score` (double). *Unique composite key on (`quiz_attempt_id`, `question_id`).* Without this there is nowhere to record what a student answered, so a quiz cannot be graded or reviewed.
 32. **grades**: `id` (PK), `submission_id` (FK, nullable, unique), `quiz_attempt_id` (FK, nullable, unique), `calculated_score` (double).
 
 ---
