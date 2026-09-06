@@ -1,4 +1,4 @@
-# Project Context & AI Coding Guidelines
+# Project Context & Development Guidelines
 **Project Name:** LearnSync (Integrated Educational Resource and Collaborative Learning Portal)
 **Folder Name:** `EduSystem`
 **Target SDG:** SDG 4 (Quality Education)
@@ -294,7 +294,8 @@ itself rather than by a conditional somewhere in a controller.
 ---
 
 ## 2A. Module Scope Boundaries
-**AI INSTRUCTION: These boundaries prevent two owners implementing the same feature. Respect them when generating code.**
+These boundaries exist so that two owners never implement the same feature. They are fixed for the
+lifetime of the project.
 
 | Overlap risk | Module 1 owns | Other module owns |
 |---|---|---|
@@ -306,7 +307,8 @@ itself rather than by a conditional somewhere in a controller.
 ---
 
 ## 3. Database Entities & Exact Schema (Data Types)
-**AI INSTRUCTION: Use Laravel Migrations to create these tables matching the exact relationships and multiplicities specified below.**
+Every table below is created with a Laravel migration, matching the relationships and
+multiplicities exactly as specified.
 Tables marked **[CORE]** must be built. Tables marked **[STRETCH]** are implemented only if time permits.
 
 ### Shared / Module 1 — Identity & Access
@@ -373,7 +375,8 @@ Tables marked **[CORE]** must be built. Tables marked **[STRETCH]** are implemen
 ---
 
 ## 5. Constraints & Out of Scope (What we DO NOT DO)
-**AI INSTRUCTION: STRICTLY ADHERE TO THESE CONSTRAINTS.**
+**These constraints are fixed. They apply to every module and are not open to reinterpretation
+during the build.**
 - **NO Peer-Review:** Peer-review was explicitly removed from the final report. Submissions are reviewed directly by Instructors.
 - **NO External Payment Gateways:** Courses are free. Do not implement Stripe/PayPal.
 - **NO Live Chat/WebSockets:** The forum is asynchronous. Do not implement Socket.io or Laravel Reverb. Use simple database writes for notifications.
@@ -383,18 +386,23 @@ Tables marked **[CORE]** must be built. Tables marked **[STRETCH]** are implemen
 
 ---
 
-## 6. Prompting Instructions for AI Code Generation
-When the human asks you to code a module, output the following in order:
-1. **Migrations & Models:** Provide the schema and Eloquent models with all `hasMany`/`belongsTo`/`hasOne`/`belongsToMany` relationships clearly defined according to Section 3.
-2. **Design Pattern Implementation:** Provide the exact PHP classes and interfaces for the assigned Design Pattern (Facade, Adapter, Strategy, Observer, or State) located in an `app/Patterns/` namespace. DO NOT cram pattern logic inside Controllers.
-3. **Controllers:** Provide the MVC Controller that binds the Models and the Design Pattern together.
-4. **Blade Views:** Provide a clean Tailwind/Bootstrap UI structure for the feature.
-5. **Seeders:** For Module 1, seed the `permissions` table from the matrix in Section 7, plus at least one `certificate_template` and five sample `badges`, so the system is demonstrable immediately after `migrate:fresh --seed`.
+## 6. Build Order for a Module
+Each module is built in this order, so that the schema is settled before anything depends on it and
+the design pattern exists before the controller that uses it:
+1. **Migrations & Models:** The schema and the Eloquent models, with every `hasMany`, `belongsTo`, `hasOne` and `belongsToMany` relationship defined as set out in Section 3.
+2. **Design Pattern Implementation:** The classes and interfaces for the module's assigned pattern (Facade, Adapter, Strategy, Observer or State), living in the `app/Patterns/` namespace. Pattern logic never sits inside a controller.
+3. **Controllers:** The controller that binds the models and the design pattern together.
+4. **Blade Views:** The Tailwind interface for the feature.
+5. **Seeders:** For Module 1, the `permissions` table is seeded from the matrix in Section 7, along with at least one `certificate_template` and five sample `badges`, so that the system is demonstrable immediately after `migrate:fresh --seed`.
 
 ---
 
 ## 7. Role-Based Access Control (RBAC) Matrix
-**AI INSTRUCTION: These permissions are seeded into the `permissions` table and resolved at runtime through Laravel Gates and Policies. Do NOT hardcode role checks like `if ($user->role === 'admin')` in Controllers — check the permission key instead. Ensure UI elements (like "Create" buttons) are hidden from roles that lack permission.**
+These permissions are seeded into the `permissions` table and resolved at runtime through Laravel
+Gates and Policies. Role checks such as `if ($user->role === 'admin')` are never hardcoded in a
+controller; the permission key is checked instead, so that an administrator can change who may do
+what without a code change. UI elements such as Create buttons are hidden from any role that lacks
+the matching permission.
 
 ### Role 0: Guest (unauthenticated)
 **What they CAN do:**
@@ -463,7 +471,7 @@ When the human asks you to code a module, output the following in order:
 ---
 
 ## 8. Module 1 Build Priority
-**AI INSTRUCTION: If the human asks "what should I build first for Module 1", follow this order. Items 1–4 are the minimum for a strong demonstration.**
+Module 1 is built in the following order. Items 1 to 4 are the minimum for a strong demonstration.
 
 1. **Public verification page + credential ID + QR-embedded PDF** — the single most demonstrable feature; scan the QR on a phone during the presentation.
 2. **Badge rules engine + trophy cabinet** — configurable criteria, greyed-out locked badges.
