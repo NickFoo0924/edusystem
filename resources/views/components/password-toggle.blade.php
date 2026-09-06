@@ -1,4 +1,9 @@
 {{--
+    LearnSync -- Blade view
+    Shared: project-wide infrastructure
+    @author Serena Lim Sze Kee, Foo Chong Xian, Ong Shun Yan, Wong Siew Lam, Ong Kwong Wei
+--}}
+{{--
     The show/hide eye that sits inside a password field.
 
     Separate from x-password-input because the two plain-HTML password forms

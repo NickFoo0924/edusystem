@@ -1,3 +1,8 @@
+{{--
+    LearnSync -- Blade view
+    Module 1: Identity, Access & Digital Credentialing
+    @author Serena Lim Sze Kee
+--}}
 {{-- learning_paths/create.blade.php --}}
 @extends('layout')
 

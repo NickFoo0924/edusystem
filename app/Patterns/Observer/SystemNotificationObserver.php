@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * LearnSync -- Observer pattern (behavioural)
+ *
+ * Module 3: Student Forum & Notifications
+ *
+ * @author Ong Shun Yan
+ */
+
 namespace App\Patterns\Observer;
 
 use App\Models\Announcement;

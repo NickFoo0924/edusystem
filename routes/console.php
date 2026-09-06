@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * LearnSync -- Route definitions
+ *
+ * Shared: project-wide infrastructure
+ *
+ * @author Serena Lim Sze Kee, Foo Chong Xian, Ong Shun Yan, Wong Siew Lam, Ong Kwong Wei
+ */
+
 use App\Console\Commands\SendScheduledReminders;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;

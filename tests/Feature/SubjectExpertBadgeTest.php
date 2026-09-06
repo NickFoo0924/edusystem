@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * LearnSync -- Automated test
+ *
+ * Module 1: Identity, Access & Digital Credentialing
+ *
+ * @author Serena Lim Sze Kee
+ */
+
 namespace Tests\Feature;
 
 use App\Models\Badge;

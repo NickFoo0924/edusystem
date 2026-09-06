@@ -1,3 +1,8 @@
+{{--
+    LearnSync -- Blade view
+    Module 2: Academic Resources Repository
+    @author Foo Chong Xian
+--}}
 {{-- courses/index.blade.php --}}
 @extends('layout')
 

@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * LearnSync -- HTTP controller
+ *
+ * Module 2: Academic Resources Repository
+ *
+ * @author Foo Chong Xian
+ */
+
 namespace App\Http\Controllers;
 
 use App\Models\Announcement;

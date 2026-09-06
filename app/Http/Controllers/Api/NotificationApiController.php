@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * LearnSync -- REST web service controller
+ *
+ * Module 3: Student Forum & Notifications
+ *
+ * @author Ong Shun Yan
+ */
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;

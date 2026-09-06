@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * LearnSync -- Database seeder
+ *
+ * Module 1: Identity, Access & Digital Credentialing
+ *
+ * @author Serena Lim Sze Kee
+ */
+
 namespace Database\Seeders;
 
 use App\Models\Announcement;

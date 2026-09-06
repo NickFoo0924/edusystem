@@ -1,3 +1,8 @@
+{{--
+    LearnSync -- Blade view
+    Shared: project-wide infrastructure
+    @author Serena Lim Sze Kee, Foo Chong Xian, Ong Shun Yan, Wong Siew Lam, Ong Kwong Wei
+--}}
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>

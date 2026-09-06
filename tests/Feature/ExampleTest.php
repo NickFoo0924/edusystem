@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * LearnSync -- Automated test
+ *
+ * Shared: project-wide infrastructure
+ *
+ * @author Serena Lim Sze Kee, Foo Chong Xian, Ong Shun Yan, Wong Siew Lam, Ong Kwong Wei
+ */
+
 namespace Tests\Feature;
 
 // use Illuminate\Foundation\Testing\RefreshDatabase;

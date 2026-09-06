@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * LearnSync -- State pattern (behavioural)
+ *
+ * Module 5: Academic Progress Analytics
+ *
+ * @author Ong Kwong Wei
+ */
+
 namespace App\Patterns\State;
 
 use RuntimeException;

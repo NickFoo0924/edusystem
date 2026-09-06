@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * LearnSync -- REST web service controller
+ *
+ * Module 4: Skill Assessment & Quiz
+ *
+ * @author Wong Siew Lam
+ */
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;

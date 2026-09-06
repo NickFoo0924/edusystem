@@ -1,3 +1,8 @@
+{{--
+    LearnSync -- Blade view
+    Module 4: Skill Assessment & Quiz
+    @author Wong Siew Lam
+--}}
 {{-- quizzes/show.blade.php --}}
 @extends('layout')
 

@@ -1,3 +1,8 @@
+{{--
+    LearnSync -- Blade view
+    Module 1: Identity, Access & Digital Credentialing
+    @author Serena Lim Sze Kee
+--}}
 {{-- certificates/pdf.blade.php --}}
 {{--
     Rendered by DomPDF from the CredentialAuthority, never served as a web page.

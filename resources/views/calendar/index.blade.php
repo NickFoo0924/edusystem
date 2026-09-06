@@ -1,3 +1,8 @@
+{{--
+    LearnSync -- Blade view
+    Module 2: Academic Resources Repository
+    @author Foo Chong Xian
+--}}
 {{-- calendar/index.blade.php
 
      Every row on this page is a CalendarEntry. The grid never asks whether an

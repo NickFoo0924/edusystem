@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * LearnSync -- Web service consumer client
+ *
+ * Module 4: Skill Assessment & Quiz
+ *
+ * @author Wong Siew Lam
+ */
+
 namespace App\Support\Api;
 
 /**

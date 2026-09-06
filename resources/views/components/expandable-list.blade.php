@@ -1,4 +1,9 @@
 {{--
+    LearnSync -- Blade view
+    Shared: project-wide infrastructure
+    @author Serena Lim Sze Kee, Foo Chong Xian, Ong Shun Yan, Wong Siew Lam, Ong Kwong Wei
+--}}
+{{--
     A list that shows its first three rows until the reader asks for the rest.
 
     A dashboard is meant to be read at a glance, and an eighteen-row queue

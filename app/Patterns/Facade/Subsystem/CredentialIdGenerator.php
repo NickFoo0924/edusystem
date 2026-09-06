@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * LearnSync -- Facade pattern: subsystem collaborator
+ *
+ * Module 1: Identity, Access & Digital Credentialing
+ *
+ * @author Serena Lim Sze Kee
+ */
+
 namespace App\Patterns\Facade\Subsystem;
 
 use App\Models\Certificate;

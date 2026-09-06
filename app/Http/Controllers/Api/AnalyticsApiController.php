@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * LearnSync -- REST web service controller
+ *
+ * Module 5: Academic Progress Analytics
+ *
+ * @author Ong Kwong Wei
+ */
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;

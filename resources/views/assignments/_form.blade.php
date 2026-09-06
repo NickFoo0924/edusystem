@@ -1,3 +1,8 @@
+{{--
+    LearnSync -- Blade view
+    Module 5: Academic Progress Analytics
+    @author Ong Kwong Wei
+--}}
 {{-- assignments/_form.blade.php -- shared by create and edit --}}
 
 @php

@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * LearnSync -- Eloquent model
+ *
+ * Module 5: Academic Progress Analytics
+ *
+ * @author Ong Kwong Wei
+ */
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;

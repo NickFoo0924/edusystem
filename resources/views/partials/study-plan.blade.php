@@ -1,4 +1,9 @@
 {{--
+    LearnSync -- Blade view
+    Module 2: Academic Resources Repository
+    @author Foo Chong Xian
+--}}
+{{--
     The suggested order to work through a course.
 
     Only the assessment steps carry a tick. There is no view-tracking table, so

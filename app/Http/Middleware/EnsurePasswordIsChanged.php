@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * LearnSync -- HTTP middleware
+ *
+ * Module 1: Identity, Access & Digital Credentialing
+ *
+ * @author Serena Lim Sze Kee
+ */
+
 namespace App\Http\Middleware;
 
 use Closure;

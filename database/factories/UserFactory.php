@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * LearnSync -- Model factory
+ *
+ * Shared: project-wide infrastructure
+ *
+ * @author Serena Lim Sze Kee, Foo Chong Xian, Ong Shun Yan, Wong Siew Lam, Ong Kwong Wei
+ */
+
 namespace Database\Factories;
 
 use App\Models\User;

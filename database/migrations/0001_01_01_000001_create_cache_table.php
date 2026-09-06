@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * LearnSync -- Database migration
+ *
+ * Shared: project-wide infrastructure
+ *
+ * @author Serena Lim Sze Kee, Foo Chong Xian, Ong Shun Yan, Wong Siew Lam, Ong Kwong Wei
+ */
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;

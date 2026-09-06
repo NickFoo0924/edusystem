@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * LearnSync -- Route definitions
+ *
+ * Shared: project-wide infrastructure
+ *
+ * @author Serena Lim Sze Kee, Foo Chong Xian, Ong Shun Yan, Wong Siew Lam, Ong Kwong Wei
+ */
+
 use App\Http\Controllers\Api\AnalyticsApiController;
 use App\Http\Controllers\Api\CourseApiController;
 use App\Http\Controllers\Api\CredentialApiController;

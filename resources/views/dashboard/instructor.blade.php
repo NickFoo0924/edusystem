@@ -1,3 +1,8 @@
+{{--
+    LearnSync -- Blade view
+    Module 5: Academic Progress Analytics
+    @author Ong Kwong Wei
+--}}
 {{-- dashboard/instructor.blade.php --}}
 @extends('layout')
 

@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * LearnSync -- Application bootstrap
+ *
+ * Shared: project-wide infrastructure
+ *
+ * @author Serena Lim Sze Kee, Foo Chong Xian, Ong Shun Yan, Wong Siew Lam, Ong Kwong Wei
+ */
+
 use App\Http\Middleware\EnsureAccountIsActive;
 use App\Http\Middleware\EnsurePasswordIsChanged;
 use App\Http\Middleware\VerifyApiKey;

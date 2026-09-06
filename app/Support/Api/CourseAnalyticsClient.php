@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * LearnSync -- Web service consumer client
+ *
+ * Module 5: Academic Progress Analytics
+ *
+ * @author Ong Kwong Wei
+ */
+
 namespace App\Support\Api;
 
 /**

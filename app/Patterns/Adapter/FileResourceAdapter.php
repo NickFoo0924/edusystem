@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * LearnSync -- Adapter pattern (structural)
+ *
+ * Module 2: Academic Resources Repository
+ *
+ * @author Foo Chong Xian
+ */
+
 namespace App\Patterns\Adapter;
 
 use App\Models\CourseMaterial;

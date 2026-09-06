@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * LearnSync -- Service provider
+ *
+ * Module 1: Identity, Access & Digital Credentialing
+ *
+ * @author Serena Lim Sze Kee
+ */
+
 namespace App\Providers;
 
 use App\Patterns\Facade\CredentialAuthority;

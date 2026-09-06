@@ -1,4 +1,9 @@
 {{--
+    LearnSync -- Blade view
+    Shared: project-wide infrastructure
+    @author Serena Lim Sze Kee, Foo Chong Xian, Ong Shun Yan, Wong Siew Lam, Ong Kwong Wei
+--}}
+{{--
     A circular avatar.
 
     Shows the uploaded image when there is one, and otherwise the first letter

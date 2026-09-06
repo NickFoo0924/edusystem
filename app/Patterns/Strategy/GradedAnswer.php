@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * LearnSync -- Strategy pattern (behavioural)
+ *
+ * Module 4: Skill Assessment & Quiz
+ *
+ * @author Wong Siew Lam
+ */
+
 namespace App\Patterns\Strategy;
 
 /**

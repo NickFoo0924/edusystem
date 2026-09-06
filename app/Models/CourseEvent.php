@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * LearnSync -- Eloquent model
+ *
+ * Module 2: Academic Resources Repository
+ *
+ * @author Foo Chong Xian
+ */
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;

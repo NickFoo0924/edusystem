@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * LearnSync -- Automated test
+ *
+ * Module 3: Student Forum & Notifications
+ *
+ * @author Ong Shun Yan
+ */
+
 namespace Tests\Feature;
 
 use App\Models\Announcement;

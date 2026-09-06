@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * LearnSync -- Eloquent model
+ *
+ * Module 3: Student Forum & Notifications
+ *
+ * @author Ong Shun Yan
+ */
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;

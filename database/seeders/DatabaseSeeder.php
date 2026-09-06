@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * LearnSync -- Database seeder
+ *
+ * Shared: project-wide infrastructure
+ *
+ * @author Serena Lim Sze Kee, Foo Chong Xian, Ong Shun Yan, Wong Siew Lam, Ong Kwong Wei
+ */
+
 namespace Database\Seeders;
 
 use App\Models\Announcement;

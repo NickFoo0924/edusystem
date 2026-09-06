@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * LearnSync -- HTTP controller
+ *
+ * Module 4: Skill Assessment & Quiz
+ *
+ * @author Wong Siew Lam
+ */
+
 namespace App\Http\Controllers;
 
 use App\Models\Course;

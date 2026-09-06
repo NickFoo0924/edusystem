@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * LearnSync -- HTTP controller
+ *
+ * Module 5: Academic Progress Analytics
+ *
+ * @author Ong Kwong Wei
+ */
+
 namespace App\Http\Controllers;
 
 use App\Models\Certificate;

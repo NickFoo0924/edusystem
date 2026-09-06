@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * LearnSync -- Web service consumer client
+ *
+ * Module 1: Identity, Access & Digital Credentialing
+ *
+ * @author Serena Lim Sze Kee
+ */
+
 namespace App\Support\Api;
 
 /**

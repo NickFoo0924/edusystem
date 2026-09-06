@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * LearnSync -- Automated test
+ *
+ * Module 2: Academic Resources Repository
+ *
+ * @author Foo Chong Xian
+ */
+
 namespace Tests\Feature;
 
 use App\Models\Course;

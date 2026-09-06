@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * LearnSync -- Blade layout component
+ *
+ * Shared: project-wide infrastructure
+ *
+ * @author Serena Lim Sze Kee, Foo Chong Xian, Ong Shun Yan, Wong Siew Lam, Ong Kwong Wei
+ */
+
 namespace App\View\Components;
 
 use Illuminate\View\Component;

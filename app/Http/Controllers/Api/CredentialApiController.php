@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * LearnSync -- REST web service controller
+ *
+ * Module 1: Identity, Access & Digital Credentialing
+ *
+ * @author Serena Lim Sze Kee
+ */
+
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;

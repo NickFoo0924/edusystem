@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * LearnSync -- Database migration
+ *
+ * Module 3: Student Forum & Notifications
+ *
+ * @author Ong Shun Yan
+ */
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;

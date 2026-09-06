@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * LearnSync -- Database migration
+ *
+ * Module 2: Academic Resources Repository
+ *
+ * @author Foo Chong Xian
+ */
+
 use App\Models\Course;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;

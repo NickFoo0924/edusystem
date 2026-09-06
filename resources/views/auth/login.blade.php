@@ -1,3 +1,8 @@
+{{--
+    LearnSync -- Blade view
+    Module 1: Identity, Access & Digital Credentialing
+    @author Serena Lim Sze Kee
+--}}
 <x-guest-layout>
     <!-- Session Status -->
     <x-auth-session-status class="mb-4" :status="session('status')" />

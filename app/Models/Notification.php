@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * LearnSync -- Eloquent model
+ *
+ * Module 1: Identity, Access & Digital Credentialing
+ *
+ * @author Serena Lim Sze Kee
+ */
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;

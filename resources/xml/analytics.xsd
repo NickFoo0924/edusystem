@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
+    LearnSync : XML resource
+    Module 5: Academic Progress Analytics
+    @author Ong Kwong Wei
+-->
+<!--
     Schema for the analytics export (resources/xml/analytics.xsd).
 
     XSD rather than DTD, and the choice matters here. A DTD can say that a

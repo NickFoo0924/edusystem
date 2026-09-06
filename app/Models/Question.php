@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * LearnSync -- Eloquent model
+ *
+ * Module 4: Skill Assessment & Quiz
+ *
+ * @author Wong Siew Lam
+ */
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;

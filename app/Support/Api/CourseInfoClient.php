@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * LearnSync -- Web service consumer client
+ *
+ * Module 2: Academic Resources Repository
+ *
+ * @author Foo Chong Xian
+ */
+
 namespace App\Support\Api;
 
 /**

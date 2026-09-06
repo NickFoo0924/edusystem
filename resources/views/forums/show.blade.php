@@ -1,3 +1,8 @@
+{{--
+    LearnSync -- Blade view
+    Module 3: Student Forum & Notifications
+    @author Ong Shun Yan
+--}}
 {{-- forums/show.blade.php --}}
 @extends('layout')
 

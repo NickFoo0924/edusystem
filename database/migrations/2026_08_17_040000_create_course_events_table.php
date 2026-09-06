@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * LearnSync -- Database migration
+ *
+ * Module 2: Academic Resources Repository
+ *
+ * @author Foo Chong Xian
+ */
+
 use App\Models\Permission;
 use App\Models\PermissionRole;
 use Illuminate\Database\Migrations\Migration;

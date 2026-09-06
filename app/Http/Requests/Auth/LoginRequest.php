@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * LearnSync -- Form request validation
+ *
+ * Module 1: Identity, Access & Digital Credentialing
+ *
+ * @author Serena Lim Sze Kee
+ */
+
 namespace App\Http\Requests\Auth;
 
 use App\Models\ActivityLog;

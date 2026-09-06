@@ -1,3 +1,8 @@
+{{--
+    LearnSync -- Blade view
+    Module 1: Identity, Access & Digital Credentialing
+    @author Serena Lim Sze Kee
+--}}
 <x-guest-layout>
     <form method="POST" action="{{ route('password.store') }}">
         @csrf

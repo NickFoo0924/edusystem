@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * LearnSync -- Mailable
+ *
+ * Module 1: Identity, Access & Digital Credentialing
+ *
+ * @author Serena Lim Sze Kee
+ */
+
 namespace App\Mail;
 
 use App\Models\Invitation;

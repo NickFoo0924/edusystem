@@ -1,4 +1,9 @@
 {{--
+    LearnSync -- Blade view
+    Shared: project-wide infrastructure
+    @author Serena Lim Sze Kee, Foo Chong Xian, Ong Shun Yan, Wong Siew Lam, Ong Kwong Wei
+--}}
+{{--
     A Breeze-styled password field with a show/hide control.
 
     Typing a password you cannot see is the main reason people get locked out,

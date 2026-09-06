@@ -1,4 +1,9 @@
 {{--
+    LearnSync -- Blade view
+    Shared: project-wide infrastructure
+    @author Serena Lim Sze Kee, Foo Chong Xian, Ong Shun Yan, Wong Siew Lam, Ong Kwong Wei
+--}}
+{{--
     The left navigation rail.
 
     Every item is gated on a permission key, so the rail reshapes itself when

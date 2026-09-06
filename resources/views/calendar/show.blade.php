@@ -1,3 +1,8 @@
+{{--
+    LearnSync -- Blade view
+    Module 2: Academic Resources Repository
+    @author Foo Chong Xian
+--}}
 {{-- calendar/show.blade.php -- one scheduled event, in full.
 
      Reached by clicking any entry on the calendar grid. Deliberately a page

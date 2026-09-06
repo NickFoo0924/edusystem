@@ -1,4 +1,9 @@
 {{--
+    LearnSync -- Blade view
+    Module 2: Academic Resources Repository
+    @author Foo Chong Xian
+--}}
+{{--
     The conversation under one announcement.
 
     Collapsed behind a <details> rather than a JavaScript toggle: a notice with

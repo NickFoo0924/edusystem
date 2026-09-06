@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
+    LearnSync : XML resource
+    Module 5: Academic Progress Analytics
+    @author Ong Kwong Wei
+-->
+<!--
     analytics-chart.xsl — turns the analytics document into an SVG line chart.
 
     SVG is an XML vocabulary, so this is a genuine XML-to-XML transformation

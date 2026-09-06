@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * LearnSync -- HTTP controller
+ *
+ * Module 3: Student Forum & Notifications
+ *
+ * @author Ong Shun Yan
+ */
+
 namespace App\Http\Controllers;
 
 use App\Models\DiscussionForum;

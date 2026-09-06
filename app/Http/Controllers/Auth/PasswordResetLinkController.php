@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * LearnSync -- Authentication controller
+ *
+ * Module 1: Identity, Access & Digital Credentialing
+ *
+ * @author Serena Lim Sze Kee
+ */
+
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;

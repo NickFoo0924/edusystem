@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * LearnSync -- Web service consumer client
+ *
+ * Shared: project-wide infrastructure
+ *
+ * @author Serena Lim Sze Kee, Foo Chong Xian, Ong Shun Yan, Wong Siew Lam, Ong Kwong Wei
+ */
+
 namespace App\Support\Api;
 
 use App\Support\Ifa;

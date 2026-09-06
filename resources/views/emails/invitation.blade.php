@@ -1,3 +1,8 @@
+{{--
+    LearnSync -- Blade view
+    Module 1: Identity, Access & Digital Credentialing
+    @author Serena Lim Sze Kee
+--}}
 {{-- emails/invitation.blade.php --}}
 <x-mail::message>
 # You have been invited to {{ config('app.name') }}

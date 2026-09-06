@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * LearnSync -- Facade pattern (structural)
+ *
+ * Module 1: Identity, Access & Digital Credentialing
+ *
+ * @author Serena Lim Sze Kee
+ */
+
 namespace App\Patterns\Facade;
 
 use App\Models\ActivityLog;

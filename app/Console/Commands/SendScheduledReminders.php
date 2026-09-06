@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * LearnSync -- Artisan console command
+ *
+ * Module 3: Student Forum & Notifications
+ *
+ * @author Ong Shun Yan
+ */
+
 namespace App\Console\Commands;
 
 use App\Models\Assignment;

@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * LearnSync -- Support helper
+ *
+ * Module 2: Academic Resources Repository
+ *
+ * @author Foo Chong Xian
+ */
+
 namespace App\Support;
 
 use App\Models\Course;
